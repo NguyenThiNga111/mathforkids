@@ -1,0 +1,15 @@
+{
+    "managementLessons": "Management Lessons",
+    "grade": "Grade",
+    "lessonName": "Lesson Name",
+    "lessonStatus": "Lesson Status",
+    "inputgrade": "Select grade",
+    "inputlessonName": "Enter lesson name",
+    "nameViRequired": "Lesson name (VI) is required",
+    "nameEnRequired": "Lesson name (EN) is required",
+    "gradeRequired": "Grade is required",
+    "updateLesson": "Update Lesson",
+    "addLesson": "Add Lesson",
+    "inputlessonNameVi": "Enter lesson name (VI)",
+    "inputlessonNameEn": "Enter lesson name (EN)"
+}

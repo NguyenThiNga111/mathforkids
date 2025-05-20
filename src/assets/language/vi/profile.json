@@ -1,0 +1,12 @@
+{
+    "profile": "Hồ sơ",
+    "fullName": "Họ và tên",
+    "phoneNumber": "Số điện thoại",
+    "email": "Email",
+    "gender": "Giới tính",
+    "male": "Nam",
+    "female": "Nữ",
+    "birthday": "Ngày sinh",
+    "role": "Quyền",
+    "address": "Địa chỉ"
+}

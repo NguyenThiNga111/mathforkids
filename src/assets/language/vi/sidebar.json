@@ -1,0 +1,16 @@
+{
+    "dashboard": "Thống kê",
+    "accountUser": "Quản lý người dùng",
+    "testSystem": "Hệ thống kiểm tra",
+    "systemTasks": "Hệ thống nhiệm vụ",
+    "notification": "Thông báo",
+    "profile": "Hồ sơ",
+    "lesson": "Bài học",
+    "exercise": "Bài tập",
+    "assessment": "Bài kiểm tra",
+    "questionTest": "Câu hỏi kiểm tra",
+    "reward": "Phần thưởng",
+    "contact": "Liên hệ",
+    "setting": "Cài đặt",
+    "logout": "Đăng xuất"
+}

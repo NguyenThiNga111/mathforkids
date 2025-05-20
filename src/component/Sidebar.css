@@ -1,13 +1,12 @@
 .app-container {
     display: flex;
     height: 100vh;
-    background-color: #f3f4f6;
+    background-color: #F8F8FF;
 }
 
 .sidebar {
     width: 14rem;
-    background-color: var(--primary-color);
-    color: var(--text-color);
+    background-color: var(--background-sidebar);
     display: flex;
     overflow-x: auto;
     scrollbar-width: none;
@@ -19,7 +18,7 @@
     text-align: center;
     font-size: 1.25rem;
     font-weight: bold;
-    color: var(--text-color);
+    color: var(--color-textwhite);
 }
 
 .sidebar-nav {
@@ -34,37 +33,36 @@
     margin-right: 1rem;
     border-radius: 0.8rem;
     height: 30px;
-    color: var(--text-color);
-    font-family: var(--nunito-bold);
+    color: var(--color-textwhite);
     text-decoration: none;
+    gap: 1rem;
 }
 
 .sidebar-item:hover {
-    background-color: var(--hover-background);
+    background-color: var(--background-sidebarhover);
 }
 
 .sidebar-item.active {
     margin-left: 1.5rem;
     background-color: var(--active-background);
-    color: var(--active-text);
-    border: 4px solid var(--primary-color);
+    color: var(--color-sidebaractive);
+    border: 4px solid var(--background);
 }
 
 .sidebar-icon {
-    margin-right: 0.5rem;
     margin-top: 0.2rem;
     width: 17%;
 }
 
 .sidebar-divider {
-    border-top: 1px solid var(--divider-color);
+    border-top: 1px solid var(--sidebar-divider);
     margin-top: 1.5rem;
     margin-bottom: 0.5rem;
 }
 
 .sidebar-a {
     margin-left: 30px;
-    color: var(--sidebar-text);
+    color: var(--color-sidebar);
 }
 
 .content {

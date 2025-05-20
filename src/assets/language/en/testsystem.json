@@ -1,0 +1,20 @@
+{
+    "managementTestSystem": "Management TestSystem",
+    "level": "Level",
+    "lessonName": "Lesson Name",
+    "pupilld": "Pupilld Name",
+    "point": "Point",
+    "duration": "Duration",
+    "testSystemStatus": "Test System Status",
+    "selectionlevel": "Select Level",
+    "selectionpupilld": "Select Pupilld",
+    "selectionleson": "Select Lesson",
+    "inputPoint": "Enter Point",
+    "levelRequired": "Level is required",
+    "pupilldRequired": "Pupilld is required",
+    "pointRequired": "Point is required",
+    "lessonRequired": "Lesson is required",
+    "durationRequired": "Duration is required",
+    "updateTestSystem": "Update Test System",
+    "addTestSystem": "Add Test System"
+}

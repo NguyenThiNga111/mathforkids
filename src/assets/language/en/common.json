@@ -1,0 +1,19 @@
+{
+    "filterBy": "Filter By",
+    "addNew": "Add New",
+    "yes": "Yes",
+    "no": "No",
+    "exportFile": "Export file",
+    "update": "Update",
+    "action": "Action",
+    "available": "Available",
+    "errorFetchData": "Error fetching data",
+    "updateSuccess": "Update successful",
+    "addSuccess": "Add successful",
+    "errorSavingData": "Error saving data",
+    "validationFailed": "Validation failed",
+    "save": "Save",
+    "cancel": "Cancel",
+    "searchPlaceholder": "Search",
+    "adminRole": "Admin"
+}

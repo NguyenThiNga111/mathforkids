@@ -1,0 +1,20 @@
+{
+    "managementTestSystem": "Hệ thống kiểm tra quản lý",
+    "level": "Mức độ",
+    "lessonName": "Tên bài học",
+    "pupilld": "Tên học sinh",
+    "point": "Điểm",
+    "duration": "Thời lượng",
+    "testSystemStatus": "Trạng thái hệ thống kiểm tra",
+    "selectionlevel": "Chọn cấp độ",
+    "selectionpupilld": "Chọn học sinh",
+    "selectionleson": "Chọn bài học",
+    "inputPoint": "Nhập điểm",
+    "levelRequired": "Cấp độ bắt buộc",
+    "pupilldRequired": "Cần có học sinh",
+    "pointRequired": "Cần có điểm",
+    "lessonRequired": "Bài học bắt buộc",
+    "durationRequired": "Thời lượng bắt buộc",
+    "updateTestSystem": "Cập nhật hệ thống kiểm tra",
+    "addTestSystem": "Thêm hệ thống kiểm tra"
+}

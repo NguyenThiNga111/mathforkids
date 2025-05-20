@@ -1,0 +1,19 @@
+{
+    "filterBy": "Lọc theo",
+    "addNew": "Thêm mới",
+    "yes": "Có",
+    "no": "Không",
+    "exportFile": "Xuất file",
+    "update": "Cập nhật",
+    "action": "Hành động",
+    "available": "Xóa mềm",
+    "errorFetchData": "Lỗi khi lấy dữ liệu",
+    "updateSuccess": "Cập nhật thành công",
+    "addSuccess": "Thêm mới thành công",
+    "errorSavingData": "Lỗi khi lưu dữ liệu",
+    "validationFailed": "Xác thực thất bại",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "searchPlaceholder": "Tìm kiếm",
+    "adminRole": "Quản trị viên"
+}

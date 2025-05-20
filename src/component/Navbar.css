@@ -2,9 +2,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: var(--active-background);
+    background-color: var(--background-navbar);
     padding: 10px 20px;
-    border-bottom: 1px solid #F5F6FA;
+    border-bottom: 1px solid var(--color-border);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -17,7 +17,9 @@
     margin-left: 10%;
     width: 400px;
     padding: 8px 12px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-search);
+    background-color: var(--background-navbar);
+    color: var(--color-textwhite);
     border-radius: 20px;
     outline: none;
 }
@@ -61,7 +63,7 @@
 select {
     margin: 0;
     padding: 5px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-search);
     border-radius: 5px;
     outline: none;
 }
@@ -85,10 +87,11 @@ select {
 }
 
 .user-name {
+    color: var(--color-text);
     font-weight: bold;
 }
 
 .user-role {
-    color: #666;
+    color: var(--color-text);
     font-size: 12px;
 }

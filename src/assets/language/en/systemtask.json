@@ -1,0 +1,27 @@
+{
+    "taskManagement": "System Task Management",
+    "title": "Title",
+    "description": "Description",
+    "lesson": "Lesson",
+    "systemtaskStatus": "System Task Status",
+    "reward": "Reward",
+    "quantityReward": "Quantity Reward",
+    "addTask": "Add Task",
+    "updateTask": "Update Task",
+    "titleNameVi": "Enter title name Vi",
+    "titleNameEn": "Enter title name En",
+    "descriptionVi": "Enter description Vi",
+    "descriptionEn": "Enter description En",
+    "selectionlesson":"Selection lesson",
+    "selectionreward":"Selection reward",
+    "inputquantityReward":"Enter quantity reward",
+
+
+    "titleViRequired": "Please enter Vietnamese title",
+    "titleEnRequired": "Please enter English title",
+    "descriptionViRequired": "Please enter Vietnamese description",
+    "descriptionEnRequired": "Please enter English description",
+    "lessonRequired": "Please select lesson",
+    "rewardRequired": "Please select a reward",
+    "quantityRequired": "The amount of rewards must be greater than 0"
+}
