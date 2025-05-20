@@ -1,0 +1,5 @@
+.form-content-lesson {
+    height: 300px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}

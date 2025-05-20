@@ -1,0 +1,15 @@
+{
+    "managementLessons": "Quản lý bài học",
+    "grade": "Lớp",
+    "lessonName": "Tên bài học",
+    "lessonStatus": "Trạng thái bài học",
+    "inputgrade": "Chọn lớp",
+    "inputlessonName": "Nhập tên bài học",
+    "nameViRequired": "Tên bài học (VI) là bắt buộc",
+    "nameEnRequired": "Tên bài học (EN) là bắt buộc",
+    "gradeRequired": "Lớp là bắt buộc",
+    "updateLesson": "Cập nhật bài học",
+    "addLesson": "Thêm bài học",
+    "inputlessonNameVi": "Nhập tên bài học (VI)",
+    "inputlessonNameEn": "Nhập tên bài học (EN)"
+}

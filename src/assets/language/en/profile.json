@@ -1,0 +1,12 @@
+{
+    "profile": "Profile",
+    "fullName": "Full Name",
+    "phoneNumber": "PhoneNumber",
+    "email": "Email",
+    "gender": "Gender",
+    "male": "Male",
+    "female": "Female",
+    "birthday": "Birthday",
+    "role": "role",
+    "address": "Address"
+}

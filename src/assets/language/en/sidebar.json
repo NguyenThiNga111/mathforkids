@@ -1,0 +1,16 @@
+{
+    "dashboard": "Dashboard",
+    "accountUser": "Account User",
+    "testSystem": "Test System",
+    "systemTasks": "System Task",
+    "notification": "Notification",
+    "profile": "Profile",
+    "lesson": "Lesson",
+    "exercise": "Exercise",
+    "assessment": "Assessment",
+    "questionTest": "Question Test",
+    "reward": "Reward",
+    "contact": "Contact",
+    "setting": "Setting",
+    "logout": "Logout"
+}

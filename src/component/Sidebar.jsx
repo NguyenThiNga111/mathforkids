@@ -1,11 +1,19 @@
 import { React } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Imgs } from '../assets/theme/images'
+import { useTranslation } from 'react-i18next';
+
 import './Sidebar.css';
 
 const Dashboard = () => {
     const location = useLocation();
     const activeItem = location.pathname;
+    const { t, i18n } = useTranslation(['sidebar', 'common']);
+    const darkMode = localStorage.getItem('darkMode') === 'true';
+
+    const getIcon = (path, whiteIcon, blueIcon) => {
+        return darkMode ? whiteIcon : (activeItem === path ? blueIcon : whiteIcon);
+    };
 
     return (
         <div className="app-container">
@@ -14,46 +22,46 @@ const Dashboard = () => {
                 <nav className="sidebar-nav">
                     <Link to="/dashboard" className={`sidebar-item ${activeItem === '/dashboard' ? 'active' : ''}`}>
                         <img
-                            src={activeItem === '/dashboard' ? Imgs.dashboardBlue : Imgs.dashboardWhite}
+                            src={getIcon('/dashboard', Imgs.dashboardWhite, Imgs.dashboardBlue)}
                             alt="Dashboard"
                             className="sidebar-icon"
-                        /> Dashboard
+                        />{t('dashboard')}
                     </Link>
                     <Link to="/account-user" className={`sidebar-item ${activeItem === '/account-user' ? 'active' : ''}`}>
                         <img
-                            src={activeItem === '/account-user' ? Imgs.accountUserBlue : Imgs.accountUserWhite}
+                            src={getIcon('/account-user', Imgs.accountUserWhite, Imgs.accountUserBlue)}
                             alt="accountuser"
                             className="sidebar-icon"
-                        /> Account User
+                        /> {t('accountUser')}
                     </Link>
-                    <Link to="/testsystem" className={`sidebar-item ${activeItem === '/test-system' ? 'active' : ''}`}>
+                    <Link to="/testsystem" className={`sidebar-item ${activeItem === '/testsystem' ? 'active' : ''}`}>
                         <img
-                            src={activeItem === '/test-system' ? Imgs.testSystemblue : Imgs.testSystemwhite}
+                            src={getIcon('/testsystem', Imgs.testSystemwhite, Imgs.testSystemblue)}
                             alt="testsystem"
                             className="sidebar-icon"
-                        /> Test System
+                        /> {t('testSystem')}
                     </Link>
-                    <Link to="/system-tasks" className={`sidebar-item ${activeItem === '/system-tasks' ? 'active' : ''}`}>
+                    <Link to="/systemtask" className={`sidebar-item ${activeItem === '/systemtask' ? 'active' : ''}`}>
                         <img
-                            src={activeItem === '/system-tasks' ? Imgs.systemTaskBlue : Imgs.systemTaskWhite}
-                            alt="system-tasks"
+                            src={getIcon('/systemtask', Imgs.systemTaskWhite, Imgs.systemTaskBlue)}
+                            alt="systemtask"
                             className="sidebar-icon"
-                        /> System Tasks
+                        /> {t('systemTasks')}
                     </Link>
 
                     <Link to="/notification" className={`sidebar-item ${activeItem === '/notification' ? 'active' : ''}`}>
                         <img
-                            src={activeItem === '/notification' ? Imgs.notificationBlue : Imgs.notificationWhite}
+                            src={getIcon('/notification', Imgs.notificationWhite, Imgs.notificationBlue)}
                             alt="notification"
                             className="sidebar-icon"
-                        /> Notification
+                        /> {t('notification')}
                     </Link>
                     <Link to="/profile" className={`sidebar-item ${activeItem === '/profile' ? 'active' : ''}`}>
                         <img
-                            src={activeItem === '/profile' ? Imgs.profileBlue : Imgs.profileWhite}
+                            src={getIcon('/profile', Imgs.profileWhite, Imgs.profileBlue)}
                             alt="profile"
                             className="sidebar-icon"
-                        /> Profile
+                        /> {t('profile')}
                     </Link>
 
                     <div className="sidebar-divider"></div>
@@ -61,63 +69,63 @@ const Dashboard = () => {
 
                     <Link to="/lesson" className={`sidebar-item ${activeItem === '/lesson' ? 'active' : ''}`}>
                         <img
-                            src={activeItem === '/lesson' ? Imgs.lessonBlue : Imgs.lessonWhite}
+                            src={getIcon('/lesson', Imgs.lessonWhite, Imgs.lessonBlue)}
                             alt="lesson"
                             className="sidebar-icon"
-                        /> Lesson
+                        /> {t('lesson')}
                     </Link>
                     <Link to="/exercise" className={`sidebar-item ${activeItem === '/exercise' ? 'active' : ''}`}>
                         <img
-                            src={activeItem === '/exercise' ? Imgs.exerciseBlue : Imgs.exerciseWhite}
+                            src={getIcon('/exercise', Imgs.exerciseWhite, Imgs.exerciseBlue)}
                             alt="exercise"
                             className="sidebar-icon"
-                        /> Exercise
+                        /> {t('exercise')}
                     </Link>
-                    <Link to="/question" className={`sidebar-item ${activeItem === '/question' ? 'active' : ''}`}>
+                    <Link to="/assessment" className={`sidebar-item ${activeItem === '/assessment' ? 'active' : ''}`}>
                         <img
-                            src={activeItem === '/question' ? Imgs.questionBlue : Imgs.questionWhite}
-                            alt="question"
+                            src={getIcon('/assessment', Imgs.questionWhite, Imgs.questionBlue)}
+                            alt="assessment"
                             className="sidebar-icon"
-                        /> Question
+                        /> {t('assessment')}
                     </Link>
-                    <Link to="/question-test" className={`sidebar-item ${activeItem === '/question-test' ? 'active' : ''}`}>
+                    <Link to="/questiontest" className={`sidebar-item ${activeItem === '/questiontest' ? 'active' : ''}`}>
                         <img
-                            src={activeItem === '/question-test' ? Imgs.questionTestBlue : Imgs.questionTestWhite}
-                            alt="question-test"
+                            src={getIcon('/questiontest', Imgs.questionTestWhite, Imgs.questionTestBlue)}
+                            alt="questiontest"
                             className="sidebar-icon"
-                        /> Question Test
+                        />{t('questionTest')}
                     </Link>
 
                     <Link to="/rewards" className={`sidebar-item ${activeItem === '/rewards' ? 'active' : ''}`}>
                         <img
-                            src={activeItem === '/rewards' ? Imgs.rewardBlue : Imgs.rewardWhite}
+                            src={getIcon('/rewards', Imgs.rewardWhite, Imgs.rewardBlue)}
                             alt="rewards"
                             className="sidebar-icon"
-                        /> Rewards
+                        /> {t('reward')}
                     </Link>
                     <Link to="/contact" className={`sidebar-item ${activeItem === '/contact' ? 'active' : ''}`}>
                         <img
-                            src={activeItem === '/contact' ? Imgs.contactBlue : Imgs.contactWhite}
+                            src={getIcon('/contact', Imgs.contactWhite, Imgs.contactBlue)}
                             alt="contact"
                             className="sidebar-icon"
-                        /> Contact
+                        /> {t('contact')}
                     </Link>
 
                     <div className="sidebar-divider"></div>
 
                     <Link to="/setting" className={`sidebar-item ${activeItem === '/setting' ? 'active' : ''}`}>
                         <img
-                            src={activeItem === '/setting' ? Imgs.settingBlue : Imgs.settingWhite}
+                            src={getIcon('/setting', Imgs.settingWhite, Imgs.settingBlue)}
                             alt="setting"
                             className="sidebar-icon"
-                        /> Setting
+                        />{t('setting')}
                     </Link>
                     <Link to="/logout" className={`sidebar-item ${activeItem === '/logout' ? 'active' : ''}`}>
                         <img
-                            src={activeItem === '/logout' ? Imgs.logoutWhite : Imgs.logoutWhite}
-                            alt="logout"
+                            src={getIcon('/logout', Imgs.logoutWhite, Imgs.logoutWhite)}
+                            alt="Logout"
                             className="sidebar-icon"
-                        /> Logout
+                        /> {t('logout')}
                     </Link>
                 </nav>
             </div>
