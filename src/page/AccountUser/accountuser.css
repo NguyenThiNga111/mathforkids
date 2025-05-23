@@ -1,6 +1,7 @@
 .container-content {
     display: flex;
     flex-direction: column;
+
 }
 
 .flex.justify-end.ml-auto {
@@ -40,6 +41,11 @@ td {
     padding: 0.75rem;
     color: var(--table-color);
     border-top: 1px solid var(--table-color);
+}
+
+.buttonaction {
+    display: flex;
+    align-items: center;
 }
 
 .buttonupdate {

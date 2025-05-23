@@ -1,9 +1,100 @@
 import Navbar from "../../component/Navbar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import api from '../../assets/api/Api';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,BarChart,Bar } from 'recharts';
 import "./dashboard.css"; // Import file CSS
+const months = [
+  { label: "January", value: "01" },
+  { label: "February", value: "02" },
+  { label: "March", value: "03" },
+  { label: "April", value: "04" },
+  { label: "May", value: "05" },
+  { label: "June", value: "06" },
+  { label: "July", value: "07" },
+  { label: "August", value: "08" },
+  { label: "September", value: "09" },
+  { label: "October", value: "10" },
+  { label: "November", value: "11" },
+  { label: "December", value: "12" },
+];
 
 const Dashboard = () => {
-  const [selectedMonth, setSelectedMonth] = useState("October");
+  const [selectedUserMonth, setSelectedUserMonth] = useState("05"); // Separate state for user month
+  const [selectedPupilMonth, setSelectedPupilMonth] = useState("05"); // Separate state for pupil month
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [totalLessons, setTotalLessons] = useState(0);
+  const [studentsByGrade, setStudentsByGrade] = useState(0);
+  const [usersByMonth, setUsersByMonth] = useState({ current: 0, previous: 0 });
+  const [pupilsByMonth, setPupilsByMonth] = useState({ current: 0, previous: 0 });
+
+  // Fetch data from APIs when component mounts or month selections change
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch total users
+        const userResponse = await api.get("/user/countuser");
+        setTotalUsers(userResponse.data.count || 0);
+
+        // Fetch total students
+        const studentResponse = await api.get("/pupil/countpupil");
+        setTotalStudents(studentResponse.data.count || 0);
+
+        // Fetch total lessons
+        const lessonResponse = await api.get("/lesson/countlesson");
+        setTotalLessons(lessonResponse.data.count || 0);
+
+        // Fetch students by grade
+        const gradeResponse = await api.get("/pupil/countbygrade");
+        setStudentsByGrade(gradeResponse.data.count || 0);
+
+        // Fetch users by month for selected user month
+        let usersByMonthData = { current: 0, previous: 0 };
+        try {
+          const monthResponse = await api.get(`/user/countusersbymonth?month=${selectedUserMonth}`);
+          usersByMonthData = {
+            current: monthResponse.data.currentMonthCount || 0,
+            previous: monthResponse.data.previousMonthCount || 0,
+          };
+        } catch (userError) {
+          console.warn(`Pupil data fetch failed for month ${selectedUserMonth}:`, userError.message);
+        }
+        setUsersByMonth(usersByMonthData);
+
+        // Fetch pupils by month for selected pupil month
+        let pupilsByMonthData = { current: 0, previous: 0 };
+        try {
+          const monthPupilsResponse = await api.get(`/pupil/countpupilsbymonth?month=${selectedPupilMonth}`);
+          pupilsByMonthData = {
+            current: monthPupilsResponse.data.currentMonthCount || 0,
+            previous: monthPupilsResponse.data.previousMonthCount || 0,
+          };
+        } catch (pupilError) {
+          console.warn(`Pupil data fetch failed for month ${selectedPupilMonth}:`, pupilError.message);
+        }
+        setPupilsByMonth(pupilsByMonthData);
+
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, [selectedUserMonth, selectedPupilMonth]); // Re-fetch when either month changes
+
+  // Calculate trend for Total Users
+  const userTrend = usersByMonth.previous > 0
+    ? ((usersByMonth.current - usersByMonth.previous) / usersByMonth.previous * 100).toFixed(1)
+    : 0;
+  const userTrendDirection = userTrend >= 0 ? "up" : "down";
+
+  // Placeholder trends for other cards
+  const studentTrend = "1.3";
+  const studentTrendDirection = "up";
+  const gradeTrend = "-4.3";
+  const gradeTrendDirection = "down";
+  const lessonTrend = "1.8";
+  const lessonTrendDirection = "up";
 
   return (
     <div className="container">
@@ -17,9 +108,10 @@ const Dashboard = () => {
           <div className="stat-card">
             <div className="card-content">
               <h3 className="card-title">Total User</h3>
-              <p className="card-value">40,689</p>
-              <p className="card-trend up">
-                <span className="trend-icon">↑</span> 8.5% Up from yesterday
+              <p className="card-value">{totalUsers.toLocaleString()}</p>
+              <p className={`card-trend ${userTrendDirection}`}>
+                <span className="trend-icon">{userTrendDirection === "up" ? "↑" : "↓"}</span>
+                {Math.abs(userTrend)}% {userTrendDirection} from yesterday
               </p>
             </div>
             <div className="card-icon" style={{ backgroundColor: "#dbeafe" }}>
@@ -38,9 +130,10 @@ const Dashboard = () => {
           <div className="stat-card">
             <div className="card-content">
               <h3 className="card-title">Total Student</h3>
-              <p className="card-value">10,293</p>
-              <p className="card-trend up">
-                <span className="trend-icon">↑</span> 1.3% Up from past week
+              <p className="card-value">{totalStudents.toLocaleString()}</p>
+              <p className={`card-trend ${studentTrendDirection}`}>
+                <span className="trend-icon">{studentTrendDirection === "up" ? "↑" : "↓"}</span>
+                {studentTrend}% Up from past week
               </p>
             </div>
             <div className="card-icon" style={{ backgroundColor: "#fef3c7" }}>
@@ -55,13 +148,14 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Card 3: Statistics in each class */}
+          {/* Card 3: Students by Grade */}
           <div className="stat-card">
             <div className="card-content">
-              <h3 className="card-title">Statistics in each class</h3>
-              <p className="card-value">$89,000</p>
-              <p className="card-trend down">
-                <span className="trend-icon">↓</span> 4.3% Down from past week
+              <h3 className="card-title">Students by Grade</h3>
+              <p className="card-value">{studentsByGrade.toLocaleString()}</p>
+              <p className={`card-trend ${gradeTrendDirection}`}>
+                <span className="trend-icon">{gradeTrendDirection === "up" ? "↑" : "↓"}</span>
+                {Math.abs(gradeTrend)}% Down from past week
               </p>
             </div>
             <div className="card-icon" style={{ backgroundColor: "#d1fae5" }}>
@@ -76,13 +170,14 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Card 4: Statistics for each lesson */}
+          {/* Card 4: Total Lessons */}
           <div className="stat-card">
             <div className="card-content">
-              <h3 className="card-title">Statistics for each lesson</h3>
-              <p className="card-value">2040</p>
-              <p className="card-trend up">
-                <span className="trend-icon">↑</span> 1.8% Up from past week
+              <h3 className="card-title">Total Lessons</h3>
+              <p className="card-value">{totalLessons.toLocaleString()}</p>
+              <p className={`card-trend ${lessonTrendDirection}`}>
+                <span className="trend-icon">{lessonTrendDirection === "up" ? "↑" : "↓"}</span>
+                {lessonTrend}% Up from past week
               </p>
             </div>
             <div className="card-icon" style={{ backgroundColor: "#fed7aa" }}>
@@ -105,18 +200,30 @@ const Dashboard = () => {
             <div className="chart-header">
               <h3 className="chart-title">STATISTICS USER</h3>
               <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
+                value={selectedUserMonth}
+                onChange={(e) => setSelectedUserMonth(e.target.value)}
                 className="month-select"
               >
-                <option>October</option>
-                <option>September</option>
-                <option>August</option>
+                <option value="">Select Month</option>
+                {months.map((month) => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
               </select>
             </div>
-            <div className="chart-placeholder">
-              <p>Chart for User Statistics (64.364.77 peak)</p>
-            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={[
+                { name: "Previous", value: usersByMonth.previous },
+                { name: "Current", value: usersByMonth.current },
+              ]}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis domain={[0, 30]} ticks={[0, 10, 20, 30]} />
+                <Tooltip />
+                <Bar dataKey="value" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
 
           {/* Chart 2: Statistics Student */}
@@ -124,18 +231,30 @@ const Dashboard = () => {
             <div className="chart-header">
               <h3 className="chart-title">STATISTICS STUDENT</h3>
               <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
+                value={selectedPupilMonth}
+                onChange={(e) => setSelectedPupilMonth(e.target.value)}
                 className="month-select"
               >
-                <option>October</option>
-                <option>September</option>
-                <option>August</option>
+                <option value="">Select Month</option>
+                {months.map((month) => (
+                  <option key={month.value} value={month.value}>
+                    {month.label}
+                  </option>
+                ))}
               </select>
             </div>
-            <div className="chart-placeholder">
-              <p>Chart for Student Statistics (64.364.77 peak)</p>
-            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={[
+                { name: "Previous", value: pupilsByMonth.previous },
+                { name: "Current", value: pupilsByMonth.current },
+              ]}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="value" stroke="#8884d8" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>

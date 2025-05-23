@@ -7,45 +7,9 @@ import { UploadOutlined } from '@ant-design/icons';
 import { Upload } from 'antd';
 import { Imgs } from "../../assets/theme/images";
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 import api from '../../assets/api/Api';
 
-const rewardData = [
-    {
-        id: 1,
-        name: "Reward 1",
-        description: "This is the first reward",
-        image: "https://i.imgur.com/xpXEte1.jpeg",
-        available: true,
-    },
-    {
-        id: 2,
-        name: "Reward 2",
-        description: "This is the second reward",
-        image: "https://i.imgur.com/xpXEte1.jpeg",
-        available: false,
-    },
-    {
-        id: 3,
-        name: "Reward 3",
-        description: "This is the third reward",
-        image: "https://i.imgur.com/xpXEte1.jpeg",
-        available: true,
-    },
-    {
-        id: 4,
-        name: "Reward 4",
-        description: "This is the third reward",
-        image: "https://i.imgur.com/xpXEte1.jpeg",
-        available: true,
-    },
-    {
-        id: 5,
-        name: "Reward 5",
-        description: "This is the third reward",
-        image: "https://i.imgur.com/xpXEte1.jpeg",
-        available: true,
-    },
-];
 const Rewards = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingReward, setEditingReward] = useState(null);
@@ -53,29 +17,124 @@ const Rewards = () => {
     const [imageUrl, setImageUrl] = useState('');
     const [rewards, setRewards] = useState([]);
     const [fileList, setFileList] = useState([]);
+    const [filterAlphabet, setFilterAlphabet] = useState('alphabet'); // mặc định chưa chọn kiểu sắp xếp
+    const [filterStatus, setFilterStatus] = useState('all'); // all / enabled / disabled
     const [errors, setErrors] = useState('');
 
     const rewardPage = 3;
-    const indexOfLastUser = currentPage * rewardPage;
-    const indexOfFirtsUser = indexOfLastUser - rewardPage;
-    const currentRewards = rewards.slice(indexOfFirtsUser, indexOfLastUser);
-    const totalPage = Math.ceil(rewards.length / rewardPage);
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+    const { t, i18n } = useTranslation(['reward', 'common']);
 
     useEffect(() => {
-        setRewards(rewardData);
+        fetchRewards();
     }, []);
-    // const fetchRewards = async () => {
-    //     try {
-    //         const reponse = await api.get(`/reward`);
-    //         setRewards(reponse.data);
-    //     } catch (error) {
-    //         console.log("lỗi", error);
-    //     }
-    // }
+
+    const fetchRewards = async () => {
+        try {
+            const reponse = await api.get(`/reward`);
+            setRewards(reponse.data);
+        } catch (error) {
+            toast.error(t('errorFetchData', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+        }
+    }
+
+    const handleSave = async () => {
+        if (Validation()) {
+            try {
+                const formData = new FormData();
+                formData.append('name', JSON.stringify(editingReward.name));
+                formData.append('description', JSON.stringify(editingReward.description));
+                formData.append("image", editingReward.image); // This is File
+
+                if (editingReward.id) {
+                    await api.put(`/reward/${editingReward.id}`, formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                        },
+                    });
+                    toast.success(t('updateSuccess', { ns: 'common' }), {
+                        position: 'top-right',
+                        autoClose: 2000,
+                    });
+                } else {
+                    await api.post(`/reward`, formData, {
+                        headers: {
+                            "Content-Type": "multipart/form-data",
+                        },
+                    });
+                    toast.success(t('addSuccess', { ns: 'common' }), {
+                        position: 'top-right',
+                        autoClose: 2000,
+                    });
+                }
+                fetchRewards();
+                closeModal();
+            } catch (error) {
+                toast.error(t('errorSavingData', { ns: 'common' }), {
+                    position: 'top-right',
+                    autoClose: 2000,
+                });
+            }
+        } else {
+            toast.error(t('validationFailed', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+        }
+    };
+
+    const handleToggleAvailable = async (reward) => {
+        try {
+            const updatedReward = {
+                ...reward,
+                isDisabled: !reward.isDisabled,
+            };
+            await api.put(`/reward/disable/${reward.id}`, {
+                ...updatedReward,
+                isDisabled: updatedReward.isDisabled,
+            });
+            toast.success(t('updateSuccess', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+            setRewards((prev) =>
+                prev.map((r) => (r.id === reward.id ? { ...r, isDisabled: updatedReward.isDisabled } : r))
+            );
+        } catch (error) {
+            toast.error(t('validationFailed', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+        }
+    };
+
+    const Validation = () => {
+        const newErrors = {};
+
+        if (!editingReward?.name?.vi || editingReward.name.vi.trim() === '') {
+            newErrors.nameVi = t('nameViRequired');
+        }
+        if (!editingReward?.name?.en || editingReward.name.en.trim() === '') {
+            newErrors.nameEn = t('nameEnRequired');
+        }
+        if (!editingReward?.description?.vi || editingReward.description.vi.trim() === '') {
+            newErrors.descriptionVi = t('descriptionViRequired');
+        }
+        if (!editingReward?.description?.en || editingReward.description.en.trim() === '') {
+            newErrors.descriptionEn = t('descriptionEnRequired');
+        }
+        if (!imageUrl && fileList.length === 0) {
+            newErrors.image = t('imageRequired');
+        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    }
+
     const openModal = (mode, reward = null) => {
         if (mode === 'add') {
-            setEditingReward({ name: '', description: '', image: '' });
+            setEditingReward({ name: { en: '', vi: '' }, description: { en: '', vi: '' }, image: '' });
             setImageUrl('');
         } else if (mode === 'update') {
             setEditingReward(reward);
@@ -84,59 +143,6 @@ const Rewards = () => {
         setIsModalOpen(true);
     };
 
-    const handleSave = async () => {
-        if (Validation()) {
-            console.log('đá', editingReward);
-            try {
-                const formData = new FormData();
-                formData.append('name', editingReward.name);
-                formData.append('description', editingReward.description);
-
-                if (fileList.length > 0) {
-                    formData.append('image', fileList[0].originFileObj);
-                }
-                if (editingReward.id) {
-                    await api.put(`/reward/${editingReward.id}`, formData, {
-                        headers: { 'Content-Type': 'multipart/form-data' }
-                    });
-                    toast.success('Update Successful', {
-                        position: 'top-right',
-                        autoClose: 2000,
-                    });
-                } else {
-                    await api.post(`/reward`, formData);
-                    toast.success('Add Successful', {
-                        position: 'top-right',
-                        autoClose: 2000,
-                    });
-                }
-                fetchRewards();
-                closeModal();
-            } catch (error) {
-                console.error("Error saving reward:", error);
-                toast.error('Validation failed', {
-                    position: 'top-right',
-                    autoClose: 2000,
-                });
-            }
-        }
-    };
-
-    const Validation = () => {
-        const newErrors = {};
-        if (!editingReward?.name || editingReward.name.trim() === '') {
-            newErrors.name = 'Invalid name';
-        }
-        if (!editingReward?.description || editingReward.description.trim() === '') {
-            newErrors.description = 'Invalid description';
-        }
-        if (!imageUrl && fileList.length === 0) {
-            newErrors.image = 'Please select an image';
-        }
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    }
-
     const closeModal = () => {
         setIsModalOpen(false);
         setEditingReward(null);
@@ -144,50 +150,101 @@ const Rewards = () => {
     };
 
     const handleImageChange = (info) => {
-        const file = info.fileList[info.fileList.length - 1]?.originFileObj;
-        if (file) {
+        const fileObj = info.fileList[info.fileList.length - 1]?.originFileObj;
+        if (fileObj) {
             const reader = new FileReader();
             reader.onload = e => {
                 setImageUrl(e.target.result);
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(fileObj);
+
             setFileList([info.fileList[info.fileList.length - 1]]);
             setEditingReward(prev => ({
                 ...prev,
-                image: file.name
+                image: fileObj // Gán object thực tế, không phải file.name
             }));
         }
     };
 
+    const filteredRewards = rewards.filter(reward => {
+        const matchStatus =
+            filterStatus === 'all'
+                ? true
+                : filterStatus === 'yes'
+                    ? reward.isDisabled === false
+                    : reward.isDisabled === true;
 
+        return matchStatus;
+    });
+
+    if (filterAlphabet === 'A-Z') {
+        filteredRewards.sort((a, b) =>
+            (a.name[i18n.language] || '').localeCompare(b.name[i18n.language] || '')
+        );
+    } else if (filterAlphabet === 'Z-A') {
+        filteredRewards.sort((a, b) =>
+            (b.name[i18n.language] || '').localeCompare(a.name[i18n.language] || '')
+        );
+    }
+    const indexOfLastUser = currentPage * rewardPage;
+    const indexOfFirtsUser = indexOfLastUser - rewardPage;
+    const currentRewards = filteredRewards.slice(indexOfFirtsUser, indexOfLastUser);
+    const totalPage = Math.ceil(filteredRewards.length / rewardPage);
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     return (
         <div className="container">
             <Navbar />
             <div className="container-content">
-                <h1 className="container-title">Management Account User</h1>
+                <h1 className="container-title">{t('managementReward')}</h1>
                 <div className="flex justify-between items-center mb-4">
                     <div className="filter-bar">
                         <div className="filter-container">
                             <div className="filter-containers">
                                 <span className="filter-icon">
-                                    <svg className="iconfilter" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <svg
+                                        className="iconfilter"
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                    >
                                         <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
                                     </svg>
                                 </span>
-                                <button className="filter-text">Filter By</button>
-                                <select className="filter-dropdown">
-                                    <option>alphabet</option>
-                                    <option>A-Z</option>
-                                    <option>Z-A</option>
+                                <button className="filter-text">
+                                    {t('filterBy', { ns: 'common' })}
+                                </button>
+                                <select
+                                    className="filter-dropdown"
+                                    value={filterAlphabet}
+                                    onChange={(e) => {
+                                        setFilterAlphabet(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                >
+                                    <option value="alphabet">{t('alphabet')}</option>
+                                    <option value="A-Z">A-Z</option>
+                                    <option value="Z-A">Z-A</option>
                                 </select>
-                                <select className="filter-dropdown">
-                                    <option>Account Available</option>
-                                    <option>Yes</option>
-                                    <option>No</option>
+                                <select
+                                    className="filter-dropdown"
+                                    value={filterStatus}
+                                    onChange={(e) => {
+                                        setFilterStatus(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                >
+                                    <option value="all">{t('rewardStatus')}</option>
+                                    <option value="yes">{t('yes', { ns: 'common' })}</option>
+                                    <option value="no">{t('no', { ns: 'common' })}</option>
                                 </select>
                                 <button className="export-button">
-                                    Export File
+                                    {t('exportFile', { ns: 'common' })}
                                 </button>
                             </div>
                         </div>
@@ -195,39 +252,43 @@ const Rewards = () => {
                             className="bg-blue-500 text-white px-8 py-2 rounded-add"
                             onClick={() => openModal('add')}
                         >
-                            + Add new
+                            + {t('addNew', { ns: 'common' })}
                         </button>
                     </div>
                 </div>
                 <table className="w-full bg-white shadow-md rounded-lg">
                     <thead>
                         <tr className="bg-gray-200 text-left">
-                            <th className="p-3">Name</th>
-                            <th className="p-3">Description</th>
-                            <th className="p-3">Image</th>
-                            <th className="p-3">Action</th>
-                            <th className="p-3">Available</th>
+                            <th className="p-3">{t('name')}</th>
+                            <th className="p-3">{t('description')}</th>
+                            <th className="p-3">{t('image')}</th>
+                            <th className="p-3">{t('action', { ns: 'common' })}</th>
+                            <th className="p-3">{t('available', { ns: 'common' })}</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {currentRewards.map((user) => (
-                            <tr key={user.id} className="border-t">
-                                <td className="p-3">{user.name}</td>
-                                <td className="p-3">{user.description}</td>
+                        {currentRewards.map((reward) => (
+                            <tr key={reward.id} className="border-t">
+                                <td className="p-3">{reward.name?.[i18n.language]}</td>
+                                <td className="p-3">{reward.description?.[i18n.language]}</td>
                                 <td className="p-3">
-                                    <img src={user.image} alt={user.name} width="200" height="100" style={{ objectFit: 'cover', borderRadius: '8px' }} />
+                                    <img src={reward.image} alt={reward.name?.[i18n.language]} width="200" height="100" style={{ objectFit: 'cover', borderRadius: '8px' }} />
                                 </td>
                                 <td className="p-3">
                                     <button
                                         className="text-white px-3 py-1 buttonupdate"
-                                        onClick={() => openModal('update', user)}>
+                                        onClick={() => openModal('update', reward)}>
                                         <img className='iconupdate' src={Imgs.edit} />
-                                        Update
+                                        {t('update', { ns: 'common' })}
                                     </button>
                                 </td>
                                 <td className="p-3">
                                     <label className="switch">
-                                        <input type="checkbox" checked={user.available} readOnly />
+                                        <input
+                                            type="checkbox"
+                                            checked={reward.isDisabled}
+                                            onChange={() => handleToggleAvailable(reward)}
+                                        />
                                         <span className="slider round"></span>
                                     </label>
                                 </td>
@@ -235,6 +296,7 @@ const Rewards = () => {
                         ))}
                     </tbody>
                 </table>
+
                 <div className="flex justify-end items-center mt-4 ml-auto paginations">
                     <div className="pagination">
                         <button
@@ -265,7 +327,7 @@ const Rewards = () => {
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
-                            {editingReward ? 'Update Reward' : 'Add Reward'}
+                            {editingReward?.id ? t('updateReward') : t('addReward')}
                         </div>
                     }
                     open={isModalOpen}
@@ -273,55 +335,94 @@ const Rewards = () => {
                     footer={null}
                     className="modal-content"
                 >
-                    <div className="inputtext">
-                        <label className="titleinput">Name</label>
-                        <Input
-                            value={editingReward?.name}
-                            onChange={(e) => setEditingReward({ ...editingReward, name: e.target.value })}
-                            placeholder="Enter Name"
-                        />
-                        {errors.name && <div className="error-text">{errors.name}</div>}
-                    </div>
-                    <div className="inputtext">
-                        <label className="titleinput">Image</label>
-                        <div className="image-upload-container">
-                            <Upload
-                                accept="image/*"
-                                showUploadList={false}
-                                beforeUpload={() => false}
-                                onChange={handleImageChange}
-                                fileList={fileList}
-                            >
-                                <Button icon={<UploadOutlined />} className="custom-upload-button">
-                                    Choose image
-                                </Button>
-                            </Upload>
-
-                            {imageUrl && (
-                                <div className="image-preview-box">
-                                    <img src={imageUrl} alt="Preview" className="preview-image" />
-                                </div>
-                            )}
+                    <div className="form-content-lesson">
+                        <div className="inputtext">
+                            <label className="titleinput">{t('name')} (Vietnamese)</label>
+                            <Input
+                                placeholder={t('inputNameVi')}
+                                value={editingReward?.name?.vi || ''}
+                                onChange={(e) =>
+                                    setEditingReward({
+                                        ...editingReward,
+                                        name: { ...editingReward.name, vi: e.target.value },
+                                    })
+                                }
+                            />
+                            {errors.nameVi && <div className="error-text">{errors.nameVi}</div>}
                         </div>
-                        {errors.image && <div className="error-text">{errors.image}</div>}
-
-                    </div>
-                    <div className="inputtext">
-                        <label className="titleinput">Description</label>
-                        <Input.TextArea
-                            value={editingReward?.description}
-                            onChange={(e) => setEditingReward({ ...editingReward, description: e.target.value })}
-                            placeholder="Enter description"
-                            rows={4}
-                        />
-                        {errors.description && <div className="error-text">{errors.description}</div>}
+                        <div className="inputtext">
+                            <label className="titleinput">{t('name')} (English)</label>
+                            <Input
+                                placeholder={t('inputNameEn')}
+                                value={editingReward?.name?.en || ''}
+                                onChange={(e) =>
+                                    setEditingReward({
+                                        ...editingReward,
+                                        name: { ...editingReward.name, en: e.target.value },
+                                    })
+                                }
+                            />
+                            {errors.nameEn && <div className="error-text">{errors.nameEn}</div>}
+                        </div>
+                        <div className="inputtext">
+                            <label className="titleinput">{t('image')}</label>
+                            <div className="image-upload-container">
+                                <Upload
+                                    accept="image/*"
+                                    showUploadList={false}
+                                    beforeUpload={() => false}
+                                    onChange={handleImageChange}
+                                    fileList={fileList}
+                                >
+                                    <Button icon={<UploadOutlined />} className="custom-upload-button">
+                                        {t('inputImage')}
+                                    </Button>
+                                </Upload>
+                                {imageUrl && (
+                                    <div className="image-preview-box">
+                                        <img src={imageUrl} alt="Preview" className="preview-image" />
+                                    </div>
+                                )}
+                            </div>
+                            {errors.image && <div className="error-text">{errors.image}</div>}
+                        </div>
+                        <div className="inputtext">
+                            <label className="titleinput">{t('description')} (Vietnamese)</label>
+                            <Input.TextArea
+                                placeholder={t('inputDescriptonVi')}
+                                value={editingReward?.description?.vi || ''}
+                                onChange={(e) =>
+                                    setEditingReward({
+                                        ...editingReward,
+                                        description: { ...editingReward.description, vi: e.target.value },
+                                    })
+                                }
+                                rows={2}
+                            />
+                            {errors.descriptionVi && <div className="error-text">{errors.descriptionVi}</div>}
+                        </div>
+                        <div className="inputtext">
+                            <label className="titleinput">{t('description')} (English)</label>
+                            <Input.TextArea
+                                placeholder={t('inputDescriptonEn')}
+                                value={editingReward?.description?.en || ''}
+                                onChange={(e) =>
+                                    setEditingReward({
+                                        ...editingReward,
+                                        description: { ...editingReward.description, en: e.target.value },
+                                    })
+                                }
+                                rows={2}
+                            />
+                            {errors.descriptionEn && <div className="error-text">{errors.descriptionEn}</div>}
+                        </div>
                     </div>
                     <div className="button-row">
                         <Button type="primary" onClick={handleSave} block>
-                            Save
+                            {t('save', { ns: 'common' })}
                         </Button>
                         <Button type="primary" onClick={closeModal} block>
-                            Cancel
+                            {t('cancel', { ns: 'common' })}
                         </Button>
                     </div>
                 </Modal>

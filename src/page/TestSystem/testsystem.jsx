@@ -41,78 +41,46 @@ const TestSystem = () => {
   const [lessons, setLessons] = useState([]);
   const [pupils, setPupils] = useState([]);
   const [levels, setLevels] = useState([]);
+  const [levelactive, setLevelActive] = useState([]);
   const [editingTest, setEditingTest] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedLevel, setSelectedLevel] = useState('');
+  const [selectedPoint, setSelectedPoint] = useState('');
+
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    // fetchAllData();
-    setTestSystems(testSystemData);
+    fetchAllData();
+    // setTestSystems(testSystemData);
   }, []);
 
-  // const fetchAllData = async () => {
-  //   try {
-  //     const [tests, lessons, pupils, levels] = await Promise.all([
-  //       api.get('/testSystem'),
-  //       api.get('/lesson'),
-  //       api.get('/pupil'),
-  //       api.get('/level')
-  //     ]);
-
-  //     setTestSystems(tests.data);
-  //     setLessons(lessons.data);
-  //     setPupils(pupils.data);
-  //     setLevels(levels.data);
-  //   } catch (error) {
-  //     toast.error('Error loading data');
-  //   }
-  // };
-
-  const openModal = (test = null) => {
-    setEditingTest(test || {
-      lessonId: '',
-      pupilId: '',
-      levelId: '',
-      point: '',
-      duration: '',
-    });
-    setErrors({});
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setEditingTest(null);
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    if (!editingTest.lessonId) newErrors.lessonId = 'Lesson is required';
-    if (!editingTest.pupilId) newErrors.pupilId = 'Pupil is required';
-    if (!editingTest.levelId) newErrors.levelId = 'Level is required';
-    if (!editingTest.point) newErrors.point = 'Point is required';
-    if (!editingTest.duration) newErrors.duration = 'Duration is required';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSave = async () => {
-    if (!validateForm()) return;
+  const fetchAllData = async () => {
     try {
-      if (editingTest.id) {
-        await api.put(`/testSystem/${editingTest.id}`, editingTest);
-        toast.success('Update successful');
-      } else {
-        await api.post('/testSystem', editingTest);
-        toast.success('Create successful');
-      }
-      fetchAllData();
-      closeModal();
+      const [tests, lessons, pupils, levels, levelactive] = await Promise.all([
+        api.get('/test'),
+        api.get('/lesson'),
+        api.get('/pupil'),
+        api.get('/level'),
+        api.get('/level/enabled')
+      ]);
+      setTestSystems(tests.data);
+      setLessons(lessons.data);
+      setPupils(pupils.data);
+      setLevels(levels.data);
+      setLevelActive(levelactive.data);
+      console.log("adu", levels);
+
     } catch (error) {
-      toast.error('Error saving test');
+      toast.error('Error loading data');
+      console.log("sjaue", error);
     }
   };
 
+  const filteredTests = testSystems.filter(test => {
+    const levelMatch = selectedLevel === '' || String(test.levelId) === selectedLevel;
+    const pointMatch = selectedPoint === '' || test.point === Number(selectedPoint);
+    return levelMatch && pointMatch;
+  });
   return (
     <div className="container">
       <Navbar />
@@ -140,20 +108,28 @@ const TestSystem = () => {
                 <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
                 <select
                   className="filter-dropdown"
+                  value={selectedLevel}
+                  onChange={(e) => setSelectedLevel(e.target.value)}
                 >
                   <option value="">{t('level')}</option>
-                  <option value="1">{t('level')} 1</option>
-                  <option value="2">{t('level')} 2</option>
-                  <option value="3">{t('level')} 3</option>
+                  {levelactive.map((level) => (
+                    <option key={level.id} value={level.id}>
+                      {level.name}
+                    </option>
+                  ))}
                 </select>
+
                 <select
                   className="filter-dropdown"
+                  value={selectedPoint}
+                  onChange={(e) => setSelectedPoint(e.target.value)}
                 >
                   <option value="">{t('point')}</option>
-                  <option value="1">{t('point')} 1</option>
-                  <option value="2">{t('point')} 2</option>
-                  <option value="3">{t('point')} 3</option>
+                  <option value="85">85</option>
+                  <option value="90">90</option>
+                  <option value="100">100</option>
                 </select>
+
                 <button className="export-button">{t('exportFile', { ns: 'common' })}</button>
               </div>
             </div>
@@ -179,10 +155,10 @@ const TestSystem = () => {
             </tr>
           </thead>
           <tbody>
-            {testSystems.map((test) => (
+            {filteredTests.map((test) => (
               <tr key={test.id} className="border-t">
                 <td className="p-3">{lessons.find(l => l.id === test.lessonId)?.name?.[i18n.language]}</td>
-                <td className="p-3">{pupils.find(p => p.id === test.pupilId)?.name}</td>
+                <td className="p-3">{pupils.find(p => p.id === test.pupilId)?.fullName}</td>
                 <td className="p-3">{levels.find(l => l.id === test.levelId)?.name}</td>
                 <td className="p-3">{test.point}</td>
                 <td className="p-3">{test.duration}s</td>
