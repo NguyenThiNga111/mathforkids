@@ -10,11 +10,11 @@ import './lesson.css';
 const Lesson = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingLesson, setEditingLesson] = useState(null);
-    const [currentPage, setCurrentPage] = useState(1);
     const [lessonsData, setLessonsData] = useState([]);
     const [selectedGrade, setSelectedGrade] = useState('');
     const [selectedAvailable, setSelectedAvailable] = useState('');
     const [errors, setErrors] = useState({});
+    const [currentPage, setCurrentPage] = useState(1);
 
     const { t, i18n } = useTranslation(['lesson', 'common']);
     const { Option } = Select;
@@ -53,7 +53,6 @@ const Lesson = () => {
                     ...lesson,
                     grade: Number(lesson.grade),
                 }));
-
             setLessonsData(formattedData);
         } catch (error) {
             toast.error(t('errorFetchData', { ns: 'common' }), {
@@ -62,22 +61,6 @@ const Lesson = () => {
             });
         }
     };
-
-    const validateForm = () => {
-        const newErrors = {};
-        if (!editingLesson?.name?.vi || editingLesson.name.vi.trim() === '') {
-            newErrors.nameVi = t('nameViRequired');
-        }
-        if (!editingLesson?.name?.en || editingLesson.name.en.trim() === '') {
-            newErrors.nameEn = t('nameEnRequired');
-        }
-        if (!editingLesson?.grade || editingLesson.grade === '') {
-            newErrors.grade = t('gradeRequired');
-        }
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
     const handleSave = async () => {
         if (validateForm()) {
             try {
@@ -115,6 +98,23 @@ const Lesson = () => {
             });
         }
     };
+    
+    const validateForm = () => {
+        const newErrors = {};
+        if (!editingLesson?.name?.vi || editingLesson.name.vi.trim() === '') {
+            newErrors.nameVi = t('nameViRequired');
+        }
+        if (!editingLesson?.name?.en || editingLesson.name.en.trim() === '') {
+            newErrors.nameEn = t('nameEnRequired');
+        }
+        if (!editingLesson?.grade || editingLesson.grade === '') {
+            newErrors.grade = t('gradeRequired');
+        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+
 
     const filteredLessons = currentLessons.filter(lesson => {
         const matchGrade = selectedGrade ? lesson.grade === Number(selectedGrade) : true;

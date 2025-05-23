@@ -1,0 +1,20 @@
+{
+    "managementReward": "Quản lý phần thưởng",
+    "name": "Tên phần thưởng",
+    "description": "Mô tả",
+    "image": "Ảnh phần thưởng",
+    "inputNameVi": "Nhập tên phần thưởng Vi",
+    "inputNameEn": "Nhập tên phần thưởng En",
+    "inputDescriptonVi": "Nhập mô tả Vi",
+    "inputDescriptonEn": "Nhập mô tả En",
+    "inputImage": "Chọn ảnh",
+    "nameViRequired": "Cần phải nhập tên phần thưởng (VI)",
+    "nameEnRequired": "Cần phải nhập tên phần thưởng (EN)",
+    "descriptionViRequired": "Cần phải nhập mô tả (VI)",
+    "descriptionEnRequired": "Cần phải nhập mô tả (EN)",
+    "imageRequired": "Cần phải nhập hình ảnh",
+    "alphabet": "Bảng chữ cái",
+    "rewardStatus": "Trạng thái phần thưởng",
+    "addReward": "Thêm phần thưởng",
+    "updateReward": "Cập nhật Phần thưởng"
+}

@@ -18,6 +18,7 @@ import AssessmentPage from './page/Assessment/assessment';
 import NotificationPage from './page/Notification/notification';
 import ExercisePage from './page/Exercise/exercise';
 import ContactPage from './page/Contact/contact';
+import PupilPage from './page/Pupil/pupil';
 
 
 import { darkColors, injectColorsToRoot, lightColors } from './assets/theme/colors';
@@ -47,6 +48,8 @@ function App() {
             <Route path="notification" element={<NotificationPage />} />
             <Route path="exercise" element={<ExercisePage />} />
             <Route path="contact" element={<ContactPage />} />
+            <Route path="pupil" element={<PupilPage />} />
+
 
           </Route>
           <Route path="login" element={<LoginPage />} />

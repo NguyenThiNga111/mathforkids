@@ -1,10 +1,14 @@
 .container {
-  min-height: 100vh;
-  background-color: var(--background-content);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  /* Chiếm toàn bộ chiều cao màn hình */
 }
 
 .container-content {
   padding: 1.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
 .container-title {
@@ -88,7 +92,7 @@
 }
 
 .charts-container {
-  display: grid;
+  display: inline;
   grid-template-columns: 1fr;
   gap: 1.5rem;
 }
@@ -102,6 +106,7 @@
 .chart-card {
   background-color: var(--background-card);
   padding: 1rem;
+  margin-bottom: 30px;
   border-radius: 0.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }

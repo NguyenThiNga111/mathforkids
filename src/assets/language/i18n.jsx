@@ -14,6 +14,14 @@ import viTestSystem from './vi/testsystem.json';
 import enTestSystem from './en/testsystem.json';
 import viSystemTask from './vi/systemtask.json';
 import enSystemTask from './en/systemtask.json';
+import viReward from './vi/reward.json';
+import enReward from './en/reward.json';
+import viAccount from './vi/account.json';
+import enAccount from './en/account.json';
+import viAssessment from './vi/assessment.json';
+import enAssessment from './en/assessment.json';
+import viExercise from './vi/exercise.json';
+import enExercise from './en/exercise.json';
 i18next
     .use(LanguageDetector)
     .use(initReactI18next)
@@ -26,7 +34,10 @@ i18next
                 profile: viProfile,
                 testsystem: viTestSystem,
                 systemtask: viSystemTask,
-
+                reward: viReward,
+                account: viAccount,
+                assessment: viAssessment,
+                exercise: viExercise,
             },
             en: {
                 common: enCommon,
@@ -35,6 +46,11 @@ i18next
                 profile: enProfile,
                 testsystem: enTestSystem,
                 systemtask: enSystemTask,
+                reward: enReward,
+                account: enAccount,
+                assessment: enAssessment,
+                exercise: enExercise,
+
             },
         },
         lng: 'en', // Ngôn ngữ mặc định
@@ -45,7 +61,11 @@ i18next
             'sidebar',
             'profile',
             'testsystem',
-            'systemtask'
+            'systemtask',
+            'reward',
+            'account',
+            'assessment',
+            'exercise'
         ], // Danh sách namespace
         defaultNS: 'common', // Namespace mặc định
         fallbackNS: 'common', // Namespace dự phòng

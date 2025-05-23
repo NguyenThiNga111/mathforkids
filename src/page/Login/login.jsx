@@ -2,26 +2,34 @@ import React, { useState } from 'react'
 import './login.css'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Input, Select, Button } from 'antd';
+import api from '../../assets/api/Api';
 import { toast } from 'react-toastify';
 
 const login = () => {
     const [email, setEmail] = useState('');
     const navigate = useNavigate();
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        if (email === 'admin123@gmail.com') {
-            toast.success('Login successful', {
-                position: 'top-right',
-                autoClose: 2000,
-            });
+
+        try {
+            const response = await api.post(`/auth/sendOTPByEmail/${email}`);
+            toast.success("OTP sent successfully!", { position: 'top-right', autoClose: 2000 });
+
+            // Lưu userId để xác thực OTP sau này
+            const userId = response.data.userId;
+            console.log("dhiesssd", userId);
+
+            localStorage.setItem("userId", userId);
+
+            // Điều hướng sang trang nhập OTP
             navigate('/verify');
-        } else {
-            toast.error('Login Fail', {
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to send OTP', {
                 position: 'top-right',
                 autoClose: 3000,
             });
         }
-    }
+    };
 
     return (
         <div className='login'>

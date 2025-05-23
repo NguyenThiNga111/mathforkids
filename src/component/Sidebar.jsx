@@ -56,6 +56,7 @@ const Dashboard = () => {
                             className="sidebar-icon"
                         /> {t('notification')}
                     </Link>
+                    
                     <Link to="/profile" className={`sidebar-item ${activeItem === '/profile' ? 'active' : ''}`}>
                         <img
                             src={getIcon('/profile', Imgs.profileWhite, Imgs.profileBlue)}
@@ -102,6 +103,13 @@ const Dashboard = () => {
                             alt="rewards"
                             className="sidebar-icon"
                         /> {t('reward')}
+                    </Link>
+                    <Link to="/pupil" className={`sidebar-item ${activeItem === '/pupil' ? 'active' : ''}`}>
+                        <img
+                            src={getIcon('/pupil', Imgs.userwhite, Imgs.userwhite)}
+                            alt="pupil"
+                            className="sidebar-icon"
+                        /> {t('pupil')}
                     </Link>
                     <Link to="/contact" className={`sidebar-item ${activeItem === '/contact' ? 'active' : ''}`}>
                         <img

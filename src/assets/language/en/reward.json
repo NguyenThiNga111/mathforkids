@@ -1,0 +1,20 @@
+{
+    "managementReward": "Management Reward",
+    "name": "Reward name",
+    "description": "Description",
+    "image": "Image",
+    "inputNameVi": "Enter reward name vi",
+    "inputNameEn": "Enter reward name en",
+    "inputDescriptonVi": "Enter description vi",
+    "inputDescriptonEn": "Enter description en",
+    "inputImage": "Choose image",
+    "nameViRequired": "Reward name (VI) is required",
+    "nameEnRequired": "Reward name (EN) is required",
+    "descriptionViRequired": "Description (VI) is required",
+    "descriptionEnRequired": "Description (EN) is required",
+    "imageRequired": "Image is required",
+    "alphabet": "Alphabet",
+    "rewardStatus": "Reward status",
+    "addReward": "Add Reward",
+    "updateReward": "Update Reward"
+}

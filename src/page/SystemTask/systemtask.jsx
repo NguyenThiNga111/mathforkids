@@ -7,81 +7,42 @@ import api from '../../assets/api/Api';
 import Navbar from '../../component/Navbar';
 import './systemtask.css';
 
-const systemtaskData = [
-    {
-        "id": 1,
-        "title": {
-            "vi": "Hoàn thành bài học cộng",
-            "en": "Complete addition lesson"
-        },
-        "description": {
-            "vi": "Hoàn thành tất cả bài tập trong bài học cộng",
-            "en": "Finish all exercises in the addition lesson"
-        },
-        "lessonId": 101,
-        "rewardId": 201,
-        "quantityReward": 10,
-        "isDisabled": false
-    },
-    {
-        "id": 2,
-        "title": {
-            "vi": "Hoàn thành bài học trừ",
-            "en": "Complete subtraction lesson"
-        },
-        "description": {
-            "vi": "Làm xong bài học về phép trừ",
-            "en": "Complete the subtraction lesson"
-        },
-        "lessonId": 102,
-        "rewardId": 202,
-        "quantityReward": 5,
-        "isDisabled": true
-    }
-]
-
 const SystemTask = () => {
     const { t, i18n } = useTranslation(['systemtask', 'common']);
     const { Option } = Select;
-
     const [tasks, setTasks] = useState([]);
-    const [lessons, setLessons] = useState([]);
     const [rewards, setRewards] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
+    const [filterStatus, setFilterStatus] = useState('');
     const [errors, setErrors] = useState({});
 
     useEffect(() => {
-        // fetchTasks();
-        // fetchLessons();
-        // fetchRewards();
-        setTasks(systemtaskData);
+        fetchTasks();
+        fetchRewards();
     }, []);
 
     const fetchTasks = async () => {
         try {
-            const res = await api.get('/systemtask');
+            const res = await api.get('/dailytask');
             setTasks(res.data);
         } catch {
-            toast.error(t('errorFetchData', { ns: 'common' }));
+            toast.error(t('errorFetchData', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 2000,
+            });
         }
     };
 
-    // const fetchLessons = async () => {
-    //     const res = await api.get('/lesson');
-    //     setLessons(res.data);
-    // };
-
-    // const fetchRewards = async () => {
-    //     const res = await api.get('/reward');
-    //     setRewards(res.data);
-    // };
+    const fetchRewards = async () => {
+        const res = await api.get('/reward');
+        setRewards(res.data);
+    };
 
     const openModal = (mode, task = null) => {
         setEditingTask(task || {
             title: { vi: '', en: '' },
             description: { vi: '', en: '' },
-            lessonId: '',
             rewardId: '',
             quantityReward: 1,
             isDisabled: false,
@@ -102,35 +63,63 @@ const SystemTask = () => {
         if (!editingTask.title?.en) err.titleEn = t('titleEnRequired');
         if (!editingTask.description?.vi) err.descriptionVi = t('descriptionViRequired');
         if (!editingTask.description?.en) err.descriptionEn = t('descriptionEnRequired');
-        if (!editingTask.lessonId) err.lessonId = t('lessonRequired');
         if (!editingTask.rewardId) err.rewardId = t('rewardRequired');
         if (!editingTask.quantityReward || editingTask.quantityReward < 1) err.quantityReward = t('quantityRequired');
-
         setErrors(err);
         return Object.keys(err).length === 0;
     };
 
     const handleSave = async () => {
         if (!validateForm()) {
-            toast.error(t('validationFailed', { ns: 'common' }));
+            toast.error(t('validationFailed', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 2000,
+            });
             return;
         }
-
         try {
             const { id, ...payload } = editingTask;
             if (id) {
-                await api.put(`/systemtask/${id}`, payload);
-                toast.success(t('updateSuccess', { ns: 'common' }));
+                await api.put(`/dailytask/${id}`, payload);
+                toast.success(t('updateSuccess', { ns: 'common' }), {
+                    position: 'top-right',
+                    autoClose: 2000,
+                });
             } else {
-                await api.post('/systemtask', payload);
-                toast.success(t('addSuccess', { ns: 'common' }));
+                await api.post('/dailytask', payload);
+                toast.success(t('addSuccess', { ns: 'common' }), {
+                    position: 'top-right',
+                    autoClose: 2000,
+                });
             }
             fetchTasks();
             closeModal();
         } catch {
+            toast.error(t('errorSavingData', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+        }
+    };
+
+    const handleToggleDisabled = async (task) => {
+        try {
+            const updatedTask = { ...task, isDisabled: !task.isDisabled };
+            await api.put(`/dailytask/${task.id}`, updatedTask);
+            fetchTasks();
+            toast.success(t('updateSuccess', { ns: 'common' }));
+        } catch {
             toast.error(t('errorSavingData', { ns: 'common' }));
         }
     };
+    const filteredTasks = tasks.filter(task => {
+        const matchStatus = filterStatus === ''
+            ? true
+            : filterStatus === 'yes'
+                ? task.isDisabled === true
+                : task.isDisabled === false;
+        return matchStatus;
+    });
 
     return (
         <div className="container">
@@ -159,6 +148,7 @@ const SystemTask = () => {
                                 <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
                                 <select
                                     className="filter-dropdown"
+                                     onChange={(e) => setFilterStatus(e.target.value)}
                                 >
                                     <option value="">{t('systemtaskStatus')}</option>
                                     <option value="yes">{t('yes', { ns: 'common' })}</option>
@@ -180,7 +170,6 @@ const SystemTask = () => {
                     <thead>
                         <tr className="bg-gray-200">
                             <th className="p-2">{t('title')}</th>
-                            <th className="p-2">{t('lesson')}</th>
                             <th className="p-2">{t('reward')}</th>
                             <th className="p-2">{t('quantityReward')}</th>
                             <th className="p-2">{t('description')}</th>
@@ -189,10 +178,9 @@ const SystemTask = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {tasks.map(task => (
+                        {filteredTasks.map(task => (
                             <tr key={task.id} className="border-t">
                                 <td className="p-2">{task.title?.[i18n.language]}</td>
-                                <td className="p-2">{lessons.find(l => l.id === task.lessonId)?.name?.[i18n.language]}</td>
                                 <td className="p-2">{rewards.find(r => r.id === task.rewardId)?.name?.[i18n.language]}</td>
                                 <td className="p-2">{task.quantityReward}</td>
                                 <td className="p-2">{task.description?.[i18n.language]}</td>
@@ -207,7 +195,7 @@ const SystemTask = () => {
                                 </td>
                                 <td className="p-3">
                                     <label className="switch">
-                                        <input type="checkbox" checked={task.available} readOnly />
+                                        <input type="checkbox" checked={task.isDisabled} onChange={() => handleToggleDisabled(task)} />
                                         <span className="slider round"></span>
                                     </label>
                                 </td>
@@ -265,22 +253,7 @@ const SystemTask = () => {
                             />
                             {errors.descriptionEn && <div className="error-text">{errors.descriptionEn}</div>}
                         </div>
-                        <div className="inputtext">
-                            <label className="titleinput">{t('lesson')}</label>
-                            <Select
-                                style={{ width: '100%', height: '50px' }}
-                                placeholder={t('selectionlesson')}
-                                value={editingTask?.lessonId || undefined}
-                                onChange={value => setEditingTask({ ...editingTask, lessonId: value })}
-                            >
-                                {lessons.map(l => (
-                                    <Option key={l.id} value={l.id}>
-                                        {l.name?.[i18n.language]}
-                                    </Option>
-                                ))}
-                            </Select>
-                            {errors.lessonId && <div className="error-text">{errors.lessonId}</div>}
-                        </div>
+
                         <div className="inputtext">
                             <label className="titleinput">{t('reward')}</label>
                             <Select

@@ -33,6 +33,7 @@ import filter from '../images/filter.png';
 import exportfile from '../images/exportfile.png';
 import exportfilered from '../images/exportfilered.png';
 import background from '../images/background.png';
+import userwhite from '../images/userwhite.png';
 
 export const Imgs = {
     dashboardWhite,
@@ -70,4 +71,5 @@ export const Imgs = {
     exportfile,
     exportfilered,
     background,
+    userwhite,
 };
