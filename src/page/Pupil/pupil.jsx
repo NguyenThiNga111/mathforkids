@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { Imgs } from '../../assets/theme/images';
 import { useTranslation } from 'react-i18next';
 import api from '../../assets/api/Api';
+import './pupil.css';
 import moment from 'moment';
 
 const PupilManagement = () => {
@@ -14,7 +15,10 @@ const PupilManagement = () => {
     const [pupilsData, setPupilsData] = useState([]);
     const [usersData, setUsersData] = useState([]);
     const [parentMap, setParentMap] = useState({});
+    const [currentPage, setCurrentPage] = useState(1);
+    const [filterStatus, setFilterStatus] = useState('all');
     const [errors, setErrors] = useState({});
+    const pupilsPerPage = 15;
 
     const { t } = useTranslation(['pupil', 'common']);
     const { Option } = Select;
@@ -135,6 +139,21 @@ const PupilManagement = () => {
             });
         }
     };
+    const filteredPupils = pupilsData.filter(pupil => {
+        const matchStatus =
+            filterStatus === 'all'
+                ? true
+                : filterStatus === 'no'
+                    ? pupil.isDisabled === false
+                    : pupil.isDisabled === true;
+
+        return matchStatus;
+    });
+    const indexOfLastPupil = currentPage * pupilsPerPage;
+    const indexOfFirstPupil = indexOfLastPupil - pupilsPerPage;
+    const currentPupils = filteredPupils.slice(indexOfFirstPupil, indexOfLastPupil);
+    const totalPages = Math.ceil(filteredPupils.length / pupilsPerPage);
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
     return (
         <div className="container">
             <Navbar />
@@ -162,8 +181,13 @@ const PupilManagement = () => {
                                 <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
                                 <select
                                     className="filter-dropdown"
+                                    value={filterStatus}
+                                    onChange={(e) => {
+                                        setFilterStatus(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
                                 >
-                                    <option value="">{t('pupilStatus')}</option>
+                                    <option value="all">{t('pupilStatus')}</option>
                                     <option value="yes">{t('yes', { ns: 'common' })}</option>
                                     <option value="no">{t('no', { ns: 'common' })}</option>
                                 </select>
@@ -193,7 +217,7 @@ const PupilManagement = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {pupilsData.map(pupil => (
+                        {currentPupils.map(pupil => (
                             <tr key={pupil.id} className="border-t">
                                 <td className="p-3">{pupil.fullName}</td>
                                 <td className="p-3">{pupil.nickName}</td>
@@ -220,7 +244,33 @@ const PupilManagement = () => {
                         ))}
                     </tbody>
                 </table>
-
+                <div className="flex justify-end items-center mt-4 ml-auto">
+                    <div className="pagination">
+                        <button
+                            className="around"
+                            onClick={() => currentPage > 1 && paginate(currentPage - 1)}
+                            disabled={currentPage === 1}
+                        >
+                            &lt;
+                        </button>
+                        {Array.from({ length: totalPages }, (_, index) => (
+                            <button
+                                key={index + 1}
+                                className={`around ${currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-300'}`}
+                                onClick={() => paginate(index + 1)}
+                            >
+                                {index + 1}
+                            </button>
+                        ))}
+                        <button
+                            className="around"
+                            onClick={() => currentPage < totalPages && paginate(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                        >
+                            &gt;
+                        </button>
+                    </div>
+                </div>
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
@@ -232,7 +282,7 @@ const PupilManagement = () => {
                     footer={null}
                     className="modal-content"
                 >
-                    <div className="form-content-lesson">
+                    <div className="form-content-pupil">
                         <div className="inputtext">
                             <label className="titleinput">{t('fullName')} <span style={{ color: 'red' }}>*</span></label>
                             <Input

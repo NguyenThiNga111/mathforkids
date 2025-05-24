@@ -12,48 +12,22 @@ const Lesson = () => {
     const [editingLesson, setEditingLesson] = useState(null);
     const [lessonsData, setLessonsData] = useState([]);
     const [selectedGrade, setSelectedGrade] = useState('');
-    const [selectedAvailable, setSelectedAvailable] = useState('');
     const [errors, setErrors] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
+    const [filterStatus, setFilterStatus] = useState('all'); // all / enabled / disabled
 
     const { t, i18n } = useTranslation(['lesson', 'common']);
     const { Option } = Select;
-
-    const lessonsPerPage = 6;
-    const indexOfLastLesson = currentPage * lessonsPerPage;
-    const indexOfFirstLesson = indexOfLastLesson - lessonsPerPage;
-    const currentLessons = lessonsData.slice(indexOfFirstLesson, indexOfLastLesson);
-    const totalPages = Math.ceil(lessonsData.length / lessonsPerPage);
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+    const lessonsPerPage = 15;
 
     useEffect(() => {
         fetchLessons();
     }, []);
 
-    const openModal = (mode, lesson = null) => {
-        if (mode === 'add') {
-            setEditingLesson({ name: { en: '', vi: '' }, grade: '' });
-        } else if (mode === 'update') {
-            setEditingLesson(lesson);
-        }
-        setIsModalOpen(true);
-    };
-
-    const closeModal = () => {
-        setIsModalOpen(false);
-        setErrors({});
-    };
-
     const fetchLessons = async () => {
         try {
             const response = await api.get(`/lesson`);
-            const formattedData = response.data
-                .filter(lesson => typeof lesson.name === 'object')
-                .map((lesson) => ({
-                    ...lesson,
-                    grade: Number(lesson.grade),
-                }));
-            setLessonsData(formattedData);
+            setLessonsData(response.data);
         } catch (error) {
             toast.error(t('errorFetchData', { ns: 'common' }), {
                 position: 'top-right',
@@ -98,7 +72,30 @@ const Lesson = () => {
             });
         }
     };
-    
+
+    const handleToggleAvailable = async (lesson) => {
+        try {
+            const updatedLesson = {
+                ...lesson,
+                isDisabled: !lesson.isDisabled,
+            };
+            await api.put(`/lesson/disable/${lesson.id}`, {
+                ...updatedLesson,
+                isDisabled: updatedLesson.isDisabled,
+            });
+            toast.success(t('updateSuccess', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+            fetchLessons();
+        } catch (error) {
+            toast.error(t('validationFailed', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+        }
+    };
+
     const validateForm = () => {
         const newErrors = {};
         if (!editingLesson?.name?.vi || editingLesson.name.vi.trim() === '') {
@@ -115,16 +112,35 @@ const Lesson = () => {
     };
 
 
+    const openModal = (mode, lesson = null) => {
+        if (mode === 'add') {
+            setEditingLesson({ name: { en: '', vi: '' }, grade: '' });
+        } else if (mode === 'update') {
+            setEditingLesson(lesson);
+        }
+        setIsModalOpen(true);
+    };
 
-    const filteredLessons = currentLessons.filter(lesson => {
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setErrors({});
+    };
+    const filteredLessons = lessonsData.filter(lesson => {
         const matchGrade = selectedGrade ? lesson.grade === Number(selectedGrade) : true;
-        const matchAvailable = selectedAvailable === ''
-            ? true
-            : selectedAvailable === 'yes'
-                ? lesson.available === true
-                : lesson.available === false;
-        return matchGrade && matchAvailable;
+        const matchStatus =
+            filterStatus === 'all'
+                ? true
+                : filterStatus === 'no'
+                    ? lesson.isDisabled === false
+                    : lesson.isDisabled === true;
+
+        return matchStatus && matchGrade;
     });
+    const indexOfLastLesson = currentPage * lessonsPerPage;
+    const indexOfFirstLesson = indexOfLastLesson - lessonsPerPage;
+    const currentLessons = filteredLessons.slice(indexOfFirstLesson, indexOfLastLesson);
+    const totalPages = Math.ceil(filteredLessons.length / lessonsPerPage);
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     return (
         <div className="container">
@@ -163,10 +179,13 @@ const Lesson = () => {
                                 </select>
                                 <select
                                     className="filter-dropdown"
-                                    onChange={(e) => setSelectedAvailable(e.target.value)}
-                                    value={selectedAvailable}
+                                    value={filterStatus}
+                                    onChange={(e) => {
+                                        setFilterStatus(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
                                 >
-                                    <option value="">{t('lessonStatus')}</option>
+                                    <option value="all">{t('lessonStatus')}</option>
                                     <option value="yes">{t('yes', { ns: 'common' })}</option>
                                     <option value="no">{t('no', { ns: 'common' })}</option>
                                 </select>
@@ -192,7 +211,7 @@ const Lesson = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredLessons.map((lesson) => (
+                        {currentLessons.map((lesson) => (
                             <tr key={lesson.id} className="border-t">
                                 <td className="p-3">{lesson.name?.[i18n.language]}</td>
                                 <td className="p-3">{lesson.grade}</td>
@@ -207,7 +226,11 @@ const Lesson = () => {
                                 </td>
                                 <td className="p-3">
                                     <label className="switch">
-                                        <input type="checkbox" checked={lesson.available} readOnly />
+                                        <input
+                                            type="checkbox"
+                                            checked={lesson.isDisabled}
+                                            onChange={() => handleToggleAvailable(lesson)}
+                                        />
                                         <span className="slider round"></span>
                                     </label>
                                 </td>
@@ -257,7 +280,7 @@ const Lesson = () => {
                 >
                     <div className="form-content-lesson">
                         <div className="inputtext">
-                            <label className="titleinput">{t('lessonName')} (Vietnamese)</label>
+                            <label className="titleinput">{t('lessonName')} (Vietnamese) <span style={{ color: 'red' }}>*</span></label>
                             <Input
                                 placeholder={t('inputlessonNameVi')}
                                 value={editingLesson?.name?.vi || ''}
@@ -271,7 +294,7 @@ const Lesson = () => {
                             {errors.nameVi && <div className="error-text">{errors.nameVi}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('lessonName')} (English)</label>
+                            <label className="titleinput">{t('lessonName')} (English) <span style={{ color: 'red' }}>*</span></label>
                             <Input
                                 placeholder={t('inputlessonNameEn')}
                                 value={editingLesson?.name?.en || ''}
@@ -285,7 +308,7 @@ const Lesson = () => {
                             {errors.nameEn && <div className="error-text">{errors.nameEn}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('grade')}</label>
+                            <label className="titleinput">{t('grade')} <span style={{ color: 'red' }}>*</span></label>
                             <Select
                                 style={{ width: '100%', height: '50px' }}
                                 placeholder={t('inputgrade')}

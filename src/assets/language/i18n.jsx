@@ -22,6 +22,10 @@ import viAssessment from './vi/assessment.json';
 import enAssessment from './en/assessment.json';
 import viExercise from './vi/exercise.json';
 import enExercise from './en/exercise.json';
+import viPupil from './vi/pupil.json';
+import enPupil from './en/pupil.json';
+import viSetting from './vi/setting.json';
+import enSetting from './en/setting.json';
 i18next
     .use(LanguageDetector)
     .use(initReactI18next)
@@ -38,6 +42,9 @@ i18next
                 account: viAccount,
                 assessment: viAssessment,
                 exercise: viExercise,
+                pupil: viPupil,
+                setting: viSetting,
+
             },
             en: {
                 common: enCommon,
@@ -50,6 +57,8 @@ i18next
                 account: enAccount,
                 assessment: enAssessment,
                 exercise: enExercise,
+                pupil: enPupil,
+                setting: enSetting,
 
             },
         },
@@ -65,7 +74,9 @@ i18next
             'reward',
             'account',
             'assessment',
-            'exercise'
+            'exercise',
+            'pupil',
+            'setting'
         ], // Danh sách namespace
         defaultNS: 'common', // Namespace mặc định
         fallbackNS: 'common', // Namespace dự phòng

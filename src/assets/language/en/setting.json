@@ -1,0 +1,11 @@
+{
+  "managementsetting": "Management Setting",
+  "language": "Language",
+  "sublanguage": "Choose your preferred language",
+  "vietnam": "Vietnamese",
+  "english": "English",
+  "darkmode": "Dark Mode",
+  "subdark": "Enable or disable dark theme",
+  "notification": "Notification",
+  "subnotification": "Turn on or off notifications"
+}

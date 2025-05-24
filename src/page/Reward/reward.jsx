@@ -21,7 +21,7 @@ const Rewards = () => {
     const [filterStatus, setFilterStatus] = useState('all'); // all / enabled / disabled
     const [errors, setErrors] = useState('');
 
-    const rewardPage = 3;
+    const rewardPage = 10;
     const { t, i18n } = useTranslation(['reward', 'common']);
 
     useEffect(() => {
@@ -170,7 +170,7 @@ const Rewards = () => {
         const matchStatus =
             filterStatus === 'all'
                 ? true
-                : filterStatus === 'yes'
+                : filterStatus === 'no'
                     ? reward.isDisabled === false
                     : reward.isDisabled === true;
 
@@ -186,9 +186,9 @@ const Rewards = () => {
             (b.name[i18n.language] || '').localeCompare(a.name[i18n.language] || '')
         );
     }
-    const indexOfLastUser = currentPage * rewardPage;
-    const indexOfFirtsUser = indexOfLastUser - rewardPage;
-    const currentRewards = filteredRewards.slice(indexOfFirtsUser, indexOfLastUser);
+    const indexOfLastReward = currentPage * rewardPage;
+    const indexOfFirtsReward = indexOfLastReward - rewardPage;
+    const currentRewards = filteredRewards.slice(indexOfFirtsReward, indexOfLastReward);
     const totalPage = Math.ceil(filteredRewards.length / rewardPage);
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -337,7 +337,7 @@ const Rewards = () => {
                 >
                     <div className="form-content-lesson">
                         <div className="inputtext">
-                            <label className="titleinput">{t('name')} (Vietnamese)</label>
+                            <label className="titleinput">{t('name')} (Vietnamese) <span style={{ color: 'red' }}>*</span></label>
                             <Input
                                 placeholder={t('inputNameVi')}
                                 value={editingReward?.name?.vi || ''}
@@ -351,7 +351,7 @@ const Rewards = () => {
                             {errors.nameVi && <div className="error-text">{errors.nameVi}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('name')} (English)</label>
+                            <label className="titleinput">{t('name')} (English) <span style={{ color: 'red' }}>*</span></label>
                             <Input
                                 placeholder={t('inputNameEn')}
                                 value={editingReward?.name?.en || ''}
@@ -365,29 +365,27 @@ const Rewards = () => {
                             {errors.nameEn && <div className="error-text">{errors.nameEn}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('image')}</label>
-                            <div className="image-upload-container">
-                                <Upload
-                                    accept="image/*"
-                                    showUploadList={false}
-                                    beforeUpload={() => false}
-                                    onChange={handleImageChange}
-                                    fileList={fileList}
-                                >
-                                    <Button icon={<UploadOutlined />} className="custom-upload-button">
-                                        {t('inputImage')}
-                                    </Button>
-                                </Upload>
-                                {imageUrl && (
-                                    <div className="image-preview-box">
-                                        <img src={imageUrl} alt="Preview" className="preview-image" />
-                                    </div>
-                                )}
-                            </div>
+                            <label className="titleinput">{t('image')} <span style={{ color: 'red' }}>*</span></label>
+                            <Upload
+                                accept="image/*"
+                                showUploadList={false}
+                                beforeUpload={() => false}
+                                onChange={handleImageChange}
+                                fileList={fileList}
+                            >
+                                <Button icon={<UploadOutlined />} className="custom-upload-button">
+                                    {t('inputImage')}
+                                </Button>
+                            </Upload>
+                            {imageUrl && (
+                                <div className="image-preview-box">
+                                    <img src={imageUrl} alt="Preview" className="preview-image" />
+                                </div>
+                            )}
                             {errors.image && <div className="error-text">{errors.image}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('description')} (Vietnamese)</label>
+                            <label className="titleinput">{t('description')} (Vietnamese) <span style={{ color: 'red' }}>*</span></label>
                             <Input.TextArea
                                 placeholder={t('inputDescriptonVi')}
                                 value={editingReward?.description?.vi || ''}
@@ -402,7 +400,7 @@ const Rewards = () => {
                             {errors.descriptionVi && <div className="error-text">{errors.descriptionVi}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('description')} (English)</label>
+                            <label className="titleinput">{t('description')} (English) <span style={{ color: 'red' }}>*</span></label>
                             <Input.TextArea
                                 placeholder={t('inputDescriptonEn')}
                                 value={editingReward?.description?.en || ''}

@@ -1,30 +1,36 @@
-import React, { useState } from 'react'
-import './login.css'
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Input, Select, Button } from 'antd';
-import api from '../../assets/api/Api';
+import React, { useState } from 'react';
+import './login.css';
+import { Input, Button } from 'antd';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import api from '../../assets/api/Api';
 
-const login = () => {
+const Login = () => {
     const [email, setEmail] = useState('');
     const navigate = useNavigate();
+
     const handleLogin = async (e) => {
         e.preventDefault();
 
         try {
             const response = await api.post(`/auth/sendOTPByEmail/${email}`);
-            toast.success("OTP sent successfully!", { position: 'top-right', autoClose: 2000 });
 
-            // Lưu userId để xác thực OTP sau này
-            const userId = response.data.userId;
-            console.log("dhiesssd", userId);
 
-            localStorage.setItem("userId", userId);
+            toast.success('Login successful. OTP sent!', {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+            console.log("OPT nè: ", response.data);
+            const userID = response.data.userId;
+            console.log(userID);
+            localStorage.setItem("userID", userID);
+            navigate(`/verify`);
 
-            // Điều hướng sang trang nhập OTP
-            navigate('/verify');
+
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to send OTP', {
+            console.error(error);
+            toast.error('Login Fail - Server error', {
                 position: 'top-right',
                 autoClose: 3000,
             });
@@ -45,12 +51,15 @@ const login = () => {
                                 className='inputlogin'
                                 type='email'
                                 placeholder='admin@gmail.com'
-                                onChange={(e) => setEmail(e.target.value)} />
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
                         </div>
                         <div>
                             <div className='fotgotlabel'>
                                 <label className='labellogin'></label>
-                                <Link to="/forgotpassword" className='forgotpassword'>ForgotPassword?</Link>
+                                <a href="/forgotpassword" className='forgotpassword'>ForgotPassword?</a>
                             </div>
                         </div>
                         <div className='buttonlogins'>
@@ -65,4 +74,4 @@ const login = () => {
     );
 };
 
-export default login;
+export default Login;
