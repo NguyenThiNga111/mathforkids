@@ -1,0 +1,16 @@
+{
+    "managementLessons": "Quản lý Học sinh",
+    "fullName": "Họ và Tên",
+    "nickName": "Biệt danh",
+    "grade": "Lớp",
+    "gender": "Giới tính",
+    "dateOfBirth": "Ngày sinh",
+    "parentName": "Tên Phụ huynh",
+    "updatePupil": "Cập nhật Học sinh",
+    "addPupil": "Thêm Học sinh",
+    "selectParent": "Chọn Phụ huynh",
+    "pupilStatus": "Trạng thái học sinh",
+    "fullNameRequired": "Họ và Tên là bắt buộc",
+    "gradeRequired": "Lớp là bắt buộc",
+    "parentRequired": "Phụ huynh là bắt buộc"
+}

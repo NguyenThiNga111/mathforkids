@@ -19,6 +19,7 @@ import NotificationPage from './page/Notification/notification';
 import ExercisePage from './page/Exercise/exercise';
 import ContactPage from './page/Contact/contact';
 import PupilPage from './page/Pupil/pupil';
+import Auth from './component/auth';
 
 
 import { darkColors, injectColorsToRoot, lightColors } from './assets/theme/colors';
@@ -33,24 +34,24 @@ function App() {
       <ToastContainer />
       <Router>
         <Routes>
-          <Route path="/" element={<Siderbar />}>
-            <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="account-user" element={<AccountUserPage />} />
-            <Route path="rewards" element={<RewardPage />} />
-            <Route path="lesson" element={<LessonPage />} />
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="setting" element={<SettingPage />} />
-            <Route path="testsystem" element={<TestSystemPage />} />
-            <Route path="systemtask" element={<SystemTaskPage />} />
-            <Route path="questiontest" element={<QuestionTestPage />} />
-            <Route path="assessment" element={<AssessmentPage />} />
-
-            <Route path="notification" element={<NotificationPage />} />
-            <Route path="exercise" element={<ExercisePage />} />
-            <Route path="contact" element={<ContactPage />} />
-            <Route path="pupil" element={<PupilPage />} />
-
-
+          <Route element={<Auth />}>
+            <Route path="/" element={<Siderbar />}>
+              <Route index element={<DashboardPage />} />
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="account-user" element={<AccountUserPage />} />
+              <Route path="rewards" element={<RewardPage />} />
+              <Route path="lesson" element={<LessonPage />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="setting" element={<SettingPage />} />
+              <Route path="testsystem" element={<TestSystemPage />} />
+              <Route path="systemtask" element={<SystemTaskPage />} />
+              <Route path="questiontest" element={<QuestionTestPage />} />
+              <Route path="assessment" element={<AssessmentPage />} />
+              <Route path="notification" element={<NotificationPage />} />
+              <Route path="exercise" element={<ExercisePage />} />
+              <Route path="contact" element={<ContactPage />} />
+              <Route path="pupil" element={<PupilPage />} />
+            </Route>
           </Route>
           <Route path="login" element={<LoginPage />} />
           <Route path="forgotpassword" element={<ForgotPasswordPage />} />

@@ -14,41 +14,16 @@ const AccountUser = () => {
     const [edittingUser, setEditingUser] = useState(null);
     const [selectedUserDetail, setSelectedUserDetail] = useState(null);
     const [selectedRole, setSelectedRole] = useState('');
-    const [selectedAvailable, setSelectedAvailable] = useState('');
-
+    const [filterStatus, setFilterStatus] = useState('all'); // all / enabled / disabled
     const [userData, setUserData] = useState([]);
     const [pupilData, setPupilData] = useState([]);
-
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
+
     const { t, i18n } = useTranslation(['account', 'common']);
-
     const { Option } = Select;
-
-    const userPerPage = 4;
-    const indexOfLastUser = currentPage * userPerPage;
-    const indexOfFirtsUser = indexOfLastUser - userPerPage;
-    const filteredUsers = userData.filter(user => {
-        // Lọc theo role
-        if (selectedRole && user.role !== selectedRole) {
-            return false;
-        }
-        // Lọc theo trạng thái available
-        if (selectedAvailable === "yes" && user.isDisabled !== true) {
-            return false;
-        }
-        if (selectedAvailable === "no" && user.isDisabled !== false) {
-            return false;
-        }
-        return true;
-    });
-
-    const currentUsers = filteredUsers.slice(indexOfFirtsUser, indexOfLastUser);
-    const totalPage = Math.ceil(filteredUsers.length / userPerPage);
-
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
+    const userPerPage = 10;
     useEffect(() => {
         fetchUsers();
     }, []);
@@ -58,7 +33,6 @@ const AccountUser = () => {
         try {
             const response = await api.get('/user'); // Thay bằng URL thật
             const responsepupil = await api.get('/pupil'); // Thay bằng URL thật
-
             setUserData(response.data);
             setPupilData(responsepupil.data);
             console.log("dau", userData);
@@ -71,7 +45,55 @@ const AccountUser = () => {
             setLoading(false);
         }
     };
-
+    const handleSave = async () => {
+        if (validateForm()) {
+            try {
+                if (edittingUser?.id) {
+                    await api.put(`/user/${edittingUser.id}`, edittingUser);
+                    toast.success(t('updateSuccess', { ns: 'common' }), {
+                        position: 'top-right',
+                        autoClose: 2000,
+                    });
+                } else {
+                    const reponse = await api.post(`/user`, edittingUser);
+                    const newuser = reponse.data.id;
+                    await api.put(`/user/${newuser}`, { isVerify: true })
+                    toast.success(t('addSuccess', { ns: 'common' }), {
+                        position: 'top-right',
+                        autoClose: 2000,
+                    });
+                }
+                fetchUsers();
+                closeModal();
+            } catch (error) {
+                toast.error(t('errorSavingData', { ns: 'common' }), {
+                    position: 'top-right',
+                    autoClose: 2000,
+                });
+            }
+        } else {
+            toast.error(t('validationFailed', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+        }
+    }
+    const handleToggleDisabled = async (user) => {
+        try {
+            const updatedUser = { ...user, isDisabled: !user.isDisabled };
+            await api.put(`/user/disable/${user.id}`, updatedUser);
+            toast.success(t('updateSuccess', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+            fetchUsers();
+        } catch {
+            toast.error(t('errorSavingData', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+        }
+    };
     const validateForm = () => {
         const newErrors = {};
         if (!edittingUser?.phoneNumber || !/^\d{10}$/.test(edittingUser.phoneNumber)) {
@@ -112,30 +134,6 @@ const AccountUser = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSave = async () => {
-        if (validateForm()) {
-            if (edittingUser?.id) {
-                await api.put(`/user/${edittingUser.id}`, edittingUser);
-                toast.success(t('updateSuccess', { ns: 'common' }), {
-                    position: 'top-right',
-                    autoClose: 2000,
-                });
-            } else {
-                await api.post(`/user`, edittingUser);
-                toast.success(t('addSuccess', { ns: 'common' }), {
-                    position: 'top-right',
-                    autoClose: 2000,
-                });
-            }
-            fetchUsers();
-            closeModal();
-        } else {
-            toast.error(t('validationFailed', { ns: 'common' }), {
-                position: 'top-right',
-                autoClose: 2000,
-            });
-        }
-    }
 
     const formatFirebaseTimestamp = (timestamp) => {
         if (!timestamp || !timestamp.seconds) return '';
@@ -163,22 +161,7 @@ const AccountUser = () => {
         setIsModalOpen(true);
     };
 
-    const handleToggleDisabled = async (user) => {
-        try {
-            const updatedUser = { ...user, isDisabled: !user.isDisabled };
-            await api.put(`/user/disable/${user.id}`, updatedUser);
-            toast.success(t('updateSuccess', { ns: 'common' }), {
-                position: 'top-right',
-                autoClose: 2000,
-            });
-            fetchUsers();
-        } catch {
-            toast.error(t('errorSavingData', { ns: 'common' }), {
-                position: 'top-right',
-                autoClose: 2000,
-            });
-        }
-    };
+
 
     const openDetailModal = (user) => {
         const userPupils = pupilData.filter((pupil) => pupil.userId === user.id);
@@ -186,6 +169,7 @@ const AccountUser = () => {
         console.log("ied", selectedUserDetail);
         setDetailModalOpen(true);
     };
+
     const closeDetailModal = () => {
         setDetailModalOpen(false);
         setSelectedUserDetail(null);
@@ -195,12 +179,28 @@ const AccountUser = () => {
         setIsModalOpen(false);
         setErrors('');
     };
+
+    const filteredUsers = userData.filter(user => {
+        const matchRole = selectedRole ? user.role === selectedRole : true;
+        const matchStatus =
+            filterStatus === 'all'
+                ? true
+                : filterStatus === 'no'
+                    ? user.isDisabled === false
+                    : user.isDisabled === true;
+        return matchStatus && matchRole;
+    });
+    const indexOfLastUser = currentPage * userPerPage;
+    const indexOfFirtsUser = indexOfLastUser - userPerPage;
+    const currentUsers = filteredUsers.slice(indexOfFirtsUser, indexOfLastUser);
+    const totalPage = Math.ceil(filteredUsers.length / userPerPage);
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
     return (
         <div className="container">
             <Navbar />
             <div className="container-content">
                 <h1 className="container-title">{t('managementAccountUser')}</h1>
-
                 <div className="flex justify-between items-center mb-4">
                     <div className="filter-bar">
                         <div className="filter-container">
@@ -232,11 +232,15 @@ const AccountUser = () => {
                                     <option value="admin">{t('roleAdmin')}</option>
                                 </select>
 
-                                <select className="filter-dropdown"
-                                    value={selectedAvailable}
-                                    onChange={(e) => setSelectedAvailable(e.target.value)}
+                                <select
+                                    className="filter-dropdown"
+                                    value={filterStatus}
+                                    onChange={(e) => {
+                                        setFilterStatus(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
                                 >
-                                    <option value="">{t('accountStatus')}</option>
+                                    <option value="all">{t('accountStatus')}</option>
                                     <option value="yes">{t('yes', { ns: 'common' })}</option>
                                     <option value="no">{t('no', { ns: 'common' })}</option>
                                 </select>
@@ -388,7 +392,7 @@ const AccountUser = () => {
                 >
                     <div className='form-content'>
                         <div className="inputtext">
-                            <label className='titleinput'>{t('numberPhone')} </label>
+                            <label className='titleinput'>{t('numberPhone')} <span style={{ color: 'red' }}>*</span></label>
                             <Input
                                 placeholder={t('inputNumberPhone')}
                                 value={edittingUser?.phoneNumber || ''}
@@ -397,7 +401,7 @@ const AccountUser = () => {
                             {errors.phoneNumber && <div className="error-text">{errors.phoneNumber}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className='titleinput'>{t('fullName')} </label>
+                            <label className='titleinput'>{t('fullName')} <span style={{ color: 'red' }}>*</span></label>
                             <Input
                                 placeholder={t('inputFullName')}
                                 value={edittingUser?.fullName || ''}
@@ -406,7 +410,7 @@ const AccountUser = () => {
                             {errors.fullName && <div className="error-text">{errors.fullName}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className='titleinput'>{t('address')} </label>
+                            <label className='titleinput'>{t('address')} <span style={{ color: 'red' }}>*</span></label>
                             <Input
                                 placeholder={t('inputAddress')}
                                 value={edittingUser?.address || ''}
@@ -415,7 +419,7 @@ const AccountUser = () => {
                             {errors.address && <div className="error-text">{errors.address}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className='titleinput'>{t('email')} </label>
+                            <label className='titleinput'>{t('email')} <span style={{ color: 'red' }}>*</span></label>
                             <Input
                                 type="email"
                                 placeholder={t('inputEmail')}
@@ -425,7 +429,7 @@ const AccountUser = () => {
                             {errors.email && <div className="error-text">{errors.email}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className='titleinput'>{t('dateOfBirth')} </label>
+                            <label className='titleinput'>{t('dateOfBirth')} <span style={{ color: 'red' }}>*</span></label>
                             <DatePicker
                                 placeholder={t('inputDateOfBirth')}
                                 style={{ width: '100%', height: '50px' }}
@@ -436,7 +440,7 @@ const AccountUser = () => {
                             {errors.dateOfBirth && <div className="error-text">{errors.dateOfBirth}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className='titleinput'>{t('gender')}</label>
+                            <label className='titleinput'>{t('gender')} <span style={{ color: 'red' }}>*</span></label>
                             <Select
                                 style={{ width: '100%', height: '50px' }}
                                 placeholder={t('selectionGender')}
@@ -449,7 +453,7 @@ const AccountUser = () => {
                             {errors.gender && <div className="error-text">{errors.gender}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className='titleinput'>{t('role')}</label>
+                            <label className='titleinput'>{t('role')} <span style={{ color: 'red' }}>*</span></label>
                             <Select
                                 style={{ width: '100%', height: '50px' }}
                                 placeholder={t('selectionRole')}

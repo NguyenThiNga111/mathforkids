@@ -32,7 +32,7 @@ const Assessment = () => {
     const [levels, setLevels] = useState([]);
     const [errors, setErrors] = useState('');
 
-    const assessmentPage = 3;
+    const assessmentPage = 10;
     const { t, i18n } = useTranslation(['assessment', 'common']);
 
     useEffect(() => {
@@ -304,27 +304,18 @@ const Assessment = () => {
             setAnswerFileList([]);
         }
     };
-
-    const filteredAssessments = assessments.filter((assessment) => {
+    const filteredAssessments = assessments.filter(assessments => {
+        const matchLevel = filterLevel === 'all' ? true : assessments.levelId === filterLevel;
+        const matchType = filterType === 'all' ? true : assessments.type?.map === filterType;
+        const matchGrade = filterGrade === 'all' ? true : assessments.grade === Number(filterGrade);
         const matchStatus =
             filterStatus === 'all'
                 ? true
-                : filterStatus === 'yes'
-                    ? !assessment.isDisabled
-                    : assessment.isDisabled;
-
-        const matchLevel =
-            filterLevel === 'all' || assessment.levelId === filterLevel;
-
-        const matchGrade =
-            filterGrade === 'all' || assessment.grade.toString() === filterGrade;
-
-        const matchType =
-            filterType === 'all' || assessment.type?.map === filterType;
-
-        return matchStatus && matchLevel && matchGrade && matchType;
+                : filterStatus === 'no'
+                    ? assessments.isDisabled === false
+                    : assessments.isDisabled === true;
+        return matchStatus && matchLevel && matchType && matchGrade;
     });
-
     const indexOfLastAssessment = currentPage * assessmentPage;
     const indexOfFirstAssessment = indexOfLastAssessment - assessmentPage;
     const currentAssessments = filteredAssessments.slice(indexOfFirstAssessment, indexOfLastAssessment);
@@ -379,11 +370,10 @@ const Assessment = () => {
                                         setCurrentPage(1);
                                     }}
                                 >
-                                    <option value="">{t('grade')}</option>
+                                    <option value="all">{t('grade')}</option>
                                     <option value="1">{t('grade')} 1</option>
                                     <option value="2">{t('grade')} 2</option>
                                     <option value="3">{t('grade')} 3</option>
-
                                 </select>
                                 <select
                                     className="filter-dropdown"
@@ -552,7 +542,7 @@ const Assessment = () => {
                 >
                     <div className="form-content-assessment">
                         <div className="inputtext">
-                            <label className="titleinput">{t('question')} (Vietnamese)</label>
+                            <label className="titleinput">{t('question')} (Vietnamese) <span style={{ color: 'red' }}>*</span></label>
                             <Input
                                 placeholder={t('inputQuestionVi')}
                                 value={editingAssessment?.question?.vi || ''}
@@ -566,7 +556,7 @@ const Assessment = () => {
                             {errors.questionVi && <div className="error-text">{errors.questionVi}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('question')} (English)</label>
+                            <label className="titleinput">{t('question')} (English) <span style={{ color: 'red' }}>*</span></label>
                             <Input
                                 placeholder={t('inputQuestionEn')}
                                 value={editingAssessment?.question?.en || ''}
@@ -580,7 +570,7 @@ const Assessment = () => {
                             {errors.questionEn && <div className="error-text">{errors.questionEn}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('level')}</label>
+                            <label className="titleinput">{t('level')} <span style={{ color: 'red' }}>*</span></label>
                             <Select
                                 style={{ width: '100%', height: '50px' }}
                                 placeholder={t('selectLevelId')}
@@ -601,7 +591,7 @@ const Assessment = () => {
                             {errors.levelId && <div className="error-text">{errors.levelId}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('grade')}</label>
+                            <label className="titleinput">{t('grade')} <span style={{ color: 'red' }}>*</span></label>
                             <Select
                                 style={{ width: '100%', height: '50px' }}
                                 placeholder={t('selectGrade')}
@@ -622,7 +612,7 @@ const Assessment = () => {
                             {errors.grade && <div className="error-text">{errors.grade}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('type')}</label>
+                            <label className="titleinput">{t('type')} <span style={{ color: 'red' }}>*</span></label>
                             <Select
                                 style={{ width: '100%', height: '50px' }}
                                 placeholder={t('selectType')}
@@ -687,7 +677,7 @@ const Assessment = () => {
                             </div>
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('option')}</label>
+                            <label className="titleinput">{t('option')} <span style={{ color: 'red' }}>*</span></label>
                             {optionType === 'text' ? (
                                 editingAssessment?.option?.map((opt, index) => (
                                     <Input
@@ -733,7 +723,7 @@ const Assessment = () => {
                             {errors.option && <div className="error-text">{errors.option}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('answer')}</label>
+                            <label className="titleinput">{t('answer')} <span style={{ color: 'red' }}>*</span></label>
                             {optionType === 'text' ? (
                                 <Input
                                     placeholder={t('inputAnswer')}
@@ -771,8 +761,7 @@ const Assessment = () => {
                             {errors.answer && <div className="error-text">{errors.answer}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('image')}</label>
-                            {/* <div className="image-upload-container"> */}
+                            <label className="titleinput">{t('image')} <span style={{ color: 'red' }}>*</span></label>
                             <Upload
                                 accept="image/*"
                                 showUploadList={false}
@@ -789,7 +778,6 @@ const Assessment = () => {
                                     <img src={imageUrl} alt="Preview" className="preview-image" />
                                 </div>
                             )}
-                            {/* </div> */}
                         </div>
                     </div>
                     <div className="button-row">

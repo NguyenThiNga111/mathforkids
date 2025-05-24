@@ -1,26 +1,22 @@
 import React, { useState } from 'react';
 import { Input, Button } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import './Verify.css';
 import { toast } from 'react-toastify';
-import { Imgs } from '../../assets/theme/images';
-import { useTranslation } from 'react-i18next';
-
 import api from '../../assets/api/Api';
 
-import './Verify.css';
-
-const verify = () => {
+const Verify = () => {
     const [otp, setOtp] = useState(new Array(4).fill(''));
-    const navigate = useNavigate(); // Khởi tạo useNavigate
-
+    const navigate = useNavigate();
+    const userID = localStorage.getItem("userID");
+    console.log(userID);
     const handleChange = (e, index) => {
         const value = e.target.value;
-        if (/^[0-9]?$/.test(value)) { // Chỉ cho phép số, tối đa 1 ký tự
+        if (/^[0-9]?$/.test(value)) {
             const newOtp = [...otp];
             newOtp[index] = value;
             setOtp(newOtp);
 
-            // Tự động focus ô tiếp theo nếu đã nhập số
             if (value && index < 3) {
                 document.getElementById(`otp-input-${index + 1}`).focus();
             }
@@ -29,7 +25,7 @@ const verify = () => {
 
     const handlePaste = (e) => {
         const paste = e.clipboardData.getData('text').trim();
-        if (/^\d{4}$/.test(paste)) { // Kiểm tra nếu là 6 số
+        if (/^\d{4}$/.test(paste)) {
             setOtp(paste.split(''));
         }
     };
@@ -39,40 +35,51 @@ const verify = () => {
             document.getElementById(`otp-input-${index - 1}`).focus();
         }
     };
-    const handleBack = () => {
-        navigate(-1); // Sử dụng navigate(-1) để quay lại trang trước
-    };
-    const handleVerify = async () => {
-        const userId = localStorage.getItem("userId");
-        const enteredOtp = otp.join('');
 
-        if (enteredOtp.length < 4) {
-            toast.warning("Please enter the full 4-digit OTP.", { autoClose: 2000 });
+    const handleBack = () => {
+        navigate(-1);
+    };
+
+    const handleVerify = async () => {
+        const enteredOTP = otp.join('');
+        if (enteredOTP.length !== 4) {
+            toast.error('Please enter all 4 digits');
             return;
         }
-        console.log("dhied", userId);
-        try {
-            const response = await api.post(`/auth/verify/${userId}`, { otp: enteredOtp });
-            toast.success("OTP verified successfully!", { autoClose: 2000 });
 
-            // Chuyển về dashboard nếu thành công
-            navigate("/dashboard");
-        } catch (error) {
-            toast.error(error.response?.data?.message || "OTP verification failed", {
-                autoClose: 3000,
+        try {
+            const response = await api.post(`/auth/verify/${userID}`, {
+                otpCode: enteredOTP
             });
+
+            if (response.data.success) {
+                const { role, token } = response.data;
+
+                if (role === 'admin') {
+                    localStorage.setItem('token', token);
+                    toast.success('OTP verified successfully!');
+                    navigate('/');
+                } else if (role === 'user') {
+                    toast.error('Access denied: Only admins can proceed.');
+                    // Stay on the verify page, no navigation
+                } else {
+                    toast.error('Invalid role. Please contact support.');
+                }
+            } else {
+                toast.error('Invalid OTP. Please try again.');
+            }
+        } catch (error) {
+            toast.error('Verification failed. Please try again.');
         }
     };
 
     return (
         <div className="login">
             <div className="wave"></div>
-            <div className="back-button" onClick={handleBack}>
-                ←
-            </div>
+            {/* <div className="back-button" onClick={handleBack}>←</div> */}
             <div className="containtverify">
                 <h2 className="titlelogin">Verification OTP</h2>
-                <p className="subtitle">Please enter the 6-digit code sent to your email</p>
+                <p className="subtitle">Please enter the 4-digit code sent to your email</p>
 
                 <div className="contentverify">
                     <div className="otp-container">
@@ -92,7 +99,6 @@ const verify = () => {
                     </div>
                     <div className='buttonverifys'>
                         <Button className="buttonverify" onClick={handleVerify}>Verify</Button>
-
                     </div>
                 </div>
             </div>
@@ -100,4 +106,4 @@ const verify = () => {
     );
 };
 
-export default verify;
+export default Verify;

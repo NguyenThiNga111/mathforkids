@@ -1,0 +1,17 @@
+{
+    "managementLessons": "Pupil Management",
+    "fullName": "Full Name",
+    "nickName": "Nickname",
+    "grade": "Grade",
+    "gender": "Gender",
+    "dateOfBirth": "Date of Birth",
+    "parentName": "Parent Name",
+    "updatePupil": "Update Pupil",
+    "addPupil": "Add Pupil",
+    "selectParent": "Select Parent",
+    "pupilStatus": "Pupil status",
+    "fullNameRequired": "Full Name is required",
+    "gradeRequired": "Grade is required",
+    "parentRequired": "Parent is required"
+ 
+}

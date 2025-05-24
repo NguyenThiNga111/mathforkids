@@ -69,14 +69,6 @@ td {
     height: 0;
 }
 
-/* input:checked+.slider {
-    background-color: #3b82f6;
-}
-
-input:checked+.slider:before {
-    transform: translateX(20px);
-} */
-
 .slider.round {
     border-radius: 20px;
 }

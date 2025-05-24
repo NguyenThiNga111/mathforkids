@@ -56,7 +56,7 @@ const Dashboard = () => {
                             className="sidebar-icon"
                         /> {t('notification')}
                     </Link>
-                    
+
                     <Link to="/profile" className={`sidebar-item ${activeItem === '/profile' ? 'active' : ''}`}>
                         <img
                             src={getIcon('/profile', Imgs.profileWhite, Imgs.profileBlue)}

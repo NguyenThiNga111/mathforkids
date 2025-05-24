@@ -18,7 +18,7 @@
     "selectType": "Chọn loại",
     "textOption": "Lựa chọn văn bản",
     "imageOption": "Lựa chọn hình ảnh",
-    "uploadOption": "Tải lên lựa chọn {number}",
+    "uploadOption": "Tải lên lựa chọn",
     "uploadAnswer": "Tải lên đáp án",
     "inputImage": "Tải lên hình ảnh",
     "levelIdRequired": "Cấp độ là bắt buộc",

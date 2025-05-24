@@ -26,7 +26,9 @@ const exercise = () => {
     const [lessons, setLessons] = useState([]); // New state for lessons
     const [errors, setErrors] = useState('');
 
-    const exercisePage = 3;
+    const exercisePage = 10;
+    const { Option } = Select;
+
     const { t, i18n } = useTranslation(['exercise', 'common']);
 
     useEffect(() => {
@@ -309,27 +311,21 @@ const exercise = () => {
         }
     };
 
-    const filteredExercises = exercises.filter((exercise) => {
+    const filteredExercises = exercises.filter(exercise => {
+        const matchLevel = filterLevel === 'all' ? true : exercise.levelId === filterLevel;
+        const matchLesson = filterLesson === 'all' ? true : exercise.lessonId === filterLesson;
         const matchStatus =
             filterStatus === 'all'
                 ? true
-                : filterStatus === 'yes'
-                    ? !exercise.isDisabled
-                    : exercise.isDisabled;
-
-        const matchLevel =
-            filterLevel === 'all' || exercise.levelId === filterLevel;
-
-        const matchLesson =
-            filterLesson === 'all' || exercise.lessonId === filterLesson;
-
+                : filterStatus === 'no'
+                    ? exercise.isDisabled === false
+                    : exercise.isDisabled === true;
         return matchStatus && matchLevel && matchLesson;
     });
-
     const indexOfLastExercise = currentPage * exercisePage;
     const indexOfFirstExercise = indexOfLastExercise - exercisePage;
     const currentExercises = filteredExercises.slice(indexOfFirstExercise, indexOfLastExercise);
-    const totalPage = Math.ceil(filteredExercises.length / exercisePage);
+    const totalPages = Math.ceil(filteredExercises.length / exercisePage);
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     return (
@@ -414,9 +410,9 @@ const exercise = () => {
                     <thead>
                         <tr className="bg-gray-200 text-left">
                             <th className="p-3">{t('question')}</th>
+                            <th className="p-3">{t('image')}</th>
                             <th className="p-3">{t('option')}</th>
                             <th className="p-3">{t('answer')}</th>
-                            <th className="p-3">{t('image')}</th>
                             <th className="p-3">{t('level')}</th>
                             <th className="p-3">{t('lesson')}</th>
                             <th className="p-3">{t('action', { ns: 'common' })}</th>
@@ -427,6 +423,17 @@ const exercise = () => {
                         {currentExercises.map((exercise) => (
                             <tr key={exercise.id} className="border-t">
                                 <td className="p-3">{exercise.question?.[i18n.language]}</td>
+                                <td className="p-3">
+                                    {exercise.image && (
+                                        <img
+                                            src={exercise.image}
+                                            alt={exercise.question?.[i18n.language]}
+                                            width="200"
+                                            height="100"
+                                            style={{ objectFit: 'cover', borderRadius: '8px' }}
+                                        />
+                                    )}
+                                </td>
                                 <td className="p-3">
                                     {exercise.option.map((item, index) => (
                                         item && item.startsWith("http") ? (
@@ -460,17 +467,7 @@ const exercise = () => {
                                         </span>
                                     )}
                                 </td>
-                                <td className="p-3">
-                                    {exercise.image && (
-                                        <img
-                                            src={exercise.image}
-                                            alt={exercise.question?.[i18n.language]}
-                                            width="200"
-                                            height="100"
-                                            style={{ objectFit: 'cover', borderRadius: '8px' }}
-                                        />
-                                    )}
-                                </td>
+
                                 <td className="p-3">{getLevelName(exercise.levelId)}</td>
                                 <td className="p-3">{getLessonName(exercise.lessonId)}</td>
                                 <td className="p-3">
@@ -497,18 +494,19 @@ const exercise = () => {
                     </tbody>
                 </table>
 
-                <div className="flex justify-end items-center mt-4 ml-auto paginations">
+                <div className="flex justify-end items-center mt-4 ml-auto">
                     <div className="pagination">
                         <button
                             className="around"
                             onClick={() => currentPage > 1 && paginate(currentPage - 1)}
                             disabled={currentPage === 1}
                         >
+                            &lt;
                         </button>
-                        {Array.from({ length: totalPage }, (_, index) => (
+                        {Array.from({ length: totalPages }, (_, index) => (
                             <button
                                 key={index + 1}
-                                className={`around ${currentPage === index + 1 ? 'active' : ''}`}
+                                className={`around ${currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-300'}`}
                                 onClick={() => paginate(index + 1)}
                             >
                                 {index + 1}
@@ -516,9 +514,10 @@ const exercise = () => {
                         ))}
                         <button
                             className="around"
-                            onClick={() => currentPage < totalPage && paginate(currentPage + 1)}
-                            disabled={currentPage === totalPage}
+                            onClick={() => currentPage < totalPages && paginate(currentPage + 1)}
+                            disabled={currentPage === totalPages}
                         >
+                            &gt;
                         </button>
                     </div>
                 </div>
@@ -535,7 +534,7 @@ const exercise = () => {
                 >
                     <div className="form-content-assessment">
                         <div className="inputtext">
-                            <label className="titleinput">{t('question')} (Vietnamese)</label>
+                            <label className="titleinput">{t('question')} (Vietnamese) <span style={{ color: 'red' }}>*</span></label>
                             <Input
                                 placeholder={t('inputQuestionVi')}
                                 value={editingExercise?.question?.vi || ''}
@@ -549,7 +548,7 @@ const exercise = () => {
                             {errors.questionVi && <div className="error-text">{errors.questionVi}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('question')} (English)</label>
+                            <label className="titleinput">{t('question')} (English) <span style={{ color: 'red' }}>*</span></label>
                             <Input
                                 placeholder={t('inputQuestionEn')}
                                 value={editingExercise?.question?.en || ''}
@@ -563,7 +562,7 @@ const exercise = () => {
                             {errors.questionEn && <div className="error-text">{errors.questionEn}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('level')}</label>
+                            <label className="titleinput">{t('level')} <span style={{ color: 'red' }}>*</span></label>
                             <Select
                                 style={{ width: '100%', height: '50px' }}
                                 placeholder={t('selectLevelId')}
@@ -584,7 +583,7 @@ const exercise = () => {
                             {errors.levelId && <div className="error-text">{errors.levelId}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('lesson')}</label>
+                            <label className="titleinput">{t('lesson')} <span style={{ color: 'red' }}>*</span></label>
                             <Select
                                 style={{ width: '100%', height: '50px' }}
                                 placeholder={t('selectLesson')}
@@ -643,7 +642,7 @@ const exercise = () => {
                             </div>
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('option')}</label>
+                            <label className="titleinput">{t('option')} <span style={{ color: 'red' }}>*</span></label>
                             {optionType === 'text' ? (
                                 editingExercise?.option?.map((opt, index) => (
                                     <Input
@@ -689,7 +688,7 @@ const exercise = () => {
                             {errors.option && <div className="error-text">{errors.option}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('answer')}</label>
+                            <label className="titleinput">{t('answer')} <span style={{ color: 'red' }}>*</span></label>
                             {optionType === 'text' ? (
                                 <Input
                                     placeholder={t('inputAnswer')}
@@ -727,7 +726,7 @@ const exercise = () => {
                             {errors.answer && <div className="error-text">{errors.answer}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('image')}</label>
+                            <label className="titleinput">{t('image')} <span style={{ color: 'red' }}>*</span></label>
                             <Upload
                                 accept="image/*"
                                 showUploadList={false}

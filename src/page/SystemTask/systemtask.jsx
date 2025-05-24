@@ -12,10 +12,12 @@ const SystemTask = () => {
     const { Option } = Select;
     const [tasks, setTasks] = useState([]);
     const [rewards, setRewards] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
     const [filterStatus, setFilterStatus] = useState('');
     const [errors, setErrors] = useState({});
+    const taskPage = 10;
 
     useEffect(() => {
         fetchTasks();
@@ -37,36 +39,6 @@ const SystemTask = () => {
     const fetchRewards = async () => {
         const res = await api.get('/reward');
         setRewards(res.data);
-    };
-
-    const openModal = (mode, task = null) => {
-        setEditingTask(task || {
-            title: { vi: '', en: '' },
-            description: { vi: '', en: '' },
-            rewardId: '',
-            quantityReward: 1,
-            isDisabled: false,
-        });
-        setErrors({});
-        setIsModalOpen(true);
-    };
-
-    const closeModal = () => {
-        setIsModalOpen(false);
-        setEditingTask(null);
-        setErrors({});
-    };
-
-    const validateForm = () => {
-        const err = {};
-        if (!editingTask.title?.vi) err.titleVi = t('titleViRequired');
-        if (!editingTask.title?.en) err.titleEn = t('titleEnRequired');
-        if (!editingTask.description?.vi) err.descriptionVi = t('descriptionViRequired');
-        if (!editingTask.description?.en) err.descriptionEn = t('descriptionEnRequired');
-        if (!editingTask.rewardId) err.rewardId = t('rewardRequired');
-        if (!editingTask.quantityReward || editingTask.quantityReward < 1) err.quantityReward = t('quantityRequired');
-        setErrors(err);
-        return Object.keys(err).length === 0;
     };
 
     const handleSave = async () => {
@@ -112,14 +84,50 @@ const SystemTask = () => {
             toast.error(t('errorSavingData', { ns: 'common' }));
         }
     };
+
+    const validateForm = () => {
+        const err = {};
+        if (!editingTask.title?.vi) err.titleVi = t('titleViRequired');
+        if (!editingTask.title?.en) err.titleEn = t('titleEnRequired');
+        if (!editingTask.description?.vi) err.descriptionVi = t('descriptionViRequired');
+        if (!editingTask.description?.en) err.descriptionEn = t('descriptionEnRequired');
+        if (!editingTask.rewardId) err.rewardId = t('rewardRequired');
+        if (!editingTask.quantityReward || editingTask.quantityReward < 1) err.quantityReward = t('quantityRequired');
+        setErrors(err);
+        return Object.keys(err).length === 0;
+    };
+
+    const openModal = (mode, task = null) => {
+        setEditingTask(task || {
+            title: { vi: '', en: '' },
+            description: { vi: '', en: '' },
+            rewardId: '',
+            quantityReward: 1,
+            isDisabled: false,
+        });
+        setErrors({});
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setEditingTask(null);
+        setErrors({});
+    };
+
     const filteredTasks = tasks.filter(task => {
         const matchStatus = filterStatus === ''
             ? true
-            : filterStatus === 'yes'
+            : filterStatus === 'no'
                 ? task.isDisabled === true
                 : task.isDisabled === false;
         return matchStatus;
     });
+    const indexOfLastTask = currentPage * taskPage;
+    const indexOfFirtsTask = indexOfLastTask - taskPage;
+    const currentTask = filteredTasks.slice(indexOfFirtsTask, indexOfLastTask);
+    const totalPage = Math.ceil(filteredTasks.length / taskPage);
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     return (
         <div className="container">
@@ -148,7 +156,7 @@ const SystemTask = () => {
                                 <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
                                 <select
                                     className="filter-dropdown"
-                                     onChange={(e) => setFilterStatus(e.target.value)}
+                                    onChange={(e) => setFilterStatus(e.target.value)}
                                 >
                                     <option value="">{t('systemtaskStatus')}</option>
                                     <option value="yes">{t('yes', { ns: 'common' })}</option>
@@ -178,7 +186,7 @@ const SystemTask = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredTasks.map(task => (
+                        {currentTask.map(task => (
                             <tr key={task.id} className="border-t">
                                 <td className="p-2">{task.title?.[i18n.language]}</td>
                                 <td className="p-2">{rewards.find(r => r.id === task.rewardId)?.name?.[i18n.language]}</td>
@@ -203,7 +211,33 @@ const SystemTask = () => {
                         ))}
                     </tbody>
                 </table>
-
+                <div className="flex justify-end items-center mt-4 ml-auto paginations">
+                    <div className="pagination">
+                        <button
+                            className="around"
+                            onClick={() => currentPage > 1 && paginate(currentPage - 1)}
+                            disabled={currentPage === 1}
+                        >
+                            &lt;
+                        </button>
+                        {Array.from({ length: totalPage }, (_, index) => (
+                            <button
+                                key={index + 1}
+                                className={`around ${currentPage === index + 1 ? 'active' : ''}`}
+                                onClick={() => paginate(index + 1)}
+                            >
+                                {index + 1}
+                            </button>
+                        ))}
+                        <button
+                            className="around"
+                            onClick={() => currentPage < totalPage && paginate(currentPage + 1)}
+                            disabled={currentPage === totalPage}
+                        >
+                            &gt;
+                        </button>
+                    </div>
+                </div>
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
@@ -215,9 +249,9 @@ const SystemTask = () => {
                     footer={null}
                     className="modal-content"
                 >
-                    <div className="form-content-lesson">
+                    <div className="form-content-task">
                         <div className="inputtext">
-                            <label className="titleinput">{t('title')} (Vietnamese)</label>
+                            <label className="titleinput">{t('title')} (Vietnamese) <span style={{ color: 'red' }}>*</span></label>
                             <Input
                                 placeholder={t('titleNameVi')}
                                 value={editingTask?.title?.vi || ''}
@@ -226,7 +260,7 @@ const SystemTask = () => {
                             {errors.titleVi && <div className="error-text">{errors.titleVi}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('title')} (English)</label>
+                            <label className="titleinput">{t('title')} (English) <span style={{ color: 'red' }}>*</span></label>
                             <Input
                                 placeholder={t('titleNameEn')}
                                 value={editingTask?.title?.en || ''}
@@ -236,7 +270,7 @@ const SystemTask = () => {
                         </div>
 
                         <div className="inputtext">
-                            <label className="titleinput">{t('description')} (Vietnamese)</label>
+                            <label className="titleinput">{t('description')} (Vietnamese) <span style={{ color: 'red' }}>*</span></label>
                             <Input
                                 placeholder={t('descriptionVi')}
                                 value={editingTask?.description?.vi || ''}
@@ -245,7 +279,7 @@ const SystemTask = () => {
                             {errors.descriptionVi && <div className="error-text">{errors.descriptionVi}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('description')} (English)</label>
+                            <label className="titleinput">{t('description')} (English) <span style={{ color: 'red' }}>*</span></label>
                             <Input
                                 placeholder={t('descriptionEn')}
                                 value={editingTask?.description?.en || ''}
@@ -255,7 +289,7 @@ const SystemTask = () => {
                         </div>
 
                         <div className="inputtext">
-                            <label className="titleinput">{t('reward')}</label>
+                            <label className="titleinput">{t('reward')} <span style={{ color: 'red' }}>*</span></label>
                             <Select
                                 style={{ width: '100%', height: '50px' }}
                                 placeholder={t('selectionreward')}
@@ -271,7 +305,7 @@ const SystemTask = () => {
                             {errors.rewardId && <div className="error-text">{errors.rewardId}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('quantityReward')}</label>
+                            <label className="titleinput">{t('quantityReward')} <span style={{ color: 'red' }}>*</span></label>
                             <Input
                                 placeholder={t('inputquantityReward')}
                                 value={editingTask?.quantityReward || ''}
