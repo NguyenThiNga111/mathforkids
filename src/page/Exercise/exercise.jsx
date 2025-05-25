@@ -139,6 +139,7 @@ const exercise = () => {
                 });
             }
         } else {
+            console.log("abc", errors);
             toast.error(t('validationFailed', { ns: 'common' }), {
                 position: 'top-right',
                 autoClose: 2000,
@@ -469,7 +470,7 @@ const exercise = () => {
                                 </td>
 
                                 <td className="p-3">{getLevelName(exercise.levelId)}</td>
-                                <td className="p-3">{getLessonName(exercise.lessonId)}</td>
+                                <td className="p-3 lesson-column">{getLessonName(exercise.lessonId)}</td>
                                 <td className="p-3">
                                     <button
                                         className="text-white px-3 py-1 buttonupdate"
@@ -726,7 +727,7 @@ const exercise = () => {
                             {errors.answer && <div className="error-text">{errors.answer}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('image')} <span style={{ color: 'red' }}>*</span></label>
+                            <label className="titleinput">{t('image')} </label>
                             <Upload
                                 accept="image/*"
                                 showUploadList={false}

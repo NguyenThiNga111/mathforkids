@@ -41,14 +41,6 @@ const Dashboard = () => {
                             className="sidebar-icon"
                         /> {t('testSystem')}
                     </Link>
-                    <Link to="/systemtask" className={`sidebar-item ${activeItem === '/systemtask' ? 'active' : ''}`}>
-                        <img
-                            src={getIcon('/systemtask', Imgs.systemTaskWhite, Imgs.systemTaskBlue)}
-                            alt="systemtask"
-                            className="sidebar-icon"
-                        /> {t('systemTasks')}
-                    </Link>
-
                     <Link to="/notification" className={`sidebar-item ${activeItem === '/notification' ? 'active' : ''}`}>
                         <img
                             src={getIcon('/notification', Imgs.notificationWhite, Imgs.notificationBlue)}
@@ -56,7 +48,20 @@ const Dashboard = () => {
                             className="sidebar-icon"
                         /> {t('notification')}
                     </Link>
-
+                    <Link to="/completetask" className={`sidebar-item ${activeItem === '/completetask' ? 'active' : ''}`}>
+                        <img
+                            src={getIcon('/completetask', Imgs.completetaskwhite, Imgs.completetaskblue)}
+                            alt="completetask"
+                            className="sidebar-icon"
+                        /> {t('completetask')}
+                    </Link>
+                     <Link to="/completelesson" className={`sidebar-item ${activeItem === '/completelesson' ? 'active' : ''}`}>
+                        <img
+                            src={getIcon('/completelesson', Imgs.completetaskwhite, Imgs.completetaskblue)}
+                            alt="completelesson"
+                            className="sidebar-icon"
+                        /> {t('completelesson')}
+                    </Link>
                     <Link to="/profile" className={`sidebar-item ${activeItem === '/profile' ? 'active' : ''}`}>
                         <img
                             src={getIcon('/profile', Imgs.profileWhite, Imgs.profileBlue)}
@@ -96,6 +101,13 @@ const Dashboard = () => {
                             className="sidebar-icon"
                         />{t('questionTest')}
                     </Link>
+                    <Link to="/systemtask" className={`sidebar-item ${activeItem === '/systemtask' ? 'active' : ''}`}>
+                        <img
+                            src={getIcon('/systemtask', Imgs.systemTaskWhite, Imgs.systemTaskBlue)}
+                            alt="systemtask"
+                            className="sidebar-icon"
+                        /> {t('systemTasks')}
+                    </Link>
 
                     <Link to="/rewards" className={`sidebar-item ${activeItem === '/rewards' ? 'active' : ''}`}>
                         <img
@@ -106,17 +118,10 @@ const Dashboard = () => {
                     </Link>
                     <Link to="/pupil" className={`sidebar-item ${activeItem === '/pupil' ? 'active' : ''}`}>
                         <img
-                            src={getIcon('/pupil', Imgs.userwhite, Imgs.userwhite)}
+                            src={getIcon('/pupil', Imgs.pupilwhite, Imgs.pupilblue)}
                             alt="pupil"
                             className="sidebar-icon"
                         /> {t('pupil')}
-                    </Link>
-                    <Link to="/contact" className={`sidebar-item ${activeItem === '/contact' ? 'active' : ''}`}>
-                        <img
-                            src={getIcon('/contact', Imgs.contactWhite, Imgs.contactBlue)}
-                            alt="contact"
-                            className="sidebar-icon"
-                        /> {t('contact')}
                     </Link>
 
                     <div className="sidebar-divider"></div>
@@ -130,7 +135,7 @@ const Dashboard = () => {
                     </Link>
                     <Link to="/logout" className={`sidebar-item ${activeItem === '/logout' ? 'active' : ''}`}>
                         <img
-                            src={getIcon('/logout', Imgs.logoutWhite, Imgs.logoutWhite)}
+                            src={getIcon('/logout', Imgs.logoutWhite, Imgs.logoutBlue)}
                             alt="Logout"
                             className="sidebar-icon"
                         /> {t('logout')}

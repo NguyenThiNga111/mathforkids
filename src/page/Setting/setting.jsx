@@ -10,10 +10,54 @@ import './setting.css';
 
 const setting = () => {
     const [language, setLanguage] = useState('Vietnamese');
-    const [darkMode, setDarkMode] = useState(false);
     const [notification, setNotification] = useState(false);
     const { t, i18n } = useTranslation(['setting', 'common']);
+    const userID = localStorage.getItem('userID');
+    const [darkMode, setDarkMode] = useState(() => {
+        const savedMode = localStorage.getItem('darkMode');
+        return savedMode ? JSON.parse(savedMode) : false;
+    });
+    useEffect(() => {
+        injectColorsToRoot(darkMode ? darkColors : lightColors);
 
+        const fetchUserSettings = async () => {
+            try {
+                const response = await api.get(`/user/${userID}`);
+                const user = response.data;
+
+                // Đặt theme từ API
+                const isDark = user?.mode === 'dark';
+                setDarkMode(isDark);
+                localStorage.setItem('darkMode', JSON.stringify(isDark));
+                injectColorsToRoot(isDark ? darkColors : lightColors);
+            } catch (error) {
+                toast.error(t('fetchFailed', { ns: 'common' }), {
+                    position: 'top-right',
+                    autoClose: 2000,
+                });
+            }
+        };
+        fetchUserSettings();
+    }, [userID, t]);
+    
+    const handleDarkModeToggle = async () => {
+        const newDarkMode = !darkMode;
+        setDarkMode(newDarkMode);
+        localStorage.setItem('darkMode', newDarkMode);
+        injectColorsToRoot(newDarkMode ? darkColors : lightColors);
+
+        // Gửi lên server nếu cần
+        try {
+            await api.put(`/user/${userID}`, {
+                mode: newDarkMode ? 'dark' : 'light'
+            });
+        } catch (error) {
+            toast.error(t('updateFailed', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+        }
+    };
     const handleRestoreDefaults = () => {
         setLanguage('Vietnamese');
         setDarkMode(false);
@@ -48,16 +92,8 @@ const setting = () => {
                                 <input
                                     type="checkbox"
                                     checked={darkMode}
-                                    onChange={() => {
-                                        const newDarkMode = !darkMode;
-                                        setDarkMode(newDarkMode);
-                                        localStorage.setItem('darkMode', newDarkMode);
-                                        if (newDarkMode) {
-                                            injectColorsToRoot(darkColors);
-                                        } else {
-                                            injectColorsToRoot(lightColors);
-                                        }
-                                    }} />
+                                    onChange={handleDarkModeToggle}
+                                />
                                 <span className="slider" />
                             </label>
                         </div>

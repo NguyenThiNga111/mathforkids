@@ -13,5 +13,6 @@
     "contact": "Contact",
     "setting": "Setting",
     "logout": "Logout",
-    "pupil":"Pupil"
+    "pupil": "Pupil",
+    "completetask": "Complete task"
 }

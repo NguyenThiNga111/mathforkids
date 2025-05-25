@@ -292,7 +292,7 @@ const AccountUser = () => {
                                         <button
                                             className="text-white px-3 py-1 buttonupdate"
                                             onClick={() => openDetailModal(user)}>
-                                            <img className='iconupdate' src={Imgs.userwhite} />
+                                            <img className='iconupdate' src={Imgs.pupilwhite} />
                                             {t('pupil')}
                                         </button>
                                     </div>
@@ -364,7 +364,7 @@ const AccountUser = () => {
                                 {selectedUserDetail.children.map((child, index) => (
                                     <tr key={index} className="border-t">
                                         <td className="p-3">
-                                            <img src={child.image} alt={child.nickName} width="50" height="50" style={{ objectFit: 'cover', borderRadius: '50px', border: '2px solid #ccc' }} />
+                                            <img src={child.image || 'https://i.pravatar.cc/100'} alt={child.nickName} width="50" height="50" style={{ objectFit: 'cover', borderRadius: '50px', border: '2px solid #ccc' }} />
                                         </td>
                                         <td className="p-2">{child.nickName}</td>
                                         <td className="p-2">{formatFirebaseTimestamp(child.dateOfBirth)}</td>
@@ -374,7 +374,7 @@ const AccountUser = () => {
                             </tbody>
                         </table>
                     ) : (
-                        <p>This parent has no children registered.</p>
+                        <p>Parents have not created a profile for the pupil</p> 
                     )}
                 </Modal>
 

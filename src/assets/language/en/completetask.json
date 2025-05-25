@@ -1,0 +1,16 @@
+{
+    "managementCompleteTasks": "Manager Complete Task",
+    "completed": "Completed",
+    "notCompleted": "Not Completed",
+    "addCompleteTask": "Add Complete Task",
+    "updateCompleteTask": "Update Complete Task",
+    "selectPupil": "Select Pupil",
+    "selectTask": "Select Task",
+    "selectLesson": "Select Lesson",
+    "isCompleted": "Is Completed",
+    "pupil":"Pupil",
+    "task":"Task",
+    "lesson":"Lesson",
+    "status":"Status",
+    "taskStatus":"Task status"
+}
