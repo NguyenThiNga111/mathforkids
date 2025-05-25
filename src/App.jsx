@@ -1,4 +1,4 @@
-import React from 'react';
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Siderbar from './component/Sidebar';
 import DashboardPage from './page/Dashboard/dashboard';
@@ -19,6 +19,10 @@ import NotificationPage from './page/Notification/notification';
 import ExercisePage from './page/Exercise/exercise';
 import ContactPage from './page/Contact/contact';
 import PupilPage from './page/Pupil/pupil';
+import CompleteTaskPage from './page/CompleteTask/completetask';
+import CompleteLessonPage from './page/CompleteLesson/completelesson';
+import Logout from './page/Logout/logout';
+
 import Auth from './component/auth';
 
 
@@ -29,6 +33,13 @@ import 'react-toastify/dist/ReactToastify.css';
 import './assets/language/i18n';
 
 function App() {
+  useEffect(() => {
+    // Initialize theme based on localStorage
+    const savedMode = localStorage.getItem('darkMode');
+    const isDark = savedMode ? JSON.parse(savedMode) : false;
+    injectColorsToRoot(isDark ? darkColors : lightColors);
+  }, []);
+
   return (
     <>
       <ToastContainer />
@@ -51,6 +62,10 @@ function App() {
               <Route path="exercise" element={<ExercisePage />} />
               <Route path="contact" element={<ContactPage />} />
               <Route path="pupil" element={<PupilPage />} />
+              <Route path="completetask" element={<CompleteTaskPage />} />
+              <Route path="completelesson" element={<CompleteLessonPage />} />
+              <Route path="logout" element={<Logout />} />
+
             </Route>
           </Route>
           <Route path="login" element={<LoginPage />} />

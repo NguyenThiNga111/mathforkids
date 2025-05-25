@@ -1,0 +1,22 @@
+{
+    "managementNotifications": "Notification Management",
+    "title": "Title",
+    "sender": "User",
+    "content": "Content",
+    "createdAt": "Created At",
+    "status": "Status",
+    "read": "Read",
+    "unread": "Unread",
+    "addNotification": "Add Notification",
+    "updateNotification": "Update Notification",
+    "inputTitleVi": "Enter title (Vietnamese)",
+    "inputTitleEn": "Enter title (English)",
+    "selectSender": "Select sender",
+    "inputContentVi": "Enter content (Vietnamese)",
+    "inputContentEn": "Enter content (English)",
+    "titleViRequired": "Title (Vietnamese) is required",
+    "titleEnRequired": "Title (English) is required",
+    "contentViRequired": "Content (Vietnamese) is required",
+    "contentEnRequired": "Content (English) is required",
+    "senderRequired": "Sender is required"
+}

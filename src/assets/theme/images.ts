@@ -25,6 +25,7 @@ import contactBlue from '../images/supportblue.png';
 import settingWhite from '../images/settingwhite.png';
 import settingBlue from '../images/settingblue.png';
 import logoutWhite from '../images/logoutwhite.png';
+import logoutBlue from '../images/logoutblue.png';
 import English from '../images/english.png';
 import VietNam from '../images/vietnam.png';
 import avatar from '../images/student.png';
@@ -33,7 +34,10 @@ import filter from '../images/filter.png';
 import exportfile from '../images/exportfile.png';
 import exportfilered from '../images/exportfilered.png';
 import background from '../images/background.png';
-import userwhite from '../images/userwhite.png';
+import pupilwhite from '../images/pupilwhite.png';
+import pupilblue from '../images/pupilbule.png';
+import completetaskwhite from '../images/completedtaskwhite.png';
+import completetaskblue from '../images/completedtaskblue.png';
 
 export const Imgs = {
     dashboardWhite,
@@ -63,6 +67,7 @@ export const Imgs = {
     settingWhite,
     settingBlue,
     logoutWhite,
+    logoutBlue,
     English,
     VietNam,
     avatar,
@@ -71,5 +76,8 @@ export const Imgs = {
     exportfile,
     exportfilered,
     background,
-    userwhite,
+    pupilwhite,
+    pupilblue,
+    completetaskwhite,
+    completetaskblue,
 };

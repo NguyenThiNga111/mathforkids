@@ -1,0 +1,11 @@
+{
+    "managementCompleteLessons": "Complete Lesson Management",
+    "pupil": "Pupil",
+    "lesson": "Lesson",
+    "point": "Point",
+    "status": "Status",
+    "completedDate": "Completed Date",
+    "completed": "Completed",
+    "notCompleted": "Not Completed",
+    "lessonstatus": "Lesson status"
+}

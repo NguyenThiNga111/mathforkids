@@ -1,0 +1,11 @@
+{
+    "managementCompleteTasks": "Quản lý nhiệm vụ hoàn thành",
+    "completed": "Hoàn thành",
+    "notCompleted": "Chưa hoàn thành",
+    "addCompleteTask": "Thêm nhiệm vụ hoàn thành",
+    "updateCompleteTask": "Cập nhật nhiệm vụ hoàn thành",
+    "selectPupil": "Chọn học sinh",
+    "selectTask": "Chọn nhiệm vụ",
+    "selectLesson": "Chọn bài học",
+    "isCompleted": "Đã hoàn thành"
+}

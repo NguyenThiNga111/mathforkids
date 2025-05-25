@@ -272,7 +272,7 @@ const Rewards = () => {
                                 <td className="p-3">{reward.name?.[i18n.language]}</td>
                                 <td className="p-3">{reward.description?.[i18n.language]}</td>
                                 <td className="p-3">
-                                    <img src={reward.image} alt={reward.name?.[i18n.language]} width="200" height="100" style={{ objectFit: 'cover', borderRadius: '8px' }} />
+                                    <img src={reward.image} alt={reward.name?.[i18n.language]} width="150" height="150" style={{ objectFit: 'cover', borderRadius: '8px' }} />
                                 </td>
                                 <td className="p-3">
                                     <button

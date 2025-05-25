@@ -417,9 +417,9 @@ const Assessment = () => {
                     <thead>
                         <tr className="bg-gray-200 text-left">
                             <th className="p-3">{t('question')}</th>
+                            <th className="p-3">{t('image')}</th>
                             <th className="p-3">{t('option')}</th>
                             <th className="p-3">{t('answer')}</th>
-                            <th className="p-3">{t('image')}</th>
                             <th className="p-3">{t('level')}</th>
                             <th className="p-3">{t('grade')}</th>
                             <th className="p-3">{t('type')}</th>
@@ -431,6 +431,17 @@ const Assessment = () => {
                         {currentAssessments.map((assessment) => (
                             <tr key={assessment.id} className="border-t">
                                 <td className="p-3">{assessment.question?.[i18n.language]}</td>
+                                <td className="p-3">
+                                    {assessment.image && (
+                                        <img
+                                            src={assessment.image}
+                                            alt={assessment.question?.[i18n.language]}
+                                            width="200"
+                                            height="100"
+                                            style={{ objectFit: 'cover', borderRadius: '8px' }}
+                                        />
+                                    )}
+                                </td>
                                 <td className="p-3">
                                     {assessment.option.map((item, index) => (
                                         item && item.startsWith("http") ? (
@@ -449,6 +460,7 @@ const Assessment = () => {
                                         )
                                     ))}
                                 </td>
+
                                 <td className="p-3">
                                     {assessment.answer && assessment.answer.startsWith("http") ? (
                                         <img
@@ -464,17 +476,7 @@ const Assessment = () => {
                                         </span>
                                     )}
                                 </td>
-                                <td className="p-3">
-                                    {assessment.image && (
-                                        <img
-                                            src={assessment.image}
-                                            alt={assessment.question?.[i18n.language]}
-                                            width="200"
-                                            height="100"
-                                            style={{ objectFit: 'cover', borderRadius: '8px' }}
-                                        />
-                                    )}
-                                </td>
+
                                 <td className="p-3">{getLevelName(assessment.levelId)}</td>
                                 <td className="p-3">{assessment.grade}</td>
                                 <td className="p-3">{assessment.type?.[i18n.language]}</td>

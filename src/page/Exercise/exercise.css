@@ -1,0 +1,6 @@
+.lesson-column {
+    max-width: 100px; /* Điều chỉnh chiều rộng mong muốn */
+    white-space: nowrap; /* Ngăn văn bản xuống dòng */
+    overflow: hidden; /* Ẩn nội dung vượt quá chiều rộng */
+    text-overflow: ellipsis; /* Thêm dấu ba chấm (...) cho nội dung bị cắt */
+}
