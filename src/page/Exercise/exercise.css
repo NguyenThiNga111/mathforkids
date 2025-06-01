@@ -1,6 +1,65 @@
-.lesson-column {
-    max-width: 100px; /* Điều chỉnh chiều rộng mong muốn */
-    white-space: nowrap; /* Ngăn văn bản xuống dòng */
-    overflow: hidden; /* Ẩn nội dung vượt quá chiều rộng */
-    text-overflow: ellipsis; /* Thêm dấu ba chấm (...) cho nội dung bị cắt */
+.table-container-exercise {
+    max-height: 520px;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.form-content-exercise {
+    height: 400px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+/* Optional: Specific column widths */
+.table-container-exercise th:nth-child(1),
+.table-container-exercise td:nth-child(1) {
+    width: 50px;
+}
+
+.table-container-exercise th:nth-child(2),
+.table-container-exercise td:nth-child(2) {
+    max-width: 100px;
+    /* fullName */
+}
+
+.table-container-exercise th:nth-child(3),
+.table-container-exercise td:nth-child(3) {
+    max-width: 250px;
+    /* email */
+}
+
+.table-container-exercise th:nth-child(4),
+.table-container-exercise td:nth-child(4) {
+    max-width: 450px;
+    /* phoneNumber */
+}
+
+.table-container-exercise th:nth-child(5),
+.table-container-exercise td:nth-child(5) {
+    max-width: 150px;
+    /* dateOfBirth */
+}
+
+.table-container-exercise th:nth-child(6),
+.table-container-exercise td:nth-child(6) {
+    max-width: 100px;
+    /* dateOfBirth */
+}
+
+.table-container-exercise th:nth-child(7),
+.table-container-exercise td:nth-child(7) {
+    max-width: 150px;
+    /* dateOfBirth */
+}
+
+.table-container-exercise th:nth-child(8),
+.table-container-exercise td:nth-child(8) {
+    max-width: 150px;
+    /* dateOfBirth */
+}
+
+.table-container-exercise th:nth-child(9),
+.table-container-exercise td:nth-child(9) {
+    max-width: 100px;
+    /* dateOfBirth */
 }

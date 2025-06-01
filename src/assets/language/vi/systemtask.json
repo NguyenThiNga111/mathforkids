@@ -5,7 +5,7 @@
     "lesson": "Bài học",
     "systemtaskStatus": "Trạng thái nhiệm vụ",
     "reward": "Phần thưởng",
-    "quantityReward": "Số lượng phần thưởng",
+    "quantity": "Số lượng",
     "isDisabled": "Trạng thái",
     "addTask": "Thêm nhiệm vụ",
     "updateTask": "Cập nhật nhiệm vụ",

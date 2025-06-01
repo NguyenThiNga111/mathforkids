@@ -5,7 +5,7 @@
     "lesson": "Lesson",
     "systemtaskStatus": "System Task Status",
     "reward": "Reward",
-    "quantityReward": "Quantity Reward",
+    "quantity": "Quantity",
     "addTask": "Add Task",
     "updateTask": "Update Task",
     "titleNameVi": "Enter title name Vi",
@@ -15,8 +15,6 @@
     "selectionlesson":"Selection lesson",
     "selectionreward":"Selection reward",
     "inputquantityReward":"Enter quantity reward",
-
-
     "titleViRequired": "Please enter Vietnamese title",
     "titleEnRequired": "Please enter English title",
     "descriptionViRequired": "Please enter Vietnamese description",

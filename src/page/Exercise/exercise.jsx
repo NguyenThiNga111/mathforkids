@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import './exercise.css';
-import Navbar from "../../component/Navbar";
+import { useParams, useNavigate } from 'react-router-dom';
 import { Input, Button, Modal, Select, Checkbox } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { Upload } from 'antd';
 import { Imgs } from "../../assets/theme/images";
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
+import { FaEdit, FaBook } from 'react-icons/fa';
 import api from '../../assets/api/Api';
+import './exercise.css';
+import Navbar from "../../component/Navbar";
 
 const exercise = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,26 +22,25 @@ const exercise = () => {
     const [answerFileList, setAnswerFileList] = useState([]);
     const [optionType, setOptionType] = useState('text');
     const [filterLevel, setFilterLevel] = useState('all');
-    const [filterLesson, setFilterLesson] = useState('all'); // Replaced filterGrade with filterLesson
     const [filterStatus, setFilterStatus] = useState('all');
     const [levels, setLevels] = useState([]);
-    const [lessons, setLessons] = useState([]); // New state for lessons
     const [errors, setErrors] = useState('');
-
-    const exercisePage = 10;
+    const [lesson, setLesson] = useState(null);
+    const exercisePage = 16;
     const { Option } = Select;
-
+    const { lessonId } = useParams();
+    const navigate = useNavigate();
     const { t, i18n } = useTranslation(['exercise', 'common']);
 
     useEffect(() => {
         fetchExercises();
         fetchLevels();
-        fetchLessons(); // Added fetchLessons
-    }, []);
+        fetchLesson(); // Added fetchLessons
+    }, [lessonId]);
 
     const fetchExercises = async () => {
         try {
-            const response = await api.get(`/exercise`);
+            const response = await api.get(`/exercise/lessonId/${lessonId}`);
             setExercises(response.data);
         } catch (error) {
             toast.error(t('errorFetchData', { ns: 'common' }), {
@@ -51,7 +52,7 @@ const exercise = () => {
 
     const fetchLevels = async () => {
         try {
-            const response = await api.get(`/level`);
+            const response = await api.get(`/level/enabled`);
             setLevels(response.data);
         } catch (error) {
             toast.error(t('errorFetchData', { ns: 'common' }), {
@@ -61,10 +62,10 @@ const exercise = () => {
         }
     };
 
-    const fetchLessons = async () => {
+    const fetchLesson = async () => {
         try {
-            const response = await api.get(`/lesson`);
-            setLessons(response.data);
+            const response = await api.get(`/lesson/${lessonId}`);
+            setLesson(response.data);
         } catch (error) {
             toast.error(t('errorFetchData', { ns: 'common' }), {
                 position: 'top-right',
@@ -78,23 +79,16 @@ const exercise = () => {
         return level ? (level.name?.[i18n.language] || level.name || levelId) : levelId;
     };
 
-    const getLessonName = (lessonId) => {
-        const lesson = lessons.find((lsn) => lsn.id === lessonId);
-        return lesson ? (lesson.name?.[i18n.language] || lesson.name || lessonId) : lessonId;
-    };
-
     const handleSave = async () => {
-        if (Validation()) {
+        if (validate()) {
             try {
                 const formData = new FormData();
                 formData.append('levelId', editingExercise.levelId);
-                formData.append('lessonId', editingExercise.lessonId); // Replaced grade with lessonId
+                formData.append('lessonId', lessonId);
                 formData.append('question', JSON.stringify(editingExercise.question));
-
                 if (fileList[0]?.originFileObj) {
                     formData.append('image', fileList[0].originFileObj);
                 }
-
                 if (optionType === 'text') {
                     const validOptions = editingExercise.option.filter(opt => opt.trim() !== '');
                     formData.append('option', JSON.stringify(validOptions));
@@ -122,7 +116,7 @@ const exercise = () => {
                 } else {
                     await api.post(`/exercise`, formData, {
                         headers: {
-                            "Content-Type": "multipart/form-data",
+                            'Content-Type': 'multipart/form-data',
                         },
                     });
                     toast.success(t('addSuccess', { ns: 'common' }), {
@@ -139,7 +133,6 @@ const exercise = () => {
                 });
             }
         } else {
-            console.log("abc", errors);
             toast.error(t('validationFailed', { ns: 'common' }), {
                 position: 'top-right',
                 autoClose: 2000,
@@ -149,7 +142,7 @@ const exercise = () => {
 
     const handleToggleAvailable = async (exercise) => {
         try {
-            await api.put(`/exercise/disable/${exercise.id}`, {
+            await api.put(`/exercise/${exercise.id}`, {
                 isDisabled: !exercise.isDisabled,
             });
             toast.success(t('updateSuccess', { ns: 'common' }), {
@@ -169,14 +162,11 @@ const exercise = () => {
         }
     };
 
-    const Validation = () => {
+    const validate = () => {
         const newErrors = {};
 
         if (!editingExercise?.levelId || editingExercise.levelId.trim() === '') {
             newErrors.levelId = t('levelIdRequired');
-        }
-        if (!editingExercise?.lessonId || editingExercise.lessonId.trim() === '') {
-            newErrors.lessonId = t('lessonIdRequired');
         }
         if (!editingExercise?.question?.vi || editingExercise.question.vi.trim() === '') {
             newErrors.questionVi = t('questionViRequired');
@@ -208,7 +198,7 @@ const exercise = () => {
         if (mode === 'add') {
             setEditingExercise({
                 levelId: '',
-                lessonId: '', // Replaced grade with lessonId
+                lessonId: lessonId,
                 question: { en: '', vi: '' },
                 option: ['', '', ''],
                 answer: '',
@@ -250,7 +240,7 @@ const exercise = () => {
         setFileList([]);
         setOptionFileList([[], [], []]);
         setAnswerFileList([]);
-        setErrors('');
+        setErrors({});
     };
 
     const handleImageChange = (info) => {
@@ -314,15 +304,15 @@ const exercise = () => {
 
     const filteredExercises = exercises.filter(exercise => {
         const matchLevel = filterLevel === 'all' ? true : exercise.levelId === filterLevel;
-        const matchLesson = filterLesson === 'all' ? true : exercise.lessonId === filterLesson;
         const matchStatus =
             filterStatus === 'all'
                 ? true
                 : filterStatus === 'no'
                     ? exercise.isDisabled === false
                     : exercise.isDisabled === true;
-        return matchStatus && matchLevel && matchLesson;
+        return matchStatus && matchLevel;
     });
+
     const indexOfLastExercise = currentPage * exercisePage;
     const indexOfFirstExercise = indexOfLastExercise - exercisePage;
     const currentExercises = filteredExercises.slice(indexOfFirstExercise, indexOfLastExercise);
@@ -330,30 +320,33 @@ const exercise = () => {
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     return (
-        <div className="container">
+        <div className="containers">
             <Navbar />
-            <div className="container-content">
-                <h1 className="container-title">{t('managementExercise')}</h1>
-                <div className="flex justify-between items-center mb-4">
+            <h1 className="container-title">
+                {t('managementExercise')} - {lesson?.name?.[i18n.language] || lessonId}
+            </h1>
+            <div className="containers-content">
+                <div className="flex justify-between items-center mb-2">
                     <div className="filter-bar">
                         <div className="filter-container">
                             <div className="filter-containers">
                                 <span className="filter-icon">
                                     <svg
                                         className="iconfilter"
-                                        width="16"
-                                        height="16"
+                                        width="20"
+                                        height="20"
                                         viewBox="0 0 24 24"
                                         fill="none"
                                         stroke="currentColor"
                                         strokeWidth="2"
                                         strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
+                                        strokeLinejoin="round">
                                         <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
                                     </svg>
+                                    <button className="filter-text">
+                                        {t('filterBy', { ns: 'common' })}
+                                    </button>
                                 </span>
-                                <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
                                 <select
                                     className="filter-dropdown"
                                     value={filterLevel}
@@ -371,21 +364,6 @@ const exercise = () => {
                                 </select>
                                 <select
                                     className="filter-dropdown"
-                                    value={filterLesson}
-                                    onChange={(e) => {
-                                        setFilterLesson(e.target.value);
-                                        setCurrentPage(1);
-                                    }}
-                                >
-                                    <option value="all">{t('lesson')}</option>
-                                    {lessons.map((lesson) => (
-                                        <option key={lesson.id} value={lesson.id}>
-                                            {lesson.name?.[i18n.language] || lesson.name || lesson.id}
-                                        </option>
-                                    ))}
-                                </select>
-                                <select
-                                    className="filter-dropdown"
                                     value={filterStatus}
                                     onChange={(e) => {
                                         setFilterStatus(e.target.value);
@@ -396,132 +374,133 @@ const exercise = () => {
                                     <option value="yes">{t('yes', { ns: 'common' })}</option>
                                     <option value="no">{t('no', { ns: 'common' })}</option>
                                 </select>
-                                <button className="export-button">{t('exportFile', { ns: 'common' })}</button>
                             </div>
                         </div>
                         <button
-                            className="bg-blue-500 text-white px-8 py-2 rounded-add"
+                            className="bg-blue-500 px-4 py-2 rounded-add"
                             onClick={() => openModal('add')}
                         >
                             + {t('addNew', { ns: 'common' })}
                         </button>
                     </div>
                 </div>
-                <table className="w-full bg-white shadow-md rounded-lg">
-                    <thead>
-                        <tr className="bg-gray-200 text-left">
-                            <th className="p-3">{t('question')}</th>
-                            <th className="p-3">{t('image')}</th>
-                            <th className="p-3">{t('option')}</th>
-                            <th className="p-3">{t('answer')}</th>
-                            <th className="p-3">{t('level')}</th>
-                            <th className="p-3">{t('lesson')}</th>
-                            <th className="p-3">{t('action', { ns: 'common' })}</th>
-                            <th className="p-3">{t('available', { ns: 'common' })}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {currentExercises.map((exercise) => (
-                            <tr key={exercise.id} className="border-t">
-                                <td className="p-3">{exercise.question?.[i18n.language]}</td>
-                                <td className="p-3">
-                                    {exercise.image && (
-                                        <img
-                                            src={exercise.image}
-                                            alt={exercise.question?.[i18n.language]}
-                                            width="200"
-                                            height="100"
-                                            style={{ objectFit: 'cover', borderRadius: '8px' }}
-                                        />
-                                    )}
-                                </td>
-                                <td className="p-3">
-                                    {exercise.option.map((item, index) => (
-                                        item && item.startsWith("http") ? (
+                <div className="table-container-exercise">
+                    <table className="w-full bg-white shadow-md rounded-lg">
+                        <thead>
+                            <tr className="bg-gray-200 text-left">
+                                <th className="p-3">{t('.no', { ns: 'common' })}</th>
+                                <th className="p-3">{t('question')}</th>
+                                <th className="p-3">{t('image')}</th>
+                                <th className="p-3">{t('option')}</th>
+                                <th className="p-3  text-center">{t('answer')}</th>
+                                <th className="p-3 text-center">{t('level')}</th>
+                                <th className="p-3 text-center">{t('action', { ns: 'common' })}</th>
+                                <th className="p-3 text-center">{t('available', { ns: 'common' })}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {currentExercises.map((exercise, index) => (
+                                <tr key={exercise.id} className="border-t">
+                                    <td className="p-3">{indexOfFirstExercise + index + 1}</td>
+                                    <td className="p-3">{exercise.question?.[i18n.language]}</td>
+                                    <td className="p-3">
+                                        {exercise.image && (
                                             <img
-                                                key={index}
-                                                src={item}
-                                                alt={`Option ${index + 1}`}
+                                                src={exercise.image}
+                                                alt={exercise.question?.[i18n.language]}
+                                                width="200"
+                                                height="100"
+                                                style={{ objectFit: 'cover', borderRadius: '8px', border: '2px solid #ccc' }}
+                                            />
+                                        )}
+                                    </td>
+                                    <td className="p-3">
+                                        {exercise.option.map((item, index) => (
+                                            item && item.startsWith("http") ? (
+                                                <img
+                                                    key={index}
+                                                    src={item}
+                                                    alt={`Option ${index + 1}`}
+                                                    width="90"
+                                                    height="90"
+                                                    style={{ objectFit: 'cover', borderRadius: '10px', border: '2px solid #ccc', marginRight: '10px' }}
+                                                />
+                                            ) : (
+                                                <span key={index} style={{ marginRight: '45px' }}>
+                                                    {item}
+                                                </span>
+                                            )
+                                        ))}
+                                    </td>
+                                    <td className="p-3  text-center">
+                                        {exercise.answer && exercise.answer.startsWith("http") ? (
+                                            <img
+                                                src={exercise.answer}
+                                                alt="Answer"
                                                 width="90"
                                                 height="90"
-                                                style={{ objectFit: 'cover', borderRadius: '10px', border: '2px solid #ccc', marginRight: '10px' }}
+                                                style={{ objectFit: 'cover', borderRadius: '10px', border: '2px solid #ccc' }}
                                             />
                                         ) : (
-                                            <span key={index} style={{ marginRight: '45px' }}>
-                                                {item}
+                                            <span>
+                                                {exercise.answer}
                                             </span>
-                                        )
-                                    ))}
-                                </td>
-                                <td className="p-3">
-                                    {exercise.answer && exercise.answer.startsWith("http") ? (
-                                        <img
-                                            src={exercise.answer}
-                                            alt="Answer"
-                                            width="90"
-                                            height="90"
-                                            style={{ objectFit: 'cover', borderRadius: '10px', border: '2px solid #ccc' }}
-                                        />
-                                    ) : (
-                                        <span>
-                                            {exercise.answer}
-                                        </span>
-                                    )}
-                                </td>
+                                        )}
+                                    </td>
 
-                                <td className="p-3">{getLevelName(exercise.levelId)}</td>
-                                <td className="p-3 lesson-column">{getLessonName(exercise.lessonId)}</td>
-                                <td className="p-3">
-                                    <button
-                                        className="text-white px-3 py-1 buttonupdate"
-                                        onClick={() => openModal('update', exercise)}
-                                    >
-                                        <img className="iconupdate" src={Imgs.edit} />
-                                        {t('update', { ns: 'common' })}
-                                    </button>
-                                </td>
-                                <td className="p-3">
-                                    <label className="switch">
-                                        <input
-                                            type="checkbox"
-                                            checked={exercise.isDisabled}
-                                            onChange={() => handleToggleAvailable(exercise)}
-                                        />
-                                        <span className="slider round"></span>
-                                    </label>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-
-                <div className="flex justify-end items-center mt-4 ml-auto">
-                    <div className="pagination">
-                        <button
-                            className="around"
-                            onClick={() => currentPage > 1 && paginate(currentPage - 1)}
-                            disabled={currentPage === 1}
-                        >
-                            &lt;
-                        </button>
-                        {Array.from({ length: totalPages }, (_, index) => (
+                                    <td className="p-3 text-center">{getLevelName(exercise.levelId)}</td>
+                                    <td className="p-3 text-center">
+                                        <button
+                                            className="text-white px-3 py-1 buttonupdate"
+                                            onClick={() => openModal('update', exercise)}
+                                        >
+                                            <FaEdit className="iconupdate" />
+                                            {t('update', { ns: 'common' })}
+                                        </button>
+                                    </td>
+                                    <td className="p-3 text-center">
+                                        <label className="switch">
+                                            <input
+                                                type="checkbox"
+                                                checked={exercise.isDisabled}
+                                                onChange={() => handleToggleAvailable(exercise)}
+                                            />
+                                            <span className="slider round"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    <div className="flex justify-end items-center mt-4 ml-auto paginations">
+                        <div className="pagination">
                             <button
-                                key={index + 1}
-                                className={`around ${currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-300'}`}
-                                onClick={() => paginate(index + 1)}
+                                className="around"
+                                onClick={() => currentPage > 1 && paginate(currentPage - 1)}
+                                disabled={currentPage === 1}
                             >
-                                {index + 1}
+                                &lt;
                             </button>
-                        ))}
-                        <button
-                            className="around"
-                            onClick={() => currentPage < totalPages && paginate(currentPage + 1)}
-                            disabled={currentPage === totalPages}
-                        >
-                            &gt;
-                        </button>
+                            {Array.from({ length: totalPages }, (_, index) => (
+                                <button
+                                    key={index + 1}
+                                    className={`around ${currentPage === index + 1 ? 'active' : ''}`}
+                                    onClick={() => paginate(index + 1)}
+                                >
+                                    {index + 1}
+                                </button>
+                            ))}
+                            <button
+                                className="around"
+                                onClick={() => currentPage < totalPages && paginate(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                            >
+                                &gt;
+                            </button>
+                        </div>
                     </div>
                 </div>
+
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
@@ -533,7 +512,7 @@ const exercise = () => {
                     footer={null}
                     className="modal-content"
                 >
-                    <div className="form-content-assessment">
+                    <div className="form-content-exercise">
                         <div className="inputtext">
                             <label className="titleinput">{t('question')} (Vietnamese) <span style={{ color: 'red' }}>*</span></label>
                             <Input
@@ -583,27 +562,7 @@ const exercise = () => {
                             </Select>
                             {errors.levelId && <div className="error-text">{errors.levelId}</div>}
                         </div>
-                        <div className="inputtext">
-                            <label className="titleinput">{t('lesson')} <span style={{ color: 'red' }}>*</span></label>
-                            <Select
-                                style={{ width: '100%', height: '50px' }}
-                                placeholder={t('selectLesson')}
-                                value={editingExercise?.lessonId || null}
-                                onChange={(value) =>
-                                    setEditingExercise({
-                                        ...editingExercise,
-                                        lessonId: value,
-                                    })
-                                }
-                            >
-                                {lessons.map((lesson) => (
-                                    <Select.Option key={lesson.id} value={lesson.id}>
-                                        {lesson.name?.[i18n.language] || lesson.id}
-                                    </Select.Option>
-                                ))}
-                            </Select>
-                            {errors.lessonId && <div className="error-text">{errors.lessonId}</div>}
-                        </div>
+
                         <div className="inputtexts">
                             <div style={{ display: 'flex', gap: '20px' }}>
                                 <label className="titleinput"> {t('textOption')}</label>
@@ -747,12 +706,13 @@ const exercise = () => {
                         </div>
                     </div>
                     <div className="button-row">
-                        <Button type="primary" onClick={handleSave} block>
-                            {t('save', { ns: 'common' })}
-                        </Button>
-                        <Button type="primary" onClick={closeModal} block>
+                        <Button className="cancel-button" onClick={closeModal} block>
                             {t('cancel', { ns: 'common' })}
                         </Button>
+                        <Button className="save-button" onClick={handleSave} block>
+                            {t('save', { ns: 'common' })}
+                        </Button>
+
                     </div>
                 </Modal>
             </div>

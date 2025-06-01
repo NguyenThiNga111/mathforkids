@@ -11,5 +11,18 @@
     "updateLesson": "Cập nhật bài học",
     "addLesson": "Thêm bài học",
     "inputlessonNameVi": "Nhập tên bài học (VI)",
-    "inputlessonNameEn": "Nhập tên bài học (EN)"
+    "inputlessonNameEn": "Nhập tên bài học (EN)",
+    "nameViMinLength": "Tên bài học tiếng Việt phải có ít nhất 3 ký tự",
+    "nameEnMinLength": "Tên bài học tiếng Anh phải có ít nhất 3 ký tự",
+    "nameViInvalid": "Tên bài học tiếng Việt chứa ký tự không hợp lệ",
+    "nameEnInvalid": "Tên bài học tiếng Anh chứa ký tự không hợp lệ",
+    "addition": "Cộng",
+    "subtraction": "Trừ",
+    "multiplication": "Nhân",
+    "division": "Chia",
+    "typeRequired": "Vui lòng chọn loại bài học",
+    "inputType": "Chọn loại bài học",
+    "type":"Loại",
+    "exercises":"Bài tập"
+
 }

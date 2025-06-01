@@ -1,15 +1,10 @@
 .profile-container {
-    max-width: 900px;
-    margin: 30px auto;
-    padding: 20px;
-}
-
-.profile-card {
-    background-color: #FFFFFF;
+    background-color: #cdcdcd;
+    width: 80%;
+    margin: auto;
     padding: 40px;
-    border-radius: 12px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
-    height: 480px;
+    height: 580px;
+    border-radius: 20px;
 }
 
 .avatar-section {
@@ -36,7 +31,6 @@
     align-items: center;
 }
 
-/* Căn giữa lưới form */
 .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;

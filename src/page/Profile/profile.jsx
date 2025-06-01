@@ -161,10 +161,10 @@ const profile = () => {
         return <div>{t('loading', { ns: 'common' })}</div>;
     }
     return (
-        <div className="container">
+        <div className="containers">
             <Navbar />
-            <div className="container-content">
-                <h1 className="container-title">{t('profile')}</h1>
+            <h1 className="container-title">{t('profile')}</h1>
+            <div className="profile-container">
                 <div className="flex justify-between items-center mb-4">
                     <div className="profile-card">
                         <div className="avatar-section">
@@ -200,26 +200,7 @@ const profile = () => {
                                             })}
                                     />
                                 </div>
-                                <div className="form-group">
-                                    <label>{t('email')}</label>
-                                    <Input
-                                        type="email"
-                                        className='inputprofile'
-                                        placeholder={t('enterEmail')}
-                                        value={userData.email}
-                                        onChange={(e) => setUserData({ ...userData, email: e.target.value })}
-                                    />
-                                </div>
-                                <div className="form-group">
-                                    <label>{t('phoneNumber')}</label>
-                                    <Input
-                                        type="tel"
-                                        className='inputprofile'
-                                        placeholder={t('enterPhoneNumber')}
-                                        value={userData.phoneNumber}
-                                        onChange={(e) => setUserData({ ...userData, phoneNumber: e.target.value })}
-                                    />
-                                </div>
+
                                 <div className="form-group">
                                     <label>{t('address')}</label>
                                     <Input
@@ -241,6 +222,28 @@ const profile = () => {
                                         <Option value="Male">{t('male')}</Option>
                                         <Option value="Female">{t('female')}</Option>
                                     </Select>
+                                </div>
+                                <div className="form-group">
+                                    <label>{t('email')}</label>
+                                    <Input
+                                        type="email"
+                                        className='inputprofile'
+                                        placeholder={t('enterEmail')}
+                                        value={userData.email}
+                                        onChange={(e) => setUserData({ ...userData, email: e.target.value })}
+                                        readOnly
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>{t('phoneNumber')}</label>
+                                    <Input
+                                        type="tel"
+                                        className='inputprofile'
+                                        placeholder={t('enterPhoneNumber')}
+                                        value={userData.phoneNumber}
+                                        onChange={(e) => setUserData({ ...userData, phoneNumber: e.target.value })}
+                                        readOnly
+                                    />
                                 </div>
                             </div>
                         </div>

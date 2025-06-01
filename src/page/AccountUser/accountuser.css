@@ -1,66 +1,164 @@
-.container-content {
-    display: flex;
-    flex-direction: column;
-
+/* Nền tổng thể */
+.containers {
+    background-color: #EDEFF5;
+    background-color: var(--background-content);
 }
 
-.flex.justify-end.ml-auto {
-    margin-left: auto;
-}
-
-h1 {
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-bottom: 1rem;
+/* Tiêu đề giữ nguyên màu nền */
+.container-title {
+    font-size: 28px;
+    margin: 20px 0 10px 20px;
     color: var(--color-title);
 }
 
-select,
-button {
-    border: 1px solid var(--filter-border);
-    padding: 0.5rem;
-    border-radius: 0.25rem;
+.table-container-user {
+    max-height: 520px;
+    overflow-y: auto;
+    scrollbar-width: none;
 }
 
+/* Phần content có nền trắng (trừ h1 ra) */
+.containers-content {
+    background-color: white;
+    margin: 20px;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Thanh filter và các thành phần bên trong */
+
+.filter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-container {
+    display: flex;
+    align-items: center;
+}
+
+.filter-containers {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filter-icon {
+    margin-right: 8px;
+}
+
+.iconfilter {
+    color: #555;
+}
+
+.filter-text {
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: #333;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.filter-dropdown {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    background-color: white;
+    min-width: 120px;
+}
+
+.rounded-add {
+    padding: 8px 16px;
+    color: var(--color-text);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    border: 1px solid black;
+}
+
+/* Bảng chính */
 table {
     width: 100%;
     border-collapse: collapse;
-    box-shadow: 0 1px 3px var(--table-color);
-    border-radius: 0.5rem;
-    overflow: hidden;
+    margin-top: 20px;
 }
 
-th {
-    padding: 0.75rem;
-    background-color: var(--table-name);
-    color: var(--table-color);
-    text-align: left;
+thead tr {
+    background-color: #dcdcdc;
 }
 
+
+tbody tr:nth-child(odd) {
+    background-color: white;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #EDEFF5;
+}
+
+th,
 td {
-    padding: 0.75rem;
-    color: var(--table-color);
-    border-top: 1px solid var(--table-color);
+    padding: 12px;
+    text-align: left;
 }
 
 .buttonaction {
     display: flex;
+    text-align: center;
     align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
 .buttonupdate {
-    background-color: var(--button-update);
-    color: var(--color-textwhite);
-    display: flex;
-    align-items: center;
-    border-radius: 10px;
+    padding: 8px 16px;
+    border: none;
+    background-color: #3366FF;
+    color: #ffff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
 }
 
+.buttondetail {
+    padding: 8px 16px;
+    border: none;
+    background-color: #F4A100;
+    color: #ffff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.buttonlessondetail {
+    padding: 8px 16px;
+    border: none;
+    background-color: #60D56C;
+    color: #ffff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.iconupdate {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+}
+
+/* Switch toggle */
 .switch {
     position: relative;
     display: inline-block;
-    width: 50px;
-    height: 30px;
+    width: 40px;
+    height: 24px;
 }
 
 .switch input {
@@ -69,113 +167,70 @@ td {
     height: 0;
 }
 
-.slider.round {
-    border-radius: 20px;
+.slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    border-radius: 24px;
+    cursor: pointer;
+    transition: 0.4s;
 }
 
-.slider.round:before {
+.slider::before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
     border-radius: 50%;
+    transition: 0.4s;
 }
 
-/* Thanh bộ lọc */
-.filter-bar {
+input:checked+.slider {
+    background-color: #4A90E2;
+}
+
+input:checked+.slider::before {
+    transform: translateX(16px);
+}
+
+/* Phân trang */
+.paginations {
+    margin-top: 20px;
+    float: right;
+}
+
+.pagination {
     display: flex;
-    align-items: center;
-    text-align: center;
-    justify-content: space-between;
-    padding-bottom: 10px;
+    gap: 8px;
 }
 
-.filter-containers {
-    background-color: var(--background-filter);
-    height: 50px;
-    display: flex;
-    align-items: center;
-    border-radius: 10px;
-    padding-left: 20px;
-    border: 1px solid var(--border-search);
-    border-top-right-radius: 15px;
-    border-bottom-right-radius: 15px;
+.around {
+    padding: 6px 12px;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
 }
 
-.filter-icon {
-    padding-right: 10px;
+.around.active {
+    background-color: #4A90E2;
+    color: white;
+    font-weight: bold;
 }
 
-.filter-text,
-.export-button {
-    background-color: var(--button-filter);
-    color: var(--color-filter);
-    align-items: center;
-    height: 50px;
-    padding-left: 20px;
-    padding-right: 20px;
-    width: auto;
+/* Modal bảng con */
+
+.modal-content tbody tr:nth-child(even) {
+    background-color: #EDEFF5;
 }
 
-.export-button {
-    color: var(--color-export);
-    border-top-left-radius: 0px;
-    border-bottom-left-radius: 0px;
-    border-top-right-radius: 15px;
-    border-bottom-right-radius: 15px;
-}
-
-.filter-dropdown,
-.filter-text {
-    background-color: var(--button-filter);
-    color: var(--color-filter);
-    align-items: center;
-    height: 50px;
-    border-radius: 0px !important;
-    max-width: 200px;
-}
-
-.rounded-add {
-    background-color: var(--button-add);
-    width: 100px;
-    font-size: 0.875rem;
-    border-radius: 6px;
-}
-
-/* Đảm bảo nút Add New giữ nguyên */
-button.bg-blue-500 {
-    background-color: var(--background-button);
-    color: var(--color-textwhite);
-}
-
-button.bg-blue-500:hover {
-    background-color: var(--background-buttonhover);
-    transition: background-color 0.3s;
-}
-
-
-/* nút update */
-.iconupdate {
-    margin-right: 5px;
-    width: 20px;
-    height: 20px;
-}
-
-.export-button:hover {
-    background-color: var(--color-export);
-    color: var(--color-textwhite);
-}
-
-/* form add  */
-.form-content {
-    height: 400px;
-    overflow-x: auto;
-    scrollbar-width: none;
-}
-
-.ant-modal {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    top: 0 !important;
-    height: 100vh;
-    padding: 0;
+.modal-content tbody tr:nth-child(odd) {
+    background-color: white;
 }
 
 .ant-modal-content {
@@ -193,6 +248,7 @@ button.bg-blue-500:hover {
     border-radius: 8px;
     outline: none;
     font-size: 15px;
+    height: 50px;
     transition: border-color 0.3s ease;
 }
 
@@ -201,35 +257,18 @@ button.bg-blue-500:hover {
     border-color: var(--border-input);
 }
 
-.inputtext {
-    margin-bottom: 15px;
-}
-
 .inputtext label {
     display: block;
-    margin-bottom: 5px;
+    margin-top: 15px;
     font-weight: bold;
 }
 
-.inputtext input {
-    width: 100%;
-    height: 50px;
-    padding: 10px;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-.modal-content .button-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    margin-top: 1rem;
-}
 
 .modal-content button {
     flex: 1;
     padding: 10px;
     border: none;
+    height: 40px;
     border-radius: 8px;
     font-weight: bold;
     color: var(--color-textwhite);
@@ -238,51 +277,176 @@ button.bg-blue-500:hover {
     transition: background-color 0.2s;
 }
 
-.inputtext button {
-    color: var(--background-sidebar);
+/* Form trong Modal */
+.form-content {
+    height: 400px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-wrap: wrap;
+    gap: 20px;
 }
 
-.paginations {
-    margin-top: 10px;
+.inputtext {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.titleinput {
+    font-weight: 600;
+    margin-bottom: 6px;
 }
 
 .error-text {
-    color: var(--error-text);
+    color: red;
     font-size: 13px;
     margin-top: 4px;
 }
 
-/* page change */
-.pagination {
+.gender-icon {
+    font-size: 25px;
+    vertical-align: middle;
+}
+
+.role-icon {
+    font-size: 25px;
+    vertical-align: middle;
+}
+
+/* nút save và cancel */
+.button-row {
     display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 20px;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 1rem;
+    padding-left: 350px !important;
 }
 
-.around {
-    padding: 8px 12px;
+.save-button {
+    background-color: var(--background-save);
+    color: var(--color-textwhite);
     border: none;
-    border-radius: 4px;
-    background-color: var(--background-page);
-    color: var(--color-page);
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+    border-radius: 8px;
+    height: 40px;
+    font-weight: bold;
+    font-size: 15px;
+    width: 100px;
+    transition: background-color 0.2s;
 }
 
-.around:hover:not(:disabled) {
-    background-color: var(--background-buttonhover);
+.save-button:hover {
+    background-color: var(--background-savehover) !important;
+    color: var(--color-textwhite) !important;
+}
+
+/* Cancel Button (Red) */
+.cancel-button {
+    background-color: var(--background-cancel);
     color: var(--color-textwhite);
-    /* darker gray on hover */
+    border: none;
+    border-radius: 8px;
+    height: 40px;
+    font-weight: bold;
+    font-size: 15px;
+    transition: background-color 0.2s;
 }
 
-.around:disabled {
-    background-color: var(--background-disabled);
-    color: var(--color-disabled);
-    cursor: not-allowed;
+.cancel-button:hover {
+    background-color: var(--background-cancelhover) !important;
+    color: var(--color-textwhite) !important;
 }
 
-.around.active {
-    background-color: var(--button-add);
-    color: var(--color-textwhite);
+/* bảng dữ liệu */
+.table-container-user table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-container-user th,
+.table-container-user td {
+    padding: 12px;
+    text-align: left;
+    overflow-wrap: break-word;
+    max-width: 200px;
+}
+
+/* Optional: Specific column widths */
+.table-container-user th:nth-child(1),
+.table-container-user td:nth-child(1) {
+    width: 80px;
+}
+
+.table-container-user th:nth-child(2),
+.table-container-user td:nth-child(2) {
+    max-width: 150px;
+}
+
+.table-container-user th:nth-child(3),
+.table-container-user td:nth-child(3) {
+    max-width: 200px;
+}
+
+.table-container-user th:nth-child(4),
+.table-container-user td:nth-child(4) {
+    max-width: 150px;
+}
+
+.table-container-user th:nth-child(5),
+.table-container-user td:nth-child(5) {
+    max-width: 100px;
+}
+
+.table-container-user th:nth-child(6),
+.table-container-user td:nth-child(6) {
+    max-width: 80px;
+}
+
+.table-container-user th:nth-child(7),
+.table-container-user td:nth-child(7) {
+    max-width: 250px;
+}
+
+.table-container-user th:nth-child(8),
+.table-container-user td:nth-child(8) {
+    max-width: 100px;
+}
+
+/* user detail */
+.pupil-detail-content {
+    height: 400px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.user-detail-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.user-detail-row {
+    display: flex;
+    align-items: center;
+}
+
+.user-detail-label {
+    width: 150px;
+    /* Fixed width for labels to align values */
+    font-weight: 600;
+    color: var(--color-title);
+}
+
+.user-detail-value {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-text);
+}
+
+.user-detail-value .gender-icon,
+.user-detail-value .role-icon {
+    font-size: 20px;
+    vertical-align: middle;
 }

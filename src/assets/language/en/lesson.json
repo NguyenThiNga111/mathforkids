@@ -11,5 +11,18 @@
     "updateLesson": "Update Lesson",
     "addLesson": "Add Lesson",
     "inputlessonNameVi": "Enter lesson name (VI)",
-    "inputlessonNameEn": "Enter lesson name (EN)"
+    "inputlessonNameEn": "Enter lesson name (EN)",
+    "nameViMinLength": "Lesson name in Vietnamese must be at least 3 characters",
+    "nameEnMinLength": "Lesson name in English must be at least 3 characters",
+    "nameViInvalid": "Lesson name in Vietnamese contains invalid characters",
+    "nameEnInvalid": "Lesson name in English contains invalid characters",
+    "addition": "Addition",
+    "subtraction": "Subtraction",
+    "multiplication": "Multiplication",
+    "division": "Division",
+    "typeRequired": "Please select a lesson type",
+    "inputType": "Select lesson type",
+    "type":"Type",
+    "exercises":"Exercises"
+
 }
