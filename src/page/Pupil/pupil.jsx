@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import Navbar from '../../component/Navbar';
 import { Input, Button, Select, Modal, DatePicker, Upload, Switch } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { toast } from 'react-toastify';
 import { Imgs } from '../../assets/theme/images';
 import { useTranslation } from 'react-i18next';
+import { FaEdit } from 'react-icons/fa';
+import moment from 'moment';
+import Navbar from '../../component/Navbar';
 import api from '../../assets/api/Api';
 import './pupil.css';
-import moment from 'moment';
 
 const PupilManagement = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,7 +19,7 @@ const PupilManagement = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [filterStatus, setFilterStatus] = useState('all');
     const [errors, setErrors] = useState({});
-    const pupilsPerPage = 15;
+    const pupilsPerPage = 16;
 
     const { t } = useTranslation(['pupil', 'common']);
     const { Option } = Select;
@@ -125,8 +126,7 @@ const PupilManagement = () => {
     };
     const handleToggleDisabled = async (pupil) => {
         try {
-            const updatedPupil = { ...pupil, isDisabled: !pupil.isDisabled };
-            await api.put(`/pupil/disable/${pupil.id}`, updatedPupil);
+            await api.put(`/pupil/${pupil.id}`, { isDisabled: !pupil.isDisabled });
             fetchData();
             toast.success(t('updateSuccess', { ns: 'common' }), {
                 position: 'top-right',
@@ -154,31 +154,33 @@ const PupilManagement = () => {
     const currentPupils = filteredPupils.slice(indexOfFirstPupil, indexOfLastPupil);
     const totalPages = Math.ceil(filteredPupils.length / pupilsPerPage);
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
     return (
-        <div className="container">
+        <div className="containers">
             <Navbar />
-            <div className="container-content">
-                <h1 className="container-title">{t('managementLessons')}</h1>
-                <div className="flex justify-between items-center mb-4">
+            <h1 className="container-title">{t('managementLessons')}</h1>
+            <div className="containers-content">
+                <div className="flex justify-between items-center mb-2">
                     <div className="filter-bar">
                         <div className="filter-container">
                             <div className="filter-containers">
                                 <span className="filter-icon">
                                     <svg
                                         className="iconfilter"
-                                        width="16"
-                                        height="16"
+                                        width="20"
+                                        height="20"
                                         viewBox="0 0 24 24"
                                         fill="none"
                                         stroke="currentColor"
                                         strokeWidth="2"
                                         strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
+                                        strokeLinejoin="round">
                                         <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
                                     </svg>
+                                    <button className="filter-text">
+                                        {t('filterBy', { ns: 'common' })}
+                                    </button>
                                 </span>
-                                <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
                                 <select
                                     className="filter-dropdown"
                                     value={filterStatus}
@@ -191,86 +193,89 @@ const PupilManagement = () => {
                                     <option value="yes">{t('yes', { ns: 'common' })}</option>
                                     <option value="no">{t('no', { ns: 'common' })}</option>
                                 </select>
-                                <button className="export-button">{t('exportFile', { ns: 'common' })}</button>
                             </div>
                         </div>
                         <button
-                            className="bg-blue-500 text-white px-4 py-2 rounded-add"
+                            className="bg-blue-500 px-4 py-2 rounded-add"
                             onClick={() => openModal('add')}
                         >
                             + {t('addNew', { ns: 'common' })}
                         </button>
                     </div>
                 </div>
-
-                <table className="w-full bg-white shadow-md rounded-lg">
-                    <thead>
-                        <tr className="bg-gray-200">
-                            <th>{t('fullName')}</th>
-                            <th>{t('nickName')}</th>
-                            <th>{t('grade')}</th>
-                            <th>{t('gender')}</th>
-                            <th>{t('dateOfBirth')}</th>
-                            <th>{t('parentName')}</th>
-                            <th>{t('available', { ns: 'common' })}</th>
-                            <th>{t('action', { ns: 'common' })}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {currentPupils.map(pupil => (
-                            <tr key={pupil.id} className="border-t">
-                                <td className="p-3">{pupil.fullName}</td>
-                                <td className="p-3">{pupil.nickName}</td>
-                                <td className="p-3">{pupil.grade}</td>
-                                <td className="p-3">{pupil.gender}</td>
-                                <td className="p-3">{formatFirebaseTimestamp(pupil.dateOfBirth)}</td>
-                                <td className="p-3">{pupil.parentName}</td>
-                                <td className="p-3">
-                                    <button
-                                        className="text-white px-3 py-1 buttonupdate"
-                                        onClick={() => openModal('update', pupil)}
-                                    >
-                                        <img className="iconupdate" src={Imgs.edit} alt="Edit" />
-                                        {t('update', { ns: 'common' })}
-                                    </button>
-                                </td>
-                                <td className="p-3">
-                                    <label className="switch">
-                                        <input type="checkbox" checked={pupil.isDisabled} onChange={() => handleToggleDisabled(pupil)} />
-                                        <span className="slider round"></span>
-                                    </label>
-                                </td>
+                <div className="table-container-pupil">
+                    <table className="w-full bg-white shadow-md rounded-lg">
+                        <thead>
+                            <tr className="bg-gray-200">
+                                <th className="p-3">{t('.no', { ns: 'common' })}</th>
+                                <th className="p-3">{t('fullName')}</th>
+                                <th className="p-3">{t('nickName')}</th>
+                                <th className="p-3">{t('parentName')}</th>
+                                <th className="p-3 text-center">{t('grade')}</th>
+                                <th className="p-3">{t('gender')}</th>
+                                <th className="p-3">{t('dateOfBirth')}</th>
+                                <th className="p-3 text-center">{t('available', { ns: 'common' })}</th>
+                                <th className="p-3 text-center">{t('action', { ns: 'common' })}</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-                <div className="flex justify-end items-center mt-4 ml-auto">
-                    <div className="pagination">
-                        <button
-                            className="around"
-                            onClick={() => currentPage > 1 && paginate(currentPage - 1)}
-                            disabled={currentPage === 1}
-                        >
-                            &lt;
-                        </button>
-                        {Array.from({ length: totalPages }, (_, index) => (
+                        </thead>
+                        <tbody>
+                            {currentPupils.map((pupil, index) => (
+                                <tr key={pupil.id} className="border-t">
+                                    <td className="p-3">{indexOfFirstPupil + index + 1}</td>
+                                    <td className="p-3">{pupil.fullName}</td>
+                                    <td className="p-3">{pupil.nickName}</td>
+                                    <td className="p-3">{pupil.parentName}</td>
+                                    <td className="p-3 text-center">{pupil.grade}</td>
+                                    <td className="p-3">{pupil.gender}</td>
+                                    <td className="p-3">{formatFirebaseTimestamp(pupil.dateOfBirth)}</td>
+                                    <td className="p-3 text-center">
+                                        <button
+                                            className="text-white px-3 py-1 buttonupdate"
+                                            onClick={() => openModal('update', pupil)}
+                                        >
+                                            <FaEdit className='iconupdate' />
+                                            {t('update', { ns: 'common' })}
+                                        </button>
+                                    </td>
+                                    <td className="p-3 text-center">
+                                        <label className="switch">
+                                            <input type="checkbox" checked={pupil.isDisabled} onChange={() => handleToggleDisabled(pupil)} />
+                                            <span className="slider round"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    <div className="flex justify-end items-center mt-4 ml-auto paginations">
+                        <div className="pagination">
                             <button
-                                key={index + 1}
-                                className={`around ${currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-300'}`}
-                                onClick={() => paginate(index + 1)}
+                                className="around"
+                                onClick={() => currentPage > 1 && paginate(currentPage - 1)}
+                                disabled={currentPage === 1}
                             >
-                                {index + 1}
+                                &lt;
                             </button>
-                        ))}
-                        <button
-                            className="around"
-                            onClick={() => currentPage < totalPages && paginate(currentPage + 1)}
-                            disabled={currentPage === totalPages}
-                        >
-                            &gt;
-                        </button>
+                            {Array.from({ length: totalPages }, (_, index) => (
+                                <button
+                                    key={index + 1}
+                                    className={`around ${currentPage === index + 1 ? 'active' : ''}`}
+                                    onClick={() => paginate(index + 1)}
+                                >
+                                    {index + 1}
+                                </button>
+                            ))}
+                            <button
+                                className="around"
+                                onClick={() => currentPage < totalPages && paginate(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                            >
+                                &gt;
+                            </button>
+                        </div>
                     </div>
                 </div>
+
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
@@ -364,17 +369,11 @@ const PupilManagement = () => {
                     </div>
 
                     <div className="button-row">
-                        <Button
-                            type="primary"
-                            onClick={handleSave}
-                            block>
-                            Save
+                        <Button className="cancel-button" onClick={closeModal} block>
+                            {t('cancel', { ns: 'common' })}
                         </Button>
-                        <Button
-                            type="primary"
-                            onClick={closeModal}
-                            block>
-                            Cancel
+                        <Button className="save-button" onClick={handleSave} block>
+                            {t('save', { ns: 'common' })}
                         </Button>
                     </div>
                 </Modal>

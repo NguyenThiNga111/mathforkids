@@ -39,7 +39,7 @@ const setting = () => {
         };
         fetchUserSettings();
     }, [userID, t]);
-    
+
     const handleDarkModeToggle = async () => {
         const newDarkMode = !darkMode;
         setDarkMode(newDarkMode);
@@ -64,13 +64,13 @@ const setting = () => {
         setNotification(false);
     };
     return (
-        <div className="container">
+        <div className="containers">
             <Navbar />
             <div className="container-content">
                 <h1 className="container-title">{t('managementsetting')}</h1>
                 <div className="flex justify-between items-center mb-4">
                     <div className="settings-card">
-                        <div className="setting-item">
+                        {/* <div className="setting-item">
                             <div className="setting-icon globe" />
                             <div className="setting-content">
                                 <label>{t('language')}</label>
@@ -80,7 +80,7 @@ const setting = () => {
                                 <option value="Vietnamese">{t('vietnam')}</option>
                                 <option value="English">{t('english')}</option>
                             </select>
-                        </div>
+                        </div> */}
 
                         <div className="setting-item">
                             <div className="setting-icon moon" />

@@ -1,12 +1,14 @@
 export const lightColors = {
-  backgroundSidebar: '#4880FF',
+  backgroundSidebar: '#FFFFFF',
   backgroundSidebarhover: '#2563eb',
   backgroundCard: '#FFFFFF',
   colorCard: '#6b7280',
   colorCardvalue: '#202224',
   activeBackground: '#FFFFFF',
   colorSidebaractive: '#4880FF',
-  colorSidebar: '#FFFFFF',
+  colorSidebar: '#081028',
+  backgroundSidebarheader: '#3366FF',
+  sidebarItem: "#E6ECFF",
   buttonAdd: '#1685FB',
   colorTitle: '#1B2431',
   buttonUpdate: '#1685FB',
@@ -29,17 +31,22 @@ export const lightColors = {
   borderInput: '#3b82f6',
   errorText: '#ff0000',
   backgroundWhite: '#FFFFFF',
-  backgroundGradient: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
+  backgroundGradient: 'linear-gradient(135deg,#2e6bcc 0%, #1e40af 100%)',
   subTitle: '#6b7280',
   labelLogin: '#374151',
   backgroundPage: '#e5e7eb',
   colorPage: '#202224',
   backgroundDisabled: '#e5e7eb',
-  colorDisabled: '#9ca3af'
+  colorDisabled: '#9ca3af',
+  backgroundSave: '#3b82f6',
+  backgroundSavehover: '#2e6bcc',
+  backgroundCancel: '#ff4d4f',
+  backgroundCancelhover: '#e64446'
+
 };
 
 export const darkColors = {
-  backgroundSidebar: '#273142',
+  backgroundSidebar: '#0B1739',
   backgroundSidebarhover: '#374151',
   backgroundCard: '#273142',
   colorCard: '#FFFFFF',
@@ -47,6 +54,9 @@ export const darkColors = {
   activeBackground: '#4880FF',
   colorSidebaractive: '#FFFFFF',
   colorSidebar: '#e5e7eb',
+  backgroundSidebarheader: '#1D30B5',
+  sidebarItem: "#1D30B5",
+
   buttonAdd: '#1685FB',
   colorTitle: '#FFFFFF',
   buttonUpdate: '#3b82f6',

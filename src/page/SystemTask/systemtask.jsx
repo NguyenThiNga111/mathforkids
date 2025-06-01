@@ -3,6 +3,7 @@ import { Input, Button, Select, Modal } from 'antd';
 import { toast } from 'react-toastify';
 import { Imgs } from '../../assets/theme/images';
 import { useTranslation } from 'react-i18next';
+import { FaEdit } from 'react-icons/fa';
 import api from '../../assets/api/Api';
 import Navbar from '../../component/Navbar';
 import './systemtask.css';
@@ -17,7 +18,7 @@ const SystemTask = () => {
     const [editingTask, setEditingTask] = useState(null);
     const [filterStatus, setFilterStatus] = useState('');
     const [errors, setErrors] = useState({});
-    const taskPage = 10;
+    const taskPage = 16;
 
     useEffect(() => {
         fetchTasks();
@@ -130,30 +131,31 @@ const SystemTask = () => {
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     return (
-        <div className="container">
+        <div className="containers">
             <Navbar />
-            <div className="container-content">
-                <h1 className="container-title">{t('taskManagement')}</h1>
-                <div className="flex justify-between items-center mb-4">
+            <h1 className="container-title">{t('taskManagement')}</h1>
+            <div className="containers-content">
+                <div className="flex justify-between items-center mb-2">
                     <div className="filter-bar">
                         <div className="filter-container">
                             <div className="filter-containers">
                                 <span className="filter-icon">
                                     <svg
                                         className="iconfilter"
-                                        width="16"
-                                        height="16"
+                                        width="20"
+                                        height="20"
                                         viewBox="0 0 24 24"
                                         fill="none"
                                         stroke="currentColor"
                                         strokeWidth="2"
                                         strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
+                                        strokeLinejoin="round">
                                         <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
                                     </svg>
+                                    <button className="filter-text">
+                                        {t('filterBy', { ns: 'common' })}
+                                    </button>
                                 </span>
-                                <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
                                 <select
                                     className="filter-dropdown"
                                     onChange={(e) => setFilterStatus(e.target.value)}
@@ -162,82 +164,85 @@ const SystemTask = () => {
                                     <option value="yes">{t('yes', { ns: 'common' })}</option>
                                     <option value="no">{t('no', { ns: 'common' })}</option>
                                 </select>
-                                <button className="export-button">{t('exportFile', { ns: 'common' })}</button>
                             </div>
                         </div>
                         <button
-                            className="bg-blue-500 text-white px-4 py-2 rounded-add"
+                            className="bg-blue-500 px-4 py-2 rounded-add"
                             onClick={() => openModal('add')}
                         >
                             + {t('addNew', { ns: 'common' })}
                         </button>
                     </div>
                 </div>
-
-                <table className="w-full bg-white shadow-md rounded-lg">
-                    <thead>
-                        <tr className="bg-gray-200">
-                            <th className="p-2">{t('title')}</th>
-                            <th className="p-2">{t('reward')}</th>
-                            <th className="p-2">{t('quantityReward')}</th>
-                            <th className="p-2">{t('description')}</th>
-                            <th className="p-2">{t('action', { ns: 'common' })}</th>
-                            <th className="p-2">{t('available', { ns: 'common' })}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {currentTask.map(task => (
-                            <tr key={task.id} className="border-t">
-                                <td className="p-2">{task.title?.[i18n.language]}</td>
-                                <td className="p-2">{rewards.find(r => r.id === task.rewardId)?.name?.[i18n.language]}</td>
-                                <td className="p-2">{task.quantityReward}</td>
-                                <td className="p-2">{task.description?.[i18n.language]}</td>
-                                <td className="p-3">
-                                    <button
-                                        className="text-white px-3 py-1 buttonupdate"
-                                        onClick={() => openModal('update', task)}
-                                    >
-                                        <img className="iconupdate" src={Imgs.edit} alt="Edit" />
-                                        {t('update', { ns: 'common' })}
-                                    </button>
-                                </td>
-                                <td className="p-3">
-                                    <label className="switch">
-                                        <input type="checkbox" checked={task.isDisabled} onChange={() => handleToggleDisabled(task)} />
-                                        <span className="slider round"></span>
-                                    </label>
-                                </td>
+                <div className="table-container-systemtask">
+                    <table className="w-full bg-white shadow-md rounded-lg">
+                        <thead>
+                            <tr className="bg-gray-200">
+                                <th className="p-3">{t('.no', { ns: 'common' })}</th>
+                                <th className="p-3">{t('title')}</th>
+                                <th className="p-3">{t('reward')}</th>
+                                <th className="p-3 text-center">{t('quantity')}</th>
+                                <th className="p-3">{t('description')}</th>
+                                <th className="p-3 text-center">{t('action', { ns: 'common' })}</th>
+                                <th className="p-3 text-center">{t('available', { ns: 'common' })}</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-                <div className="flex justify-end items-center mt-4 ml-auto paginations">
-                    <div className="pagination">
-                        <button
-                            className="around"
-                            onClick={() => currentPage > 1 && paginate(currentPage - 1)}
-                            disabled={currentPage === 1}
-                        >
-                            &lt;
-                        </button>
-                        {Array.from({ length: totalPage }, (_, index) => (
+                        </thead>
+                        <tbody>
+                            {currentTask.map((task, index) => (
+                                <tr key={task.id} className="border-t">
+                                    <td className="p-3">{indexOfFirtsTask + index + 1}</td>
+                                    <td className="p-3">{task.title?.[i18n.language]}</td>
+                                    <td className="p-3">{rewards.find(r => r.id === task.rewardId)?.name?.[i18n.language]}</td>
+                                    <td className="p-3 text-center">{task.quantityReward}</td>
+                                    <td className="p-3">{task.description?.[i18n.language]}</td>
+                                    <td className="p-3 text-center">
+                                        <button
+                                            className="text-white px-3 py-1 buttonupdate"
+                                            onClick={() => openModal('update', task)}
+                                        >
+                                            <FaEdit className='iconupdate' />
+                                            {t('update', { ns: 'common' })}
+                                        </button>
+                                    </td>
+                                    <td className="p-3 text-center">
+                                        <label className="switch">
+                                            <input type="checkbox" checked={task.isDisabled} onChange={() => handleToggleDisabled(task)} />
+                                            <span className="slider round"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    <div className="flex justify-end items-center mt-4 ml-auto paginations">
+                        <div className="pagination">
                             <button
-                                key={index + 1}
-                                className={`around ${currentPage === index + 1 ? 'active' : ''}`}
-                                onClick={() => paginate(index + 1)}
+                                className="around"
+                                onClick={() => currentPage > 1 && paginate(currentPage - 1)}
+                                disabled={currentPage === 1}
                             >
-                                {index + 1}
+                                &lt;
                             </button>
-                        ))}
-                        <button
-                            className="around"
-                            onClick={() => currentPage < totalPage && paginate(currentPage + 1)}
-                            disabled={currentPage === totalPage}
-                        >
-                            &gt;
-                        </button>
+                            {Array.from({ length: totalPage }, (_, index) => (
+                                <button
+                                    key={index + 1}
+                                    className={`around ${currentPage === index + 1 ? 'active' : ''}`}
+                                    onClick={() => paginate(index + 1)}
+                                >
+                                    {index + 1}
+                                </button>
+                            ))}
+                            <button
+                                className="around"
+                                onClick={() => currentPage < totalPage && paginate(currentPage + 1)}
+                                disabled={currentPage === totalPage}
+                            >
+                                &gt;
+                            </button>
+                        </div>
                     </div>
                 </div>
+
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
@@ -305,7 +310,7 @@ const SystemTask = () => {
                             {errors.rewardId && <div className="error-text">{errors.rewardId}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('quantityReward')} <span style={{ color: 'red' }}>*</span></label>
+                            <label className="titleinput">{t('quantity')} <span style={{ color: 'red' }}>*</span></label>
                             <Input
                                 placeholder={t('inputquantityReward')}
                                 value={editingTask?.quantityReward || ''}
@@ -315,11 +320,11 @@ const SystemTask = () => {
                         </div>
                     </div>
                     <div className="button-row">
-                        <Button type="primary" onClick={handleSave} block>
-                            Save
+                        <Button className="cancel-button" onClick={closeModal} block>
+                            {t('cancel', { ns: 'common' })}
                         </Button>
-                        <Button type="primary" onClick={closeModal} block>
-                            Cancel
+                        <Button className="save-button" onClick={handleSave} block>
+                            {t('save', { ns: 'common' })}
                         </Button>
                     </div>
                 </Modal>

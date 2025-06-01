@@ -32,12 +32,10 @@
     display: flex;
     justify-content: space-between;
     gap: 10px;
-    /* Khoảng cách giữa các ô */
 }
 
 .otp-input {
     width: 48px !important;
-    /* Chiều rộng và chiều cao bằng nhau để tạo hình vuông */
     height: 48px !important;
     text-align: center;
     border: 1px solid #d1d5db;

@@ -15,5 +15,6 @@
     "save": "Save",
     "cancel": "Cancel",
     "searchPlaceholder": "Search",
-    "adminRole": "Admin"
+    "adminRole": "Admin",
+    ".no":"No"
 }

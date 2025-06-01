@@ -15,5 +15,6 @@
     "save": "Lưu",
     "cancel": "Hủy",
     "searchPlaceholder": "Tìm kiếm",
-    "adminRole": "Quản trị viên"
+    "adminRole": "Quản trị viên",
+    ".no": "STT"
 }

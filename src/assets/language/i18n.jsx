@@ -33,6 +33,9 @@ import enConpleteTask from './en/completetask.json';
 
 import viConpleteLesson from './vi/completelesson.json';
 import enConpleteLesson from './en/completelesson.json';
+
+import viLessonDetail from './vi/lessondetail.json';
+import enLessonDetail from './en/lessondetail.json';
 i18next
     .use(LanguageDetector)
     .use(initReactI18next)
@@ -54,6 +57,7 @@ i18next
                 notification: viNotification,
                 completetask: viConpleteTask,
                 completelesson: viConpleteLesson,
+                lessondetail: viLessonDetail,
 
             },
             en: {
@@ -72,6 +76,7 @@ i18next
                 notification: enNotification,
                 completetask: enConpleteTask,
                 completelesson: enConpleteLesson,
+                lessondetail: enLessonDetail
 
             },
         },
@@ -92,7 +97,8 @@ i18next
             'setting',
             'notification',
             'completetask',
-            'completelesson'
+            'completelesson',
+            'lessondetail'
         ], // Danh sách namespace
         defaultNS: 'common', // Namespace mặc định
         fallbackNS: 'common', // Namespace dự phòng

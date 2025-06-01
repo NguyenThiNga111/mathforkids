@@ -9,6 +9,7 @@ import ForgotPasswordPage from './page/ForgotPassword/forgotpassword';
 import ResetPasswordPage from './page/ResetPassword/resetpassword';
 import VerifyPage from './page/verify/verify';
 import LessonPage from './page/Lesson/lesson';
+import LessonDetailPage from './page/LessonDetail/lessondetail';
 import ProfilePage from './page/Profile/profile';
 import SettingPage from './page/Setting/setting';
 import TestSystemPage from './page/TestSystem/testsystem';
@@ -52,6 +53,7 @@ function App() {
               <Route path="account-user" element={<AccountUserPage />} />
               <Route path="rewards" element={<RewardPage />} />
               <Route path="lesson" element={<LessonPage />} />
+              <Route path="lessondetail/:lessonId" element={<LessonDetailPage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="setting" element={<SettingPage />} />
               <Route path="testsystem" element={<TestSystemPage />} />
@@ -59,7 +61,7 @@ function App() {
               <Route path="questiontest" element={<QuestionTestPage />} />
               <Route path="assessment" element={<AssessmentPage />} />
               <Route path="notification" element={<NotificationPage />} />
-              <Route path="exercise" element={<ExercisePage />} />
+              <Route path="/exercise/lessonId/:lessonId" element={<ExercisePage />} />
               <Route path="contact" element={<ContactPage />} />
               <Route path="pupil" element={<PupilPage />} />
               <Route path="completetask" element={<CompleteTaskPage />} />

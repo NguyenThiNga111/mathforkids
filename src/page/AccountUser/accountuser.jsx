@@ -3,9 +3,9 @@ import './accountuser.css';
 import Navbar from "../../component/Navbar";
 import { Input, Button, Select, Modal, DatePicker, message } from 'antd';
 import moment from 'moment';
-import { Imgs } from "../../assets/theme/images";
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
+import { FaMars, FaVenus, FaCrown, FaGraduationCap, FaUsers, FaUserGraduate, FaEdit } from 'react-icons/fa';
 import api from '../../assets/api/Api';
 
 const AccountUser = () => {
@@ -24,6 +24,7 @@ const AccountUser = () => {
     const { t, i18n } = useTranslation(['account', 'common']);
     const { Option } = Select;
     const userPerPage = 10;
+
     useEffect(() => {
         fetchUsers();
     }, []);
@@ -31,11 +32,10 @@ const AccountUser = () => {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const response = await api.get('/user'); // Thay bằng URL thật
-            const responsepupil = await api.get('/pupil'); // Thay bằng URL thật
+            const response = await api.get('/user');
+            const responsepupil = await api.get('/pupil');
             setUserData(response.data);
             setPupilData(responsepupil.data);
-            console.log("dau", userData);
         } catch (error) {
             toast.error(t('errorFetchData', { ns: 'common' }), {
                 position: 'top-right',
@@ -45,6 +45,7 @@ const AccountUser = () => {
             setLoading(false);
         }
     };
+
     const handleSave = async () => {
         if (validateForm()) {
             try {
@@ -55,9 +56,9 @@ const AccountUser = () => {
                         autoClose: 2000,
                     });
                 } else {
-                    const reponse = await api.post(`/user`, edittingUser);
-                    const newuser = reponse.data.id;
-                    await api.put(`/user/${newuser}`, { isVerify: true })
+                    const response = await api.post(`/user`, edittingUser);
+                    const newuser = response.data.id;
+                    await api.put(`/user/${newuser}`, { isVerify: true });
                     toast.success(t('addSuccess', { ns: 'common' }), {
                         position: 'top-right',
                         autoClose: 2000,
@@ -77,11 +78,11 @@ const AccountUser = () => {
                 autoClose: 2000,
             });
         }
-    }
+    };
+
     const handleToggleDisabled = async (user) => {
         try {
-            const updatedUser = { ...user, isDisabled: !user.isDisabled };
-            await api.put(`/user/disable/${user.id}`, updatedUser);
+            await api.put(`/user/${user.id}`, { isDisabled: !user.isDisabled });
             toast.success(t('updateSuccess', { ns: 'common' }), {
                 position: 'top-right',
                 autoClose: 2000,
@@ -94,6 +95,7 @@ const AccountUser = () => {
             });
         }
     };
+
     const validateForm = () => {
         const newErrors = {};
         if (!edittingUser?.phoneNumber || !/^\d{10}$/.test(edittingUser.phoneNumber)) {
@@ -134,12 +136,13 @@ const AccountUser = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-
     const formatFirebaseTimestamp = (timestamp) => {
         if (!timestamp || !timestamp.seconds) return '';
-        const date = new Date(timestamp.seconds * 1000); // Convert seconds to milliseconds
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+        const date = new Date(timestamp.seconds * 1000);
+        const day = String(date.getDate()).padStart
+
+            (2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = date.getFullYear();
         return `${day}/${month}/${year}`;
     };
@@ -150,10 +153,8 @@ const AccountUser = () => {
         } else if (mode === 'update' && user) {
             let formattedDOB = '';
             if (user.dateOfBirth?.seconds) {
-                // Nếu là timestamp Firebase
                 formattedDOB = moment(user.dateOfBirth.seconds * 1000).format('YYYY/MM/DD');
             } else if (typeof user.dateOfBirth === 'string') {
-                // Nếu đã là chuỗi string
                 formattedDOB = moment(user.dateOfBirth).isValid() ? moment(user.dateOfBirth).format('YYYY/MM/DD') : '';
             }
             setEditingUser({ ...user, dateOfBirth: formattedDOB });
@@ -161,12 +162,9 @@ const AccountUser = () => {
         setIsModalOpen(true);
     };
 
-
-
     const openDetailModal = (user) => {
         const userPupils = pupilData.filter((pupil) => pupil.userId === user.id);
         setSelectedUserDetail({ ...user, children: userPupils });
-        console.log("ied", selectedUserDetail);
         setDetailModalOpen(true);
     };
 
@@ -177,7 +175,7 @@ const AccountUser = () => {
 
     const closeModal = () => {
         setIsModalOpen(false);
-        setErrors('');
+        setErrors({});
     };
 
     const filteredUsers = userData.filter(user => {
@@ -190,26 +188,49 @@ const AccountUser = () => {
                     : user.isDisabled === true;
         return matchStatus && matchRole;
     });
+
     const indexOfLastUser = currentPage * userPerPage;
-    const indexOfFirtsUser = indexOfLastUser - userPerPage;
-    const currentUsers = filteredUsers.slice(indexOfFirtsUser, indexOfLastUser);
+    const indexOfFirstUser = indexOfLastUser - userPerPage;
+    const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
     const totalPage = Math.ceil(filteredUsers.length / userPerPage);
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+    const renderGenderIcon = (gender) => {
+        if (gender.toLowerCase() === 'male') {
+            return <FaMars className="gender-icon" style={{ color: '#35A6FF' }} />;
+        } else if (gender.toLowerCase() === 'female') {
+            return <FaVenus className="gender-icon" style={{ color: '#FF1493' }} />;
+        }
+        return null;
+    };
+
+    const renderRoleIcon = (role) => {
+        switch (role.toLowerCase()) {
+            case 'admin':
+                return <FaCrown className="role-icon" style={{ color: '#FFF82A' }} />;
+            case 'pupil':
+                return <FaGraduationCap className="role-icon" style={{ color: '#1EFF37' }} />;
+            case 'user':
+                return <FaUsers className="role-icon" style={{ color: '#9b59b6' }} />;
+            default:
+                return null;
+        }
+    };
+
     return (
-        <div className="container">
+        <div className="containers">
             <Navbar />
-            <div className="container-content">
-                <h1 className="container-title">{t('managementAccountUser')}</h1>
-                <div className="flex justify-between items-center mb-4">
+            <h1 className="container-title">{t('managementAccountUser')}</h1>
+            <div className="containers-content">
+                <div className="flex justify-between items-center mb-2">
                     <div className="filter-bar">
                         <div className="filter-container">
                             <div className="filter-containers">
                                 <span className="filter-icon">
                                     <svg
                                         className="iconfilter"
-                                        width="16"
-                                        height="16"
+                                        width="20"
+                                        height="20"
                                         viewBox="0 0 24 24"
                                         fill="none"
                                         stroke="currentColor"
@@ -218,10 +239,10 @@ const AccountUser = () => {
                                         strokeLinejoin="round">
                                         <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
                                     </svg>
+                                    <button className="filter-text">
+                                        {t('filterBy', { ns: 'common' })}
+                                    </button>
                                 </span>
-                                <button className="filter-text">
-                                    {t('filterBy', { ns: 'common' })}
-                                </button>
                                 <select
                                     className="filter-dropdown"
                                     value={selectedRole}
@@ -231,7 +252,6 @@ const AccountUser = () => {
                                     <option value="user">{t('roleUser')}</option>
                                     <option value="admin">{t('roleAdmin')}</option>
                                 </select>
-
                                 <select
                                     className="filter-dropdown"
                                     value={filterStatus}
@@ -244,105 +264,103 @@ const AccountUser = () => {
                                     <option value="yes">{t('yes', { ns: 'common' })}</option>
                                     <option value="no">{t('no', { ns: 'common' })}</option>
                                 </select>
-                                <button className="export-button">
-                                    {t('exportFile', { ns: 'common' })}
-                                </button>
                             </div>
                         </div>
                         <button
-                            className="bg-blue-500 text-white px-4 py-2 rounded-add"
+                            className="bg-blue-500 px-4 py-2 rounded-add"
                             onClick={() => openModal('add')}
                         >
                             + {t('addNew', { ns: 'common' })}
                         </button>
                     </div>
                 </div>
-                <table className="w-full bg-white shadow-md rounded-lg">
-                    <thead>
-                        <tr className="bg-gray-200 text-left">
-                            <th className="p-3">{t('fullName')}</th>
-                            <th className="p-3">{t('email')}</th>
-                            <th className="p-3">{t('address')}</th>
-                            <th className="p-3">{t('numberPhone')}</th>
-                            <th className="p-3">{t('dateOfBirth')}</th>
-                            <th className="p-3">{t('gender')}</th>
-                            <th className="p-3">{t('role')}</th>
-                            <th className="p-3">{t('action', { ns: 'common' })}</th>
-                            <th className="p-3">{t('available', { ns: 'common' })}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {currentUsers.map((user) => (
-                            <tr key={user.id} className="border-t">
-                                <td className="p-3">{user.fullName}</td>
-                                <td className="p-3">{user.email}</td>
-                                <td className="p-3">{user.address}</td>
-                                <td className="p-3">{user.phoneNumber}</td>
-                                <td className="p-3">{formatFirebaseTimestamp(user.dateOfBirth)}</td>
-                                <td className="p-3">{user.gender}</td>
-                                <td className="p-3">{user.role}</td>
-                                <td className="p-3 ">
-                                    <div className='buttonaction'>
-                                        <button
-                                            className="text-white px-3 py-1 buttonupdate"
-                                            onClick={() => openModal('update', user)}>
-                                            <img className='iconupdate' src={Imgs.edit} />
-                                            {t('update', { ns: 'common' })}
-                                        </button>
-                                        <button
-                                            className="text-white px-3 py-1 buttonupdate"
-                                            onClick={() => openDetailModal(user)}>
-                                            <img className='iconupdate' src={Imgs.pupilwhite} />
-                                            {t('pupil')}
-                                        </button>
-                                    </div>
-                                </td>
-                                <td className="p-3">
-                                    <label className="switch">
-                                        <input
-                                            type="checkbox"
-                                            checked={user.isDisabled}
-                                            onChange={() => handleToggleDisabled(user)}
-                                        />
-                                        <span className="slider round"></span>
-                                    </label>
-                                </td>
+                <div className="table-container-user">
+                    <table className="w-full bg-white shadow-md rounded-lg">
+                        <thead>
+                            <tr className="bg-gray-200 text-left">
+                                <th className="p-3">{t('.no', { ns: 'common' })}</th>
+                                <th className="p-3">{t('fullName')}</th>
+                                <th className="p-3">{t('email')}</th>
+                                <th className="p-3">{t('numberPhone')}</th>
+                                <th className="p-3 text-center">{t('gender')}</th>
+                                <th className="p-3 text-center">{t('role')}</th>
+                                <th className="p-3 text-center">{t('action', { ns: 'common' })}</th>
+                                <th className="p-3 text-center">{t('available', { ns: 'common' })}</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-                <div className="flex justify-end items-center mt-4 ml-auto paginations">
-                    <div className="pagination">
-                        <button
-                            className="around"
-                            onClick={() => currentPage > 1 && paginate(currentPage - 1)}
-                            disabled={currentPage === 1}
-                        >
-                            &lt;
-                        </button>
-                        {Array.from({ length: totalPage }, (_, index) => (
-                            <button
-                                key={index + 1}
-                                className={`around ${currentPage === index + 1 ? 'active' : ''}`}
-                                onClick={() => paginate(index + 1)}
-                            >
-                                {index + 1}
-                            </button>
-                        ))}
-                        <button
-                            className="around"
-                            onClick={() => currentPage < totalPage && paginate(currentPage + 1)}
-                            disabled={currentPage === totalPage}
-                        >
-                            &gt;
-                        </button>
-                    </div>
+                        </thead>
+                        <tbody>
+                            {currentUsers.map((user, index) => (
+                                <tr key={user.id} className="border-t">
+                                    <td className="p-3">{indexOfFirstUser + index + 1}</td>
+                                    <td className="p-3">{user.fullName}</td>
+                                    <td className="p-3">{user.email}</td>
+                                    <td className="p-3">{user.phoneNumber}</td>
+                                    <td className="p-3 text-center">{renderGenderIcon(user.gender)}</td>
+                                    <td className="p-3 text-center">{renderRoleIcon(user.role)}</td>
 
+                                    <td className="p-3">
+                                        <div className='buttonaction'>
+                                            <button
+                                                className="text-white px-3 py-1 buttonupdate"
+                                                onClick={() => openModal('update', user)}>
+                                                <FaEdit className='iconupdate' />
+                                                {t('update', { ns: 'common' })}
+                                            </button>
+                                            <button
+                                                className="text-white px-3 py-1 buttondetail"
+                                                onClick={() => openDetailModal(user)}>
+                                                <FaUserGraduate className='iconupdate' />
+                                                {t('pupil')}
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td className="p-3 text-center">
+                                        <label className="switch">
+                                            <input
+                                                type="checkbox"
+                                                checked={user.isDisabled}
+                                                onChange={() => handleToggleDisabled(user)}
+                                            />
+                                            <span className="slider round"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    <div className="flex justify-end items-center mt-4 ml-auto paginations">
+                        <div className="pagination">
+                            <button
+                                className="around"
+                                onClick={() => currentPage > 1 && paginate(currentPage - 1)}
+                                disabled={currentPage === 1}
+                            >
+                                &lt;
+                            </button>
+                            {Array.from({ length: totalPage }, (_, index) => (
+                                <button
+                                    key={index + 1}
+                                    className={`around ${currentPage === index + 1 ? 'active' : ''}`}
+                                    onClick={() => paginate(index + 1)}
+                                >
+                                    {index + 1}
+                                </button>
+                            ))}
+                            <button
+                                className="around"
+                                onClick={() => currentPage < totalPage && paginate(currentPage + 1)}
+                                disabled={currentPage === totalPage}
+                            >
+                                &gt;
+                            </button>
+                        </div>
+                    </div>
                 </div>
+
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
-                            {t('pupil')}
+                            {t('userdetail')}
                         </div>
                     }
                     open={detailModalOpen}
@@ -350,34 +368,74 @@ const AccountUser = () => {
                     footer={null}
                     className="modal-content"
                 >
-                    {selectedUserDetail?.children?.length > 0 ? (
-                        <table className="w-full bg-white shadow-md rounded-lg">
-                            <thead>
-                                <tr className="bg-gray-200 text-left">
-                                    <th className="p-2"></th>
-                                    <th className="p-2">{t('nickName')}</th>
-                                    <th className="p-2">{t('dateOfBirth')}</th>
-                                    <th className="p-2">{t('grade')}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {selectedUserDetail.children.map((child, index) => (
-                                    <tr key={index} className="border-t">
-                                        <td className="p-3">
-                                            <img src={child.image || 'https://i.pravatar.cc/100'} alt={child.nickName} width="50" height="50" style={{ objectFit: 'cover', borderRadius: '50px', border: '2px solid #ccc' }} />
-                                        </td>
-                                        <td className="p-2">{child.nickName}</td>
-                                        <td className="p-2">{formatFirebaseTimestamp(child.dateOfBirth)}</td>
-                                        <td className="p-2">{child.grade}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    {selectedUserDetail ? (
+                        <div className="pupil-detail-content">
+                            <div className="user-detail-section">
+                                <div className="user-detail-row">
+                                    <span className="user-detail-label">{t('fullName')}:</span>
+                                    <span className="user-detail-value">{selectedUserDetail.fullName}</span>
+                                </div>
+                                <div className="user-detail-row">
+                                    <span className="user-detail-label">{t('email')}:</span>
+                                    <span className="user-detail-value">{selectedUserDetail.email}</span>
+                                </div>
+                                <div className="user-detail-row">
+                                    <span className="user-detail-label">{t('numberPhone')}:</span>
+                                    <span className="user-detail-value">{selectedUserDetail.phoneNumber}</span>
+                                </div>
+                                <div className="user-detail-row">
+                                    <span className="user-detail-label">{t('dateOfBirth')}:</span>
+                                    <span className="user-detail-value">{formatFirebaseTimestamp(selectedUserDetail.dateOfBirth)}</span>
+                                </div>
+                                <div className="user-detail-row">
+                                    <span className="user-detail-label">{t('address')}:</span>
+                                    <span className="user-detail-value">{selectedUserDetail.address}</span>
+                                </div>
+                                <div className="user-detail-row">
+                                    <span className="user-detail-label">{t('gender')}:</span>
+                                    <span className="user-detail-value">{renderGenderIcon(selectedUserDetail.gender)}
+                                    </span>
+                                </div>
+                                <div className="user-detail-row">
+                                    <span className="user-detail-label">{t('role')}:</span>
+                                    <span className="user-detail-value"> {renderRoleIcon(selectedUserDetail.role)}
+                                    </span>
+                                </div>
+                            </div>
+                            <h3 style={{ textAlign: 'center', fontSize: '24px' }}>{t('pupil')}</h3>
+                            {selectedUserDetail.children?.length > 0 ? (
+                                <table className="w-full bg-white shadow-md rounded-lg">
+                                    <thead>
+                                        <tr className="bg-gray-200 text-left">
+                                            <th className="p-2">{t('no', { ns: 'common' })}</th>
+                                            <th className="p-2">{t('image')}</th>
+                                            <th className="p-2">{t('nickName')}</th>
+                                            <th className="p-2">{t('dateOfBirth')}</th>
+                                            <th className="p-2 text-center">{t('grade')}</ th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {selectedUserDetail.children.map((child, index) => (
+                                            <tr key={index} className="border-t">
+                                                <td className="p-3">{indexOfFirstUser + index + 1}</td>
+                                                <td className="p-3">
+                                                    <img src={child.image || 'https://i.pravatar.cc/100'} alt={child.nickName} width="50" height="50" style={{ objectFit: 'cover', borderRadius: '50px', border: '2px solid #ccc' }} />
+                                                </td>
+                                                <td className="p-2">{child.nickName}</td>
+                                                <td className="p-2">{formatFirebaseTimestamp(child.dateOfBirth)}</td>
+                                                <td className="p-2 text-center">{child.grade}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <p>{t('noPupilProfile')}</p>
+                            )}
+                        </div>
                     ) : (
-                        <p>Parents have not created a profile for the pupil</p> 
+                        <p>{t('noUserData')}</p>
                     )}
                 </Modal>
-
 
                 <Modal
                     title={
@@ -435,7 +493,7 @@ const AccountUser = () => {
                                 style={{ width: '100%', height: '50px' }}
                                 defaultValue={moment()}
                                 value={edittingUser?.dateOfBirth ? moment(edittingUser.dateOfBirth, 'YYYY/MM/DD') : null}
-                                onChange={(date) => setEditingUser({ ...edittingUser, dateOfBirth: date.format('YYYY/MM/DD') })}
+                                onChange={(date) => setEditingUser({ ...edittingUser, dateOfBirth: date ? date.format('YYYY/MM/DD') : '' })}
                             />
                             {errors.dateOfBirth && <div className="error-text">{errors.dateOfBirth}</div>}
                         </div>
@@ -467,16 +525,16 @@ const AccountUser = () => {
                         </div>
                     </div>
                     <div className="button-row">
-                        <Button type="primary" onClick={handleSave} block>
-                            {t('save', { ns: 'common' })}
-                        </Button>
-                        <Button type="primary" onClick={closeModal} block>
+                        <Button className="cancel-button" onClick={closeModal} block>
                             {t('cancel', { ns: 'common' })}
+                        </Button>
+                        <Button className="save-button" onClick={handleSave} block>
+                            {t('save', { ns: 'common' })}
                         </Button>
                     </div>
                 </Modal>
             </div>
-        </div >
+        </div>
     );
 };
 

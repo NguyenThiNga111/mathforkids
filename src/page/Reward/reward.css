@@ -1,3 +1,9 @@
+.table-container-reward {
+    max-height: 520px;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
 .image-upload-container {
     display: flex;
     align-items: center;
@@ -7,14 +13,18 @@
 
 .custom-upload-button {
     border: 1px solid #1890ff;
-    color: #1890ff;
     height: 50px;
-    background: #f0faff;
+    background: #FFA500;
     padding: 10px 16px;
     display: flex;
     align-items: center;
     gap: 8px;
     border-radius: 8px;
+}
+
+.custom-upload-button:hover {
+    color: #FFA500 !important;
+    background: #FFFFFF !important;
 }
 
 .image-preview-box {
@@ -34,4 +44,35 @@
     max-height: 100%;
     border-radius: 8px;
     object-fit: contain;
+}
+
+/* Optional: Specific column widths */
+.table-container-reward th:nth-child(1),
+.table-container-reward td:nth-child(1) {
+    width: 80px;
+}
+
+.table-container-reward th:nth-child(2),
+.table-container-reward td:nth-child(2) {
+    max-width: 220px;
+}
+
+.table-container-reward th:nth-child(3),
+.table-container-reward td:nth-child(3) {
+    max-width: 300px;
+}
+
+.table-container-reward th:nth-child(4),
+.table-container-reward td:nth-child(4) {
+    max-width: 150px;
+}
+
+.table-container-reward th:nth-child(5),
+.table-container-reward td:nth-child(5) {
+    max-width: 150px;
+}
+
+.table-container-reward th:nth-child(6),
+.table-container-reward td:nth-child(6) {
+    max-width: 100px;
 }

@@ -3,3 +3,71 @@
     overflow-x: auto;
     scrollbar-width: none;
 }
+
+.table-container-notification {
+    max-height: 520px;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.table-container-notification table {
+    width: 100%;
+    border-collapse: collapse;
+    /* Ensure borders are clean */
+}
+
+.table-container-notification th,
+.table-container-notification td {
+    padding: 12px;
+    /* Match your existing padding (p-3) */
+    text-align: left;
+    /* Default alignment */
+    white-space: normal;
+    /* Allow text to wrap */
+    word-wrap: break-word;
+    /* Break long words */
+    overflow-wrap: break-word;
+    /* Modern equivalent of word-wrap */
+    max-width: 200px;
+    /* Adjust this value based on your design */
+}
+
+/* Center text for specific columns */
+
+
+/* Specific column widths */
+.table-container-notification th:nth-child(1),
+.table-container-notification td:nth-child(1) {
+    max-width: 50px;
+    /* title */
+}
+
+.table-container-notification th:nth-child(2),
+.table-container-notification td:nth-child(2) {
+    max-width: 200px;
+    /* sender */
+}
+
+.table-container-notification th:nth-child(3),
+.table-container-notification td:nth-child(3) {
+    max-width: 200px;
+    /* content */
+}
+
+.table-container-notification th:nth-child(4),
+.table-container-notification td:nth-child(4) {
+    max-width: 300px;
+    /* createdAt */
+}
+
+.table-container-notification th:nth-child(5),
+.table-container-notification td:nth-child(5) {
+    max-width: 150px;
+    /* status */
+}
+
+.table-container-notification th:nth-child(6),
+.table-container-notification td:nth-child(6) {
+    max-width: 100px;
+    /* action */
+}

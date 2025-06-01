@@ -1,14 +1,14 @@
 import { useState, useContext, useEffect } from 'react';
-import './reward.css';
-import Navbar from "../../component/Navbar";
 import { Input, Button, Modal } from 'antd';
-import axios from 'axios';
+import { FaEdit, FaBook } from 'react-icons/fa';
 import { UploadOutlined } from '@ant-design/icons';
 import { Upload } from 'antd';
 import { Imgs } from "../../assets/theme/images";
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import api from '../../assets/api/Api';
+import './reward.css';
+import Navbar from "../../component/Navbar";
 
 const Rewards = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,8 +46,11 @@ const Rewards = () => {
                 const formData = new FormData();
                 formData.append('name', JSON.stringify(editingReward.name));
                 formData.append('description', JSON.stringify(editingReward.description));
-                formData.append("image", editingReward.image); // This is File
+                if (fileList[0]?.originFileObj) {
+                    formData.append('image', fileList[0].originFileObj);
+                }
 
+                // formData.append("image", editingReward.image); // This is File
                 if (editingReward.id) {
                     await api.put(`/reward/${editingReward.id}`, formData, {
                         headers: {
@@ -87,20 +90,15 @@ const Rewards = () => {
 
     const handleToggleAvailable = async (reward) => {
         try {
-            const updatedReward = {
-                ...reward,
-                isDisabled: !reward.isDisabled,
-            };
-            await api.put(`/reward/disable/${reward.id}`, {
-                ...updatedReward,
-                isDisabled: updatedReward.isDisabled,
-            });
+            await api.put(`/reward/${reward.id}`, { isDisabled: !reward.isDisabled });
             toast.success(t('updateSuccess', { ns: 'common' }), {
                 position: 'top-right',
                 autoClose: 2000,
             });
             setRewards((prev) =>
-                prev.map((r) => (r.id === reward.id ? { ...r, isDisabled: updatedReward.isDisabled } : r))
+                prev.map((e) =>
+                    e.id === reward.id ? { ...e, isDisabled: !reward.isDisabled } : e
+                )
             );
         } catch (error) {
             toast.error(t('validationFailed', { ns: 'common' }), {
@@ -158,13 +156,17 @@ const Rewards = () => {
             };
             reader.readAsDataURL(fileObj);
 
+            // Cập nhật fileList để Upload hiển thị đúng ảnh
             setFileList([info.fileList[info.fileList.length - 1]]);
+
+            // Cập nhật file vào state editingReward
             setEditingReward(prev => ({
                 ...prev,
-                image: fileObj // Gán object thực tế, không phải file.name
+                image: fileObj
             }));
         }
     };
+
 
     const filteredRewards = rewards.filter(reward => {
         const matchStatus =
@@ -193,32 +195,31 @@ const Rewards = () => {
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     return (
-        <div className="container">
+        <div className="containers">
             <Navbar />
-            <div className="container-content">
-                <h1 className="container-title">{t('managementReward')}</h1>
-                <div className="flex justify-between items-center mb-4">
+            <h1 className="container-title">{t('managementReward')}</h1>
+            <div className="containers-content">
+                <div className="flex justify-between items-center mb-2">
                     <div className="filter-bar">
                         <div className="filter-container">
                             <div className="filter-containers">
                                 <span className="filter-icon">
                                     <svg
                                         className="iconfilter"
-                                        width="16"
-                                        height="16"
+                                        width="20"
+                                        height="20"
                                         viewBox="0 0 24 24"
                                         fill="none"
                                         stroke="currentColor"
                                         strokeWidth="2"
                                         strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
+                                        strokeLinejoin="round">
                                         <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
                                     </svg>
+                                    <button className="filter-text">
+                                        {t('filterBy', { ns: 'common' })}
+                                    </button>
                                 </span>
-                                <button className="filter-text">
-                                    {t('filterBy', { ns: 'common' })}
-                                </button>
                                 <select
                                     className="filter-dropdown"
                                     value={filterAlphabet}
@@ -243,87 +244,89 @@ const Rewards = () => {
                                     <option value="yes">{t('yes', { ns: 'common' })}</option>
                                     <option value="no">{t('no', { ns: 'common' })}</option>
                                 </select>
-                                <button className="export-button">
-                                    {t('exportFile', { ns: 'common' })}
-                                </button>
                             </div>
                         </div>
                         <button
-                            className="bg-blue-500 text-white px-8 py-2 rounded-add"
+                            className="bg-blue-500 px-4 py-2 rounded-add"
                             onClick={() => openModal('add')}
                         >
                             + {t('addNew', { ns: 'common' })}
                         </button>
                     </div>
                 </div>
-                <table className="w-full bg-white shadow-md rounded-lg">
-                    <thead>
-                        <tr className="bg-gray-200 text-left">
-                            <th className="p-3">{t('name')}</th>
-                            <th className="p-3">{t('description')}</th>
-                            <th className="p-3">{t('image')}</th>
-                            <th className="p-3">{t('action', { ns: 'common' })}</th>
-                            <th className="p-3">{t('available', { ns: 'common' })}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {currentRewards.map((reward) => (
-                            <tr key={reward.id} className="border-t">
-                                <td className="p-3">{reward.name?.[i18n.language]}</td>
-                                <td className="p-3">{reward.description?.[i18n.language]}</td>
-                                <td className="p-3">
-                                    <img src={reward.image} alt={reward.name?.[i18n.language]} width="150" height="150" style={{ objectFit: 'cover', borderRadius: '8px' }} />
-                                </td>
-                                <td className="p-3">
-                                    <button
-                                        className="text-white px-3 py-1 buttonupdate"
-                                        onClick={() => openModal('update', reward)}>
-                                        <img className='iconupdate' src={Imgs.edit} />
-                                        {t('update', { ns: 'common' })}
-                                    </button>
-                                </td>
-                                <td className="p-3">
-                                    <label className="switch">
-                                        <input
-                                            type="checkbox"
-                                            checked={reward.isDisabled}
-                                            onChange={() => handleToggleAvailable(reward)}
-                                        />
-                                        <span className="slider round"></span>
-                                    </label>
-                                </td>
+                <div className="table-container-reward">
+                    <table className="w-full bg-white shadow-md rounded-lg">
+                        <thead>
+                            <tr className="bg-gray-200 text-left">
+                                <th className="p-3">{t('.no', { ns: 'common' })}</th>
+                                <th className="p-3">{t('name')}</th>
+                                <th className="p-3">{t('description')}</th>
+                                <th className="p-3 text-center">{t('image')}</th>
+                                <th className="p-3 text-center">{t('action', { ns: 'common' })}</th>
+                                <th className="p-3 text-center">{t('available', { ns: 'common' })}</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {currentRewards.map((reward, index) => (
+                                <tr key={reward.id} className="border-t">
+                                    <td className="p-3">{indexOfFirtsReward + index + 1}</td>
+                                    <td className="p-3">{reward.name?.[i18n.language]}</td>
+                                    <td className="p-3">{reward.description?.[i18n.language]}</td>
+                                    <td className="p-3 text-center">
+                                        <img src={reward.image} alt={reward.name?.[i18n.language]} width="150" height="150" style={{ objectFit: 'cover', borderRadius: '8px' }} />
+                                    </td>
+                                    <td className="p-3 text-center">
+                                        <button
+                                            className="text-white px-3 py-1 buttonupdate"
+                                            onClick={() => openModal('update', reward)}>
+                                            <FaEdit className='iconupdate' />
+                                            {t('update', { ns: 'common' })}
+                                        </button>
+                                    </td>
+                                    <td className="p-3 text-center">
+                                        <label className="switch">
+                                            <input
+                                                type="checkbox"
+                                                checked={reward.isDisabled}
+                                                onChange={() => handleToggleAvailable(reward)}
+                                            />
+                                            <span className="slider round"></span>
+                                        </label>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
 
-                <div className="flex justify-end items-center mt-4 ml-auto paginations">
-                    <div className="pagination">
-                        <button
-                            className="around"
-                            onClick={() => currentPage > 1 && paginate(currentPage - 1)}
-                            disabled={currentPage === 1}
-                        >
-                            &lt;
-                        </button>
-                        {Array.from({ length: totalPage }, (_, index) => (
+                    <div className="flex justify-end items-center mt-4 ml-auto paginations">
+                        <div className="pagination">
                             <button
-                                key={index + 1}
-                                className={`around ${currentPage === index + 1 ? 'active' : ''}`}
-                                onClick={() => paginate(index + 1)}
+                                className="around"
+                                onClick={() => currentPage > 1 && paginate(currentPage - 1)}
+                                disabled={currentPage === 1}
                             >
-                                {index + 1}
+                                &lt;
                             </button>
-                        ))}
-                        <button
-                            className="around"
-                            onClick={() => currentPage < totalPage && paginate(currentPage + 1)}
-                            disabled={currentPage === totalPage}
-                        >
-                            &gt;
-                        </button>
+                            {Array.from({ length: totalPage }, (_, index) => (
+                                <button
+                                    key={index + 1}
+                                    className={`around ${currentPage === index + 1 ? 'active' : ''}`}
+                                    onClick={() => paginate(index + 1)}
+                                >
+                                    {index + 1}
+                                </button>
+                            ))}
+                            <button
+                                className="around"
+                                onClick={() => currentPage < totalPage && paginate(currentPage + 1)}
+                                disabled={currentPage === totalPage}
+                            >
+                                &gt;
+                            </button>
+                        </div>
                     </div>
                 </div>
+
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
@@ -395,7 +398,7 @@ const Rewards = () => {
                                         description: { ...editingReward.description, vi: e.target.value },
                                     })
                                 }
-                                rows={2}
+                                rows={4}
                             />
                             {errors.descriptionVi && <div className="error-text">{errors.descriptionVi}</div>}
                         </div>
@@ -410,17 +413,17 @@ const Rewards = () => {
                                         description: { ...editingReward.description, en: e.target.value },
                                     })
                                 }
-                                rows={2}
+                                rows={4}
                             />
                             {errors.descriptionEn && <div className="error-text">{errors.descriptionEn}</div>}
                         </div>
                     </div>
                     <div className="button-row">
-                        <Button type="primary" onClick={handleSave} block>
-                            {t('save', { ns: 'common' })}
-                        </Button>
-                        <Button type="primary" onClick={closeModal} block>
+                        <Button className="cancel-button" onClick={closeModal} block>
                             {t('cancel', { ns: 'common' })}
+                        </Button>
+                        <Button className="save-button" onClick={handleSave} block>
+                            {t('save', { ns: 'common' })}
                         </Button>
                     </div>
                 </Modal>

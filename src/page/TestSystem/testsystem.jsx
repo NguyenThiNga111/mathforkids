@@ -9,32 +9,6 @@ import './testsystem.css';
 
 const { Option } = Select;
 
-const testSystemData = [
-  {
-    id: 1,
-    lessonId: 2,
-    pupilId: 5,
-    levelId: 3,
-    point: 85,
-    duration: 300
-  },
-  {
-    id: 2,
-    lessonId: 2,
-    pupilId: 5,
-    levelId: 3,
-    point: 85,
-    duration: 300
-  },
-  {
-    id: 3,
-    lessonId: 2,
-    pupilId: 5,
-    levelId: 3,
-    point: 85,
-    duration: 300
-  },
-]
 const TestSystem = () => {
   const { t, i18n } = useTranslation(['testsystem', 'common']);
   const [testSystems, setTestSystems] = useState([]);
@@ -46,12 +20,14 @@ const TestSystem = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState('');
   const [selectedPoint, setSelectedPoint] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const userPerPage = 10;
 
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     fetchAllData();
-    // setTestSystems(testSystemData);
   }, []);
 
   const fetchAllData = async () => {
@@ -81,31 +57,38 @@ const TestSystem = () => {
     const pointMatch = selectedPoint === '' || test.point === Number(selectedPoint);
     return levelMatch && pointMatch;
   });
+
+  const indexOfLastUser = currentPage * userPerPage;
+  const indexOfFirtsUser = indexOfLastUser - userPerPage;
+  const currentUsers = filteredTests.slice(indexOfFirtsUser, indexOfLastUser);
+  const totalPage = Math.ceil(filteredTests.length / userPerPage);
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
   return (
-    <div className="container">
+    <div className="containers">
       <Navbar />
-      <div className="container-content">
-        <h1 className="container-title">{t('managementTestSystem')}</h1>
-        <div className="flex justify-between items-center mb-4">
+      <h1 className="container-title">{t('managementTestSystem')}</h1>
+      <div className="containers-content">
+        <div className="flex justify-between items-center mb-2">
           <div className="filter-bar">
             <div className="filter-container">
               <div className="filter-containers">
                 <span className="filter-icon">
                   <svg
                     className="iconfilter"
-                    width="16"
-                    height="16"
+                    width="20"
+                    height="20"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
                     strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
+                    strokeLinejoin="round">
                     <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
                   </svg>
+                  <button className="filter-text">
+                    {t('filterBy', { ns: 'common' })}
+                  </button>
                 </span>
-                <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
                 <select
                   className="filter-dropdown"
                   value={selectedLevel}
@@ -114,7 +97,7 @@ const TestSystem = () => {
                   <option value="">{t('level')}</option>
                   {levelactive.map((level) => (
                     <option key={level.id} value={level.id}>
-                      {level.name}
+                      {level.name?.[i18n.language]}
                     </option>
                   ))}
                 </select>
@@ -129,144 +112,65 @@ const TestSystem = () => {
                   <option value="90">90</option>
                   <option value="100">100</option>
                 </select>
-
-                <button className="export-button">{t('exportFile', { ns: 'common' })}</button>
               </div>
             </div>
-            {/* <button
-              className="bg-blue-500 text-white px-4 py-2 rounded-add"
-              onClick={() => openModal('add')}
-            >
-              + {t('addNew', { ns: 'common' })}
-            </button> */}
           </div>
         </div>
 
-        <table className="w-full bg-white shadow-md rounded-lg">
-          <thead>
-            <tr className="bg-gray-200 text-left">
-              <th className="p-3">{t('lessonName')}</th>
-              <th className="p-3">{t('pupilld')}</th>
-              <th className="p-3">{t('level')}</th>
-              <th className="p-3">{t('point')}</th>
-              <th className="p-3">{t('duration')}</th>
-              {/* <th className="p-3">{t('action', { ns: 'common' })}</th>
-              <th className="p-3">{t('available', { ns: 'common' })}</th> */}
-            </tr>
-          </thead>
-          <tbody>
-            {filteredTests.map((test) => (
-              <tr key={test.id} className="border-t">
-                <td className="p-3">{lessons.find(l => l.id === test.lessonId)?.name?.[i18n.language]}</td>
-                <td className="p-3">{pupils.find(p => p.id === test.pupilId)?.fullName}</td>
-                <td className="p-3">{levels.find(l => l.id === test.levelId)?.name}</td>
-                <td className="p-3">{test.point}</td>
-                <td className="p-3">{test.duration}s</td>
-                {/* <td className="p-3">
-                  <button
-                    className="text-white px-3 py-1 buttonupdate"
-                    onClick={() => openModal('update', test)}
-                  >
-                    <img className="iconupdate" src={Imgs.edit} alt="Edit" />
-                    {t('update', { ns: 'common' })}
-                  </button>
-                </td>
-                <td className="p-3">
-                  <label className="switch">
-                    <input type="checkbox" checked={test.available} readOnly />
-                    <span className="slider round"></span>
-                  </label>
-                </td> */}
+        <div className="table-container-test">
+          <table className="w-full bg-white shadow-md rounded-lg">
+            <thead>
+              <tr className="bg-gray-200 text-left">
+                <th className="p-3">{t('.no', { ns: 'common' })}</th> {/* New No column */}
+                <th className="p-3">{t('lessonName')}</th>
+                <th className="p-3">{t('pupilld')}</th>
+                <th className="p-3">{t('level')}</th>
+                <th className="p-3">{t('point')}</th>
+                <th className="p-3">{t('duration')}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* <Modal
-          title={
-            <div style={{ textAlign: 'center', fontSize: '24px' }}>
-              {editingTest?.id ? t('updateLesson') : t('addLesson')}
-            </div>
-          }
-          open={isModalOpen}
-          onCancel={closeModal}
-          footer={null}
-          className="modal-content"
-        >
-          <div className="form-content-lesson">
-            <div className="inputtext">
-              <label className="titleinput">{t('lesson')}</label>
-              <Select
-                style={{ width: '100%', height: '50px' }}
-                placeholder={t('inputgrade')}
-                value={editingTest?.lessonId}
-                onChange={(value) => setEditingTest({ ...editingTest, lessonId: value })}
+            </thead>
+            <tbody>
+              {filteredTests.map((test,index) => (
+                <tr key={test.id} className="border-t">
+                  <td className="p-3">{indexOfFirtsUser + index + 1}</td> {/* Sequential number */}
+                  <td className="p-3">{lessons.find(l => l.id === test.lessonId)?.name?.[i18n.language]}</td>
+                  <td className="p-3">{pupils.find(p => p.id === test.pupilId)?.fullName}</td>
+                  <td className="p-3">{levels.find(l => l.id === test.levelId)?.name}</td>
+                  <td className="p-3">{test.point}</td>
+                  <td className="p-3">{test.duration}s</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="flex justify-end items-center mt-4 ml-auto paginations">
+            <div className="pagination">
+              <button
+                className="around"
+                onClick={() => currentPage > 1 && paginate(currentPage - 1)}
+                disabled={currentPage === 1}
               >
-                {lessons.map(lesson => (
-                  <Option key={lesson.id} value={lesson.id}>{lesson.name?.[i18n.language]}</Option>
-                ))}
-              </Select>
-              {errors.lessonId && <div className="error-text">{errors.lessonId}</div>}
-            </div>
-            <div className="inputtext">
-              <label className="titleinput">{t('pupil')}</label>
-              <Select
-                style={{ width: '100%', height: '50px' }}
-                placeholder={t('inputgrade')}
-                value={editingTest?.pupilId}
-                onChange={(value) => setEditingTest({ ...editingTest, pupilId: value })}
+                &lt;
+              </button>
+              {Array.from({ length: totalPage }, (_, index) => (
+                <button
+                  key={index + 1}
+                  className={`around ${currentPage === index + 1 ? 'active' : ''}`}
+                  onClick={() => paginate(index + 1)}
+                >
+                  {index + 1}
+                </button>
+              ))}
+              <button
+                className="around"
+                onClick={() => currentPage < totalPage && paginate(currentPage + 1)}
+                disabled={currentPage === totalPage}
               >
-                {pupils.map(pupil => (
-                  <Option key={pupil.id} value={pupil.id}>{pupil.name}</Option>
-                ))}
-              </Select>
-              {errors.pupilId && <div className="error-text">{errors.pupilId}</div>}
-            </div>
-            <div className="inputtext">
-              <label className="titleinput">{t('level')}</label>
-              <Select
-                style={{ width: '100%', height: '50px' }}
-                placeholder={t('inputgrade')}
-                value={editingTest?.levelId}
-                onChange={(value) => setEditingTest({ ...editingTest, levelId: value })}
-              >
-                {levels.map(level => (
-                  <Option key={level.id} value={level.id}>{level.name}</Option>
-                ))}
-              </Select>
-              {errors.levelId && <div className="error-text">{errors.levelId}</div>}
+                &gt;
+              </button>
             </div>
 
-            <div className="inputtext">
-              <label className="titleinput">{t('point')}</label>
-              <Input
-                placeholder={t('point')}
-                value={editingTest?.point}
-                onChange={(e) => setEditingTest({ ...editingTest, point: e.target.value })}
-              />
-              {errors.point && <div className="error-text">{errors.point}</div>}
-            </div>
-
-            <div className="inputtext">
-              <label className="titleinput">{t('duration')}</label>
-              <Input
-                placeholder={t('duration')}
-                value={editingTest?.duration}
-                onChange={(e) => setEditingTest({ ...editingTest, duration: e.target.value })}
-                addonAfter="s"
-              />
-              {errors.duration && <div className="error-text">{errors.duration}</div>}
-            </div>
           </div>
-          <div className="button-row">
-            <Button type="primary" onClick={handleSave} block>
-              {t('save', { ns: 'common' })}
-            </Button>
-            <Button type="primary" onClick={closeModal} block>
-              {t('cancel', { ns: 'common' })}
-            </Button>
-          </div>
-        </Modal> */}
+        </div>
       </div>
     </div>
   );

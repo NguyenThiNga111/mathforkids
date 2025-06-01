@@ -17,7 +17,7 @@ const Notification = () => {
     const [filterStatus, setFilterStatus] = useState('all'); // all / read / unread
     const { t, i18n } = useTranslation(['notification', 'common']);
     const { Option } = Select;
-    const notificationsPerPage = 15;
+    const notificationsPerPage = 16;
     const [errors, setErrors] = useState({});
 
     useEffect(() => {
@@ -165,30 +165,31 @@ const Notification = () => {
     );
 
     return (
-        <div className="container">
+        <div className="containers">
             <Navbar />
-            <div className="container-content">
-                <h1 className="container-title">{t('managementNotifications')}</h1>
-                <div className="flex justify-between items-center mb-4">
+            <h1 className="container-title">{t('managementNotifications')}</h1>
+            <div className="containers-content">
+                <div className="flex justify-between items-center mb-2">
                     <div className="filter-bar">
                         <div className="filter-container">
                             <div className="filter-containers">
                                 <span className="filter-icon">
                                     <svg
                                         className="iconfilter"
-                                        width="16"
-                                        height="16"
+                                        width="20"
+                                        height="20"
                                         viewBox="0 0 24 24"
                                         fill="none"
                                         stroke="currentColor"
                                         strokeWidth="2"
                                         strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
+                                        strokeLinejoin="round">
                                         <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
                                     </svg>
+                                    <button className="filter-text">
+                                        {t('filterBy', { ns: 'common' })}
+                                    </button>
                                 </span>
-                                <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
                                 <select
                                     className="filter-dropdown"
                                     value={filterStatus}
@@ -201,84 +202,75 @@ const Notification = () => {
                                     <option value="read">{t('read')}</option>
                                     <option value="unread">{t('unread')}</option>
                                 </select>
-                                <button className="export-button">{t('exportFile', { ns: 'common' })}</button>
                             </div>
                         </div>
                         <button
-                            className="bg-blue-500 text-white px-4 py-2 rounded-add"
+                            className="bg-blue-500 px-4 py-2 rounded-add"
                             onClick={() => openModal('add')}
                         >
                             + {t('addNew', { ns: 'common' })}
                         </button>
                     </div>
                 </div>
-
-                <table className="w-full bg-white shadow-md rounded-lg">
-                    <thead>
-                        <tr className="bg-gray-200 text-left">
-                            <th className="p-3">{t('title')}</th>
-                            <th className="p-3">{t('sender')}</th>
-                            <th className="p-3">{t('content')}</th>
-                            <th className="p-3">{t('createdAt')}</th>
-                            <th className="p-3">{t('status')}</th>
-                            <th className="p-3">{t('action', { ns: 'common' })}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {currentNotifications.map((notification) => (
-                            <tr key={notification.id} className="border-t">
-                                <td className="p-3">{notification.title?.[i18n.language]}</td>
-                                <td className="p-3">
-                                    {usersData.find(user => user.id === notification.senderId)?.fullName || 'Unknown'}
-                                </td>
-                                <td className="p-3">{notification.content?.[i18n.language]}</td>
-                                <td className="p-3">{notification.createdAt}</td>
-                                <td className="p-3">
-                                    {notification.isRead ? t('read') : t('unread')}
-                                </td>
-                                <td className="p-3">
-                                    <button
-                                        className="text-white px-3 py-1 buttonupdate"
-                                        onClick={() => openModal('update', notification)}
-                                    >
-                                        <img className="iconupdate" src={Imgs.edit} alt="Edit" />
-
-                                        {t('update', { ns: 'common' })}
-                                    </button>
-                                </td>
+                <div className="table-container-notification">
+                    <table className="w-full bg-white shadow-md rounded-lg">
+                        <thead>
+                            <tr className="bg-gray-200 text-left">
+                                <th className="p-3">{t('.no', { ns: 'common' })}</th> {/* New No column */}
+                                <th className="p-3">{t('title')}</th>
+                                <th className="p-3">{t('sender')}</th>
+                                <th className="p-3">{t('content')}</th>
+                                <th className="p-3">{t('createdAt')}</th>
+                                <th className="p-3">{t('status')}</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {currentNotifications.map((notification, index) => (
+                                <tr key={notification.id} className="border-t">
+                                    <td className="p-3">{indexOfFirstNotification + index + 1}</td> {/* Sequential number */}
 
-                <div className="flex justify-end items-center mt-4 ml-auto">
-                    <div className="pagination">
-                        <button
-                            className="around"
-                            onClick={() => currentPage > 1 && paginate(currentPage - 1)}
-                            disabled={currentPage === 1}
-                        >
-                            &lt;
-                        </button>
-                        {Array.from({ length: totalPages }, (_, index) => (
+                                    <td className="p-3">{notification.title?.[i18n.language]}</td>
+                                    <td className="p-3">
+                                        {usersData.find(user => user.id === notification.senderId)?.fullName || 'Unknown'}
+                                    </td>
+                                    <td className="p-3">{notification.content?.[i18n.language]}</td>
+                                    <td className="p-3">{notification.createdAt}</td>
+                                    <td className="p-3">
+                                        {notification.isRead ? t('read') : t('unread')}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+
+                    <div className="flex justify-end items-center mt-4 ml-auto paginations">
+                        <div className="pagination">
                             <button
-                                key={index + 1}
-                                className={`around ${currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-300'}`}
-                                onClick={() => paginate(index + 1)}
+                                className="around"
+                                onClick={() => currentPage > 1 && paginate(currentPage - 1)}
+                                disabled={currentPage === 1}
                             >
-                                {index + 1}
+                                &lt;
                             </button>
-                        ))}
-                        <button
-                            className="around"
-                            onClick={() => currentPage < totalPages && paginate(currentPage + 1)}
-                            disabled={currentPage === totalPages}
-                        >
-                            &gt;
-                        </button>
+                            {Array.from({ length: totalPages }, (_, index) => (
+                                <button
+                                    key={index + 1}
+                                    className={`around ${currentPage === index + 1 ? 'active' : ''}`}
+                                    onClick={() => paginate(index + 1)}
+                                >
+                                    {index + 1}
+                                </button>
+                            ))}
+                            <button
+                                className="around"
+                                onClick={() => currentPage < totalPages && paginate(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                            >
+                                &gt;
+                            </button>
+                        </div>
                     </div>
                 </div>
-
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
@@ -370,11 +362,11 @@ const Notification = () => {
                         </div>
                     </div>
                     <div className="button-row">
-                        <Button type="primary" onClick={handleSave} block>
-                            {t('save', { ns: 'common' })}
-                        </Button>
-                        <Button type="primary" onClick={closeModal} block>
+                        <Button className="cancel-button" onClick={closeModal} block>
                             {t('cancel', { ns: 'common' })}
+                        </Button>
+                        <Button className="save-button" onClick={handleSave} block>
+                            {t('save', { ns: 'common' })}
                         </Button>
                     </div>
                 </Modal>
