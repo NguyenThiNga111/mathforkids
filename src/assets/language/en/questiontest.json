@@ -1,0 +1,10 @@
+{
+    "managementQuestionTest": "Question Test Management",
+    "question": "Question",
+    "image": "Image",
+    "option": "Options",
+    "correctAnswer": "Correct Answer",
+    "selectedAnswer": "Selected Answer",
+    "level": "Level",
+    "questionTestDetail": "Question Test Details"
+}

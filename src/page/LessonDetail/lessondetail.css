@@ -11,6 +11,32 @@
     object-fit: contain;
 }
 
+.button-margin-left {
+    margin-left: 15px;
+}
+
+.ant-breadcrumb {
+    padding-left: 20px;
+    font-size: 16px;
+}
+
+.ant-breadcrumb a {
+    color: #1890ff;
+}
+
+.ant-breadcrumb a:hover {
+    color: #40a9ff;
+}
+
+.ant-breadcrumb span:last-child {
+    color: #595959;
+    /* Gray color for the active item */
+}
+
+.ant-breadcrumb .ant-breadcrumb-separator {
+    color: #595959;
+}
+
 /* Optional: Specific column widths */
 .table-container-lessondetail th:nth-child(1),
 .table-container-lessondetail td:nth-child(1) {

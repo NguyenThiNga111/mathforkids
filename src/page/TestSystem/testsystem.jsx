@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Button, Input, Modal, Select } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import { Select } from 'antd';
 import Navbar from '../../component/Navbar';
 import api from '../../assets/api/Api';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
-import { Imgs } from '../../assets/theme/images';
+import { FaPenAlt } from 'react-icons/fa';
+
 import './testsystem.css';
 
 const { Option } = Select;
@@ -16,15 +18,11 @@ const TestSystem = () => {
   const [pupils, setPupils] = useState([]);
   const [levels, setLevels] = useState([]);
   const [levelactive, setLevelActive] = useState([]);
-  const [editingTest, setEditingTest] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState('');
   const [selectedPoint, setSelectedPoint] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-
+  const navigate = useNavigate();
   const userPerPage = 10;
-
-  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     fetchAllData();
@@ -39,7 +37,12 @@ const TestSystem = () => {
         api.get('/level'),
         api.get('/level/enabled')
       ]);
-      setTestSystems(tests.data);
+      const sortedTests = tests.data.sort((a, b) => {
+        const dateA = parseDate(a.createdAt);
+        const dateB = parseDate(b.createdAt);
+        return dateB - dateA; // Mới nhất lên đầu
+      });
+      setTestSystems(sortedTests);
       setLessons(lessons.data);
       setPupils(pupils.data);
       setLevels(levels.data);
@@ -51,7 +54,13 @@ const TestSystem = () => {
       console.log("sjaue", error);
     }
   };
-
+  const parseDate = (dateString) => {
+    // Chuyển đổi định dạng "09:02:13 21/5/2025" thành Date object
+    const [time, date] = dateString.split(' ');
+    const [hours, minutes, seconds] = time.split(':').map(Number);
+    const [day, month, year] = date.split('/').map(Number);
+    return new Date(year, month - 1, day, hours, minutes, seconds);
+  };
   const filteredTests = testSystems.filter(test => {
     const levelMatch = selectedLevel === '' || String(test.levelId) === selectedLevel;
     const pointMatch = selectedPoint === '' || test.point === Number(selectedPoint);
@@ -63,6 +72,11 @@ const TestSystem = () => {
   const currentUsers = filteredTests.slice(indexOfFirtsUser, indexOfLastUser);
   const totalPage = Math.ceil(filteredTests.length / userPerPage);
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const handleDetailClick = (testId) => {
+    navigate(`/questiontest/${testId}`);
+  };
+
   return (
     <div className="containers">
       <Navbar />
@@ -127,10 +141,12 @@ const TestSystem = () => {
                 <th className="p-3">{t('level')}</th>
                 <th className="p-3">{t('point')}</th>
                 <th className="p-3">{t('duration')}</th>
+                <th className="p-3">{t('action', { ns: 'common' })}</th>
+
               </tr>
             </thead>
             <tbody>
-              {filteredTests.map((test,index) => (
+              {filteredTests.map((test, index) => (
                 <tr key={test.id} className="border-t">
                   <td className="p-3">{indexOfFirtsUser + index + 1}</td> {/* Sequential number */}
                   <td className="p-3">{lessons.find(l => l.id === test.lessonId)?.name?.[i18n.language]}</td>
@@ -138,6 +154,15 @@ const TestSystem = () => {
                   <td className="p-3">{levels.find(l => l.id === test.levelId)?.name}</td>
                   <td className="p-3">{test.point}</td>
                   <td className="p-3">{test.duration}s</td>
+                  <td className="p-3">
+                    <button
+                      className="text-white px-3 py-1 buttonlessondetail"
+                      onClick={() => handleDetailClick(test.id)}
+                    >
+                      <FaPenAlt className="iconupdate" />
+                      {t('questiontest')}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

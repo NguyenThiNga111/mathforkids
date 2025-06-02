@@ -46,7 +46,12 @@ const Assessment = () => {
     const fetchAssessments = async () => {
         try {
             const response = await api.get(`/assessment`);
-            setAssessments(response.data);
+            const sortedAssessments = response.data.sort((a, b) => {
+                const dateA = parseDate(a.createdAt);
+                const dateB = parseDate(b.createdAt);
+                return dateB - dateA; // Mới nhất lên đầu
+            });
+            setAssessments(sortedAssessments);
         } catch (error) {
             toast.error(t('errorFetchData', { ns: 'common' }), {
                 position: 'top-right',
@@ -316,6 +321,13 @@ const Assessment = () => {
             setAnswerFileList([]);
         }
     };
+    const parseDate = (dateString) => {
+        // Chuyển đổi định dạng "09:02:13 21/5/2025" thành Date object
+        const [time, date] = dateString.split(' ');
+        const [hours, minutes, seconds] = time.split(':').map(Number);
+        const [day, month, year] = date.split('/').map(Number);
+        return new Date(year, month - 1, day, hours, minutes, seconds);
+    };
     const filteredAssessments = assessments.filter(assessments => {
         const matchLevel = filterLevel === 'all' ? true : assessments.levelId === filterLevel;
         const matchType = filterType === 'all' ? true : assessments.type?.map === filterType;
@@ -368,7 +380,7 @@ const Assessment = () => {
                                         setCurrentPage(1);
                                     }}
                                 >
-                                    <option value="all">{t('level', { ns: 'common' })}</option>
+                                    <option value="all">{t('level')}</option>
                                     {levels.map((level) => (
                                         <option key={level.id} value={level.id}>
                                             {level.name?.[i18n.language] || level.name || level.id}
@@ -429,7 +441,7 @@ const Assessment = () => {
                     <table className="w-full bg-white shadow-md rounded-lg">
                         <thead>
                             <tr className="bg-gray-200 text-left">
-                                <th className="p-3">{t('no', { ns: 'common' })}</th>
+                                <th className="p-3">{t('.no', { ns: 'common' })}</th>
                                 <th className="p-3">{t('question')}</th>
                                 <th className="p-3">{t('image')}</th>
                                 <th className="p-3 text-center">{t('answer')}</th>
@@ -480,7 +492,7 @@ const Assessment = () => {
                                                 onClick={() => openDetailModal(assessment)}
                                             >
                                                 <FaInfoCircle className='iconupdate' />
-                                                {t('detail', { ns: 'common' })}
+                                                {t('detail')}
                                             </button>
                                         </div>
                                     </td>
@@ -605,11 +617,6 @@ const Assessment = () => {
                                         <span>{selectedAssessment.answer || '-'}</span>
                                     )}
                                 </div>
-                            </div>
-                            <div className="button-row">
-                                <Button className="cancel-button" onClick={closeDetailModal} block>
-                                    {t('cancel', { ns: 'common' })}
-                                </Button>
                             </div>
                         </div>
                     )}
@@ -847,7 +854,7 @@ const Assessment = () => {
                             {errors.answer && <div className="error-text">{errors.answer}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('image')} <span style={{ color: 'red' }}>*</span></label>
+                            <label className="titleinput">{t('image')}</label>
                             <Upload
                                 accept="image/*"
                                 showUploadList={false}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Input, Button, Modal, Select, Checkbox } from 'antd';
+import { Input, Button, Modal, Select, Checkbox, Breadcrumb } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { Upload } from 'antd';
 import { Imgs } from "../../assets/theme/images";
@@ -41,7 +41,12 @@ const exercise = () => {
     const fetchExercises = async () => {
         try {
             const response = await api.get(`/exercise/lessonId/${lessonId}`);
-            setExercises(response.data);
+            const sortedExercises = response.data.sort((a, b) => {
+                const dateA = parseDate(a.createdAt);
+                const dateB = parseDate(b.createdAt);
+                return dateB - dateA; // Mới nhất lên đầu
+            });
+            setExercises(sortedExercises);
         } catch (error) {
             toast.error(t('errorFetchData', { ns: 'common' }), {
                 position: 'top-right',
@@ -301,7 +306,13 @@ const exercise = () => {
             setAnswerFileList([]);
         }
     };
-
+    const parseDate = (dateString) => {
+        // Chuyển đổi định dạng "09:02:13 21/5/2025" thành Date object
+        const [time, date] = dateString.split(' ');
+        const [hours, minutes, seconds] = time.split(':').map(Number);
+        const [day, month, year] = date.split('/').map(Number);
+        return new Date(year, month - 1, day, hours, minutes, seconds);
+    };
     const filteredExercises = exercises.filter(exercise => {
         const matchLevel = filterLevel === 'all' ? true : exercise.levelId === filterLevel;
         const matchStatus =
@@ -318,10 +329,19 @@ const exercise = () => {
     const currentExercises = filteredExercises.slice(indexOfFirstExercise, indexOfLastExercise);
     const totalPages = Math.ceil(filteredExercises.length / exercisePage);
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
+    const breadcrumbItems = [
+        {
+            title: t('lesson'),
+            onClick: () => navigate('/lesson'),
+        },
+        {
+            title: lesson?.name?.[i18n.language] || lessonId,
+        },
+    ];
     return (
         <div className="containers">
             <Navbar />
+            <Breadcrumb items={breadcrumbItems} style={{ marginBottom: 16 }} />
             <h1 className="container-title">
                 {t('managementExercise')} - {lesson?.name?.[i18n.language] || lessonId}
             </h1>
@@ -556,7 +576,7 @@ const exercise = () => {
                             >
                                 {levels.map((level) => (
                                     <Select.Option key={level.id} value={level.id}>
-                                        {level.name || level.id}
+                                        {level.name?.[i18n.language] || level.id}
                                     </Select.Option>
                                 ))}
                             </Select>

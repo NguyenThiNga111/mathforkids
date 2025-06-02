@@ -23,6 +23,7 @@
     "typeRequired": "Please select a lesson type",
     "inputType": "Select lesson type",
     "type":"Type",
-    "exercises":"Exercises"
+    "exercises":"Exercises",
+    "detail":"Detail"
 
 }

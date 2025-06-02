@@ -17,32 +17,34 @@ const AccountUser = () => {
     const [filterStatus, setFilterStatus] = useState('all'); // all / enabled / disabled
     const [userData, setUserData] = useState([]);
     const [pupilData, setPupilData] = useState([]);
-    const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
 
     const { t, i18n } = useTranslation(['account', 'common']);
     const { Option } = Select;
     const userPerPage = 10;
-
+    // console.log("token", localStorage.getItem('token'));
     useEffect(() => {
         fetchUsers();
     }, []);
 
     const fetchUsers = async () => {
-        setLoading(true);
         try {
             const response = await api.get('/user');
             const responsepupil = await api.get('/pupil');
-            setUserData(response.data);
+            const sortedUsers = response.data.sort((a, b) => {
+                const dateA = new Date(a.createdAt.seconds * 1000 + a.createdAt.nanoseconds / 1e6);
+                const dateB = new Date(b.createdAt.seconds * 1000 + b.createdAt.nanoseconds / 1e6);
+                return dateB - dateA; // Mới nhất lên đầu
+            });
+
+            setUserData(sortedUsers);
             setPupilData(responsepupil.data);
         } catch (error) {
             toast.error(t('errorFetchData', { ns: 'common' }), {
                 position: 'top-right',
                 autoClose: 2000,
             });
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -100,9 +102,27 @@ const AccountUser = () => {
         const newErrors = {};
         if (!edittingUser?.phoneNumber || !/^\d{10}$/.test(edittingUser.phoneNumber)) {
             newErrors.phoneNumber = t('numberPhoneRequired');
+        } else {
+            const phoneExists = userData.some(
+                (user) =>
+                    user.phoneNumber === edittingUser.phoneNumber &&
+                    (!edittingUser.id || user.id !== edittingUser.id)
+            );
+            if (phoneExists) {
+                newErrors.phoneNumber = t('phoneExists');
+            }
         }
         if (!edittingUser?.email || !/\S+@\S+\.\S+/.test(edittingUser.email)) {
             newErrors.email = t('emailRequired');
+        } else {
+            const emailExists = userData.some(
+                (user) =>
+                    user.email.toLowerCase() === edittingUser.email.toLowerCase() &&
+                    (!edittingUser.id || user.id !== edittingUser.id)
+            );
+            if (emailExists) {
+                newErrors.email = t('emailExists');
+            }
         }
         if (!edittingUser?.dateOfBirth || edittingUser.dateOfBirth === '') {
             newErrors.dateOfBirth = t('dateOfBirthRequired');
@@ -139,9 +159,7 @@ const AccountUser = () => {
     const formatFirebaseTimestamp = (timestamp) => {
         if (!timestamp || !timestamp.seconds) return '';
         const date = new Date(timestamp.seconds * 1000);
-        const day = String(date.getDate()).padStart
-
-            (2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = date.getFullYear();
         return `${day}/${month}/${year}`;
@@ -178,6 +196,13 @@ const AccountUser = () => {
         setErrors({});
     };
 
+    const parseDate = (dateString) => {
+        // Chuyển đổi định dạng "09:02:13 21/5/2025" thành Date object
+        const [time, date] = dateString.split(' ');
+        const [hours, minutes, seconds] = time.split(':').map(Number);
+        const [day, month, year] = date.split('/').map(Number);
+        return new Date(year, month - 1, day, hours, minutes, seconds);
+    };
     const filteredUsers = userData.filter(user => {
         const matchRole = selectedRole ? user.role === selectedRole : true;
         const matchStatus =

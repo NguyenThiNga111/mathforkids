@@ -20,7 +20,7 @@ const Rewards = () => {
     const [filterAlphabet, setFilterAlphabet] = useState('alphabet'); // mặc định chưa chọn kiểu sắp xếp
     const [filterStatus, setFilterStatus] = useState('all'); // all / enabled / disabled
     const [errors, setErrors] = useState('');
-
+    const [searchQuery, setSearchQuery] = useState(''); // New state for search query
     const rewardPage = 10;
     const { t, i18n } = useTranslation(['reward', 'common']);
 
@@ -30,8 +30,13 @@ const Rewards = () => {
 
     const fetchRewards = async () => {
         try {
-            const reponse = await api.get(`/reward`);
-            setRewards(reponse.data);
+            const response = await api.get(`/reward`);
+            const sortedRewards = response.data.sort((a, b) => {
+                const dateA = parseDate(a.createdAt);
+                const dateB = parseDate(b.createdAt);
+                return dateB - dateA; // Mới nhất lên đầu
+            });
+            setRewards(sortedRewards);
         } catch (error) {
             toast.error(t('errorFetchData', { ns: 'common' }), {
                 position: 'top-right',
@@ -49,8 +54,6 @@ const Rewards = () => {
                 if (fileList[0]?.originFileObj) {
                     formData.append('image', fileList[0].originFileObj);
                 }
-
-                // formData.append("image", editingReward.image); // This is File
                 if (editingReward.id) {
                     await api.put(`/reward/${editingReward.id}`, formData, {
                         headers: {
@@ -95,11 +98,7 @@ const Rewards = () => {
                 position: 'top-right',
                 autoClose: 2000,
             });
-            setRewards((prev) =>
-                prev.map((e) =>
-                    e.id === reward.id ? { ...e, isDisabled: !reward.isDisabled } : e
-                )
-            );
+            fetchRewards();
         } catch (error) {
             toast.error(t('validationFailed', { ns: 'common' }), {
                 position: 'top-right',
@@ -167,7 +166,13 @@ const Rewards = () => {
         }
     };
 
-
+    const parseDate = (dateString) => {
+        // Chuyển đổi định dạng "09:02:13 21/5/2025" thành Date object
+        const [time, date] = dateString.split(' ');
+        const [hours, minutes, seconds] = time.split(':').map(Number);
+        const [day, month, year] = date.split('/').map(Number);
+        return new Date(year, month - 1, day, hours, minutes, seconds);
+    };
     const filteredRewards = rewards.filter(reward => {
         const matchStatus =
             filterStatus === 'all'
@@ -176,7 +181,11 @@ const Rewards = () => {
                     ? reward.isDisabled === false
                     : reward.isDisabled === true;
 
-        return matchStatus;
+        const searchText = searchQuery.toLowerCase();
+        const rewardName = reward.name?.[i18n.language]?.toLowerCase() || '';
+        return matchStatus && (
+            rewardName.includes(searchText)
+        );
     });
 
     if (filterAlphabet === 'A-Z') {
@@ -197,7 +206,21 @@ const Rewards = () => {
     return (
         <div className="containers">
             <Navbar />
-            <h1 className="container-title">{t('managementReward')}</h1>
+            <div className='title-search'>
+                <h1 className="container-title">{t('managementReward')}</h1>
+                <div className="search">
+                    <Input
+                        type="text"
+                        className="inputsearch"
+                        placeholder={t('searchPlaceholder', { ns: 'common' })}
+                        value={searchQuery}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setCurrentPage(1); // Reset to first page on search
+                        }}
+                    />
+                </div>
+            </div>
             <div className="containers-content">
                 <div className="flex justify-between items-center mb-2">
                     <div className="filter-bar">
@@ -220,6 +243,7 @@ const Rewards = () => {
                                         {t('filterBy', { ns: 'common' })}
                                     </button>
                                 </span>
+
                                 <select
                                     className="filter-dropdown"
                                     value={filterAlphabet}

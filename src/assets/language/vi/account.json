@@ -1,6 +1,6 @@
 {
     "managementAccountUser": "Quản lý tài khoản người dùng",
-    "userdetail":"Chi tiết người dùng",
+    "userdetail": "Chi tiết người dùng",
     "fullName": "Họ và tên",
     "email": "Email",
     "address": "Địa chỉ",
@@ -31,5 +31,10 @@
     "roleAdmin": "Quản trị viên",
     "accountStatus": "Trạng thái người dùng",
     "addAccountUser": "Thêm người dùng",
-    "updateAccountUser": "Cập nhật người dùng"
+    "updateAccountUser": "Cập nhật người dùng",
+    "emailExists": "Email này đã được sử dụng.",
+    "phoneExists": "Số điện thoại này đã được sử dụng.",
+    "noPupilProfile": "Không có tài khoản học sinh",
+    "male": "Nam",
+    "female": "Nữ"
 }

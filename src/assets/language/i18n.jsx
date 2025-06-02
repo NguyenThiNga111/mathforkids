@@ -30,12 +30,14 @@ import viNotification from './vi/notification.json';
 import enNotification from './en/notification.json';
 import viConpleteTask from './vi/completetask.json';
 import enConpleteTask from './en/completetask.json';
-
 import viConpleteLesson from './vi/completelesson.json';
 import enConpleteLesson from './en/completelesson.json';
-
 import viLessonDetail from './vi/lessondetail.json';
 import enLessonDetail from './en/lessondetail.json';
+import viDashboard from './vi/dashboard.json';
+import enDashboard from './en/dashboard.json';
+import viQuestionTest from './vi/questiontest.json';
+import enQuestionTest from './en/questiontest.json';
 i18next
     .use(LanguageDetector)
     .use(initReactI18next)
@@ -58,6 +60,8 @@ i18next
                 completetask: viConpleteTask,
                 completelesson: viConpleteLesson,
                 lessondetail: viLessonDetail,
+                dashboard: viDashboard,
+                questiontest: viQuestionTest,
 
             },
             en: {
@@ -76,7 +80,9 @@ i18next
                 notification: enNotification,
                 completetask: enConpleteTask,
                 completelesson: enConpleteLesson,
-                lessondetail: enLessonDetail
+                lessondetail: enLessonDetail,
+                dashboard: enDashboard,
+                questiontest: enQuestionTest,
 
             },
         },
@@ -98,7 +104,9 @@ i18next
             'notification',
             'completetask',
             'completelesson',
-            'lessondetail'
+            'lessondetail',
+            'dashboard',
+            'questiontest'
         ], // Danh sách namespace
         defaultNS: 'common', // Namespace mặc định
         fallbackNS: 'common', // Namespace dự phòng

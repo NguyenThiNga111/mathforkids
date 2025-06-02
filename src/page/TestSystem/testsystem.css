@@ -60,3 +60,9 @@
     max-width: 80px;
     /* duration */
 }
+
+.table-container-test th:nth-child(7),
+.table-container-test td:nth-child(7) {
+    max-width: 100px;
+    /* duration */
+}

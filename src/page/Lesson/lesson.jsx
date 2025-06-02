@@ -23,12 +23,6 @@ const Lesson = () => {
     const { Option } = Select;
     const lessonsPerPage = 16;
     const navigate = useNavigate();
-    // const lessonTypes = [
-    //     { value: 'addition', label: t('addition') },
-    //     { value: 'subtraction', label: t('subtraction') },
-    //     { value: 'multiplication', label: t('multiplication') },
-    //     { value: 'division', label: t('division') },
-    // ];
     const lessonTypes = [
         { value: 'addition', label: t('addition'), icon: <FaPlus className="icon-type" />, color: '#60D56C' },
         { value: 'subtraction', label: t('subtraction'), icon: <FaMinus className="icon-type" />, color: '#B526E4' },
@@ -42,7 +36,12 @@ const Lesson = () => {
     const fetchLessons = async () => {
         try {
             const response = await api.get(`/lesson`);
-            setLessonsData(response.data);
+            const sortedLessons = response.data.sort((a, b) => {
+                const dateA = parseDate(a.createdAt);
+                const dateB = parseDate(b.createdAt);
+                return dateB - dateA; // Mới nhất lên đầu
+            });
+            setLessonsData(sortedLessons);
         } catch (error) {
             toast.error(t('errorFetchData', { ns: 'common' }), {
                 position: 'top-right',
@@ -165,7 +164,12 @@ const Lesson = () => {
         setIsModalOpen(false);
         setErrors({});
     };
-
+    const parseDate = (dateString) => {
+        const [time, date] = dateString.split(' ');
+        const [hours, minutes, seconds] = time.split(':').map(Number);
+        const [day, month, year] = date.split('/').map(Number);
+        return new Date(year, month - 1, day, hours, minutes, seconds);
+    };
     const filteredLessons = lessonsData
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         .filter(lesson => {
@@ -289,7 +293,7 @@ const Lesson = () => {
                                                     onClick={() => handleLessonDetail(lesson.id)}
                                                 >
                                                     <FaBookOpen className="iconupdate" />
-                                                    {t('lessondetail')}
+                                                    {t('detail')}
                                                 </button>
                                             </div>
                                         </td>

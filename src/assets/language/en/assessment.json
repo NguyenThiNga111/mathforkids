@@ -31,5 +31,6 @@
     "optionImageRequired": "At least three option images are required",
     "answerRequired": "Answer is required",
     "answerImageRequired": "Answer image is required",
-    "assessmentdetail":"Assessment Detail"
+    "assessmentdetail": "Assessment Detail",
+    "detail": "Detail"
 }
