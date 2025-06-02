@@ -15,8 +15,6 @@ const Login = () => {
 
         try {
             const response = await api.post(`/auth/sendOTPByEmail/${email}`);
-
-
             toast.success('Login successful. OTP sent!', {
                 position: 'top-right',
                 autoClose: 2000,
@@ -30,7 +28,7 @@ const Login = () => {
 
         } catch (error) {
             console.error(error);
-            toast.error('Login Fail - Server error', {
+            toast.error(error.response?.data?.message||'Login Fail - Server error', {
                 position: 'top-right',
                 autoClose: 3000,
             });
@@ -57,7 +55,7 @@ const Login = () => {
                             />
                         </div>
                         <div>
-                            <div className='fotgotlabel'>
+                            <div className='forgotlabel'>
                                 <label className='labellogin'></label>
                                 <a href="/forgotpassword" className='forgotpassword'>ForgotPassword?</a>
                             </div>

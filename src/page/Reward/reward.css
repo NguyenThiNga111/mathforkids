@@ -1,3 +1,26 @@
+.search {
+    display: flex;
+    align-items: center;
+}
+
+.title-search {
+    display: flex;
+    justify-content: space-between;
+}
+
+.inputsearch {
+    font-size: 14px;
+    width: 250px;
+    padding: 8px 10px;
+    border: 1px solid var(--border-search);
+    background-color: var(--background-navbar);
+    color: var(--color-text);
+    border-radius: 20px;
+    height: 30px;
+    outline: none;
+    margin-right: 20px;
+}
+
 .table-container-reward {
     max-height: 520px;
     overflow-y: auto;

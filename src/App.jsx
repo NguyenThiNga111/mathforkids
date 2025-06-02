@@ -58,7 +58,7 @@ function App() {
               <Route path="setting" element={<SettingPage />} />
               <Route path="testsystem" element={<TestSystemPage />} />
               <Route path="systemtask" element={<SystemTaskPage />} />
-              <Route path="questiontest" element={<QuestionTestPage />} />
+              <Route path="questiontest/:testId" element={<QuestionTestPage />} />
               <Route path="assessment" element={<AssessmentPage />} />
               <Route path="notification" element={<NotificationPage />} />
               <Route path="/exercise/lessonId/:lessonId" element={<ExercisePage />} />

@@ -23,6 +23,6 @@
     "typeRequired": "Vui lòng chọn loại bài học",
     "inputType": "Chọn loại bài học",
     "type":"Loại",
-    "exercises":"Bài tập"
-
+    "exercises":"Bài tập",
+    "detail":"Chi tiết"
 }

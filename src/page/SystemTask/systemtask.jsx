@@ -27,8 +27,13 @@ const SystemTask = () => {
 
     const fetchTasks = async () => {
         try {
-            const res = await api.get('/dailytask');
-            setTasks(res.data);
+            const response = await api.get('/dailytask');
+            const sortedSystemtasks = response.data.sort((a, b) => {
+                const dateA = parseDate(a.createdAt);
+                const dateB = parseDate(b.createdAt);
+                return dateB - dateA; // Mới nhất lên đầu
+            });
+            setTasks(sortedSystemtasks);
         } catch {
             toast.error(t('errorFetchData', { ns: 'common' }), {
                 position: 'top-right',
@@ -115,7 +120,13 @@ const SystemTask = () => {
         setEditingTask(null);
         setErrors({});
     };
-
+    const parseDate = (dateString) => {
+        // Chuyển đổi định dạng "09:02:13 21/5/2025" thành Date object
+        const [time, date] = dateString.split(' ');
+        const [hours, minutes, seconds] = time.split(':').map(Number);
+        const [day, month, year] = date.split('/').map(Number);
+        return new Date(year, month - 1, day, hours, minutes, seconds);
+    };
     const filteredTasks = tasks.filter(task => {
         const matchStatus = filterStatus === ''
             ? true

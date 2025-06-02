@@ -140,7 +140,7 @@ const Dashboard = () => {
 
   // Generate week options (1 to 52)
   const weeks = Array.from({ length: 52 }, (_, i) => ({
-    label: `Week ${i + 1}`,
+    label: `${t('Week')} ${i + 1}`,
     value: (i + 1).toString().padStart(2, "0"),
   }));
 
@@ -162,11 +162,11 @@ const Dashboard = () => {
             <div className="card-main">
               <div className="card-inner">
                 <div className="card-content">
-                  <h3 className="card-title">Total User</h3>
+                  <h3 className="card-title">{t('TotalUser')}</h3>
                   <p className="card-value">{totalUsers.toLocaleString()}</p>
                   <p className={`card-trend ${userTrendDirection}`}>
                     <span className="trend-icon">{userTrendDirection === "up" ? "↑" : "↓"}</span>
-                    {Math.abs(userTrend)}% {userTrendDirection} from previous {userTimePeriod}
+                    {Math.abs(userTrend)}% {t(userTrendDirection)} {t('fromPrevious')} {t(userTimePeriod)}
                   </p>
                 </div>
                 <div className="card-icon" style={{ backgroundColor: "#dbeafe" }}>
@@ -177,7 +177,7 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="card-footer footer-yellow">
-              <p>Total User</p>
+              <p>{t('TotalUser')}</p>
             </div>
           </div>
 
@@ -186,11 +186,11 @@ const Dashboard = () => {
             <div className="card-main">
               <div className="card-inner">
                 <div className="card-content">
-                  <h3 className="card-title">Total Student</h3>
+                  <h3 className="card-title">{t('TotalStudent')}</h3>
                   <p className="card-value">{totalStudents.toLocaleString()}</p>
                   <p className={`card-trend ${studentTrendDirection}`}>
                     <span className="trend-icon">{studentTrendDirection === "up" ? "↑" : "↓"}</span>
-                    {studentTrend}% Up from past week
+                    {studentTrend}% {t('upFromPastWeek')}
                   </p>
                 </div>
                 <div className="card-icon" style={{ backgroundColor: "#fef3c7" }}>
@@ -201,7 +201,7 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="card-footer footer-red">
-              <p>Total Student</p>
+              <p>{t('TotalStudent')}</p>
             </div>
           </div>
 
@@ -210,11 +210,11 @@ const Dashboard = () => {
             <div className="card-main">
               <div className="card-inner">
                 <div className="card-content">
-                  <h3 className="card-title">Students by Grade</h3>
+                  <h3 className="card-title">{t('StudentsByGrade')}</h3>
                   <p className="card-value">{studentsByGrade.toLocaleString()}</p>
                   <p className={`card-trend ${gradeTrendDirection}`}>
                     <span className="trend-icon">{gradeTrendDirection === "up" ? "↑" : "↓"}</span>
-                    {Math.abs(gradeTrend)}% Down from past week
+                    {Math.abs(gradeTrend)}% {t('downFromPastWeek')}
                   </p>
                 </div>
                 <div className="card-icon" style={{ backgroundColor: "#d1fae5" }}>
@@ -225,7 +225,7 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="card-footer footer-blue">
-              <p>Students by Grade</p>
+              <p>{t('StudentsByGrade')}</p>
             </div>
           </div>
 
@@ -234,11 +234,11 @@ const Dashboard = () => {
             <div className="card-main">
               <div className="card-inner">
                 <div className="card-content">
-                  <h3 className="card-title">Total Lessons</h3>
+                  <h3 className="card-title">{t('TotalLessons')}</h3>
                   <p className="card-value">{totalLessons.toLocaleString()}</p>
                   <p className={`card-trend ${lessonTrendDirection}`}>
                     <span className="trend-icon">{lessonTrendDirection === "up" ? "↑" : "↓"}</span>
-                    {lessonTrend}% Up from past week
+                    {lessonTrend}% {t('upFromPastWeek')}
                   </p>
                 </div>
                 <div className="card-icon" style={{ backgroundColor: "#fed7aa" }}>
@@ -249,7 +249,7 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="card-footer footer-green">
-              <p>Total Lessons</p>
+              <p>{t('TotalLessons')}</p>
             </div>
           </div>
         </div>
@@ -259,16 +259,16 @@ const Dashboard = () => {
           {/* Chart 1: Statistics User */}
           <div className="chart-card">
             <div className="chart-header">
-              <h3 className="chart-title">STATISTICS USER</h3>
+              <h3 className="chart-title">{t('StatisticsUser')}</h3>
               <div className="chart-controls">
                 <select
                   value={userTimePeriod}
                   onChange={(e) => setUserTimePeriod(e.target.value)}
                   className="period-select"
                 >
-                  <option value="month">Month</option>
-                  <option value="week">Week</option>
-                  <option value="year">Year</option>
+                  <option value="month">{t('Month')}</option>
+                  <option value="week">{t('Week')}</option>
+                  <option value="year">{t('Year')}</option>
                 </select>
                 {userTimePeriod === "month" && (
                   <select
@@ -276,10 +276,10 @@ const Dashboard = () => {
                     onChange={(e) => setSelectedUserMonth(e.target.value)}
                     className="month-select"
                   >
-                    <option value="">Select Month</option>
+                    <option value="">{t('SelectMonth')}</option>
                     {months.map((month) => (
                       <option key={month.value} value={month.value}>
-                        {month.label}
+                        {t(month.label)}
                       </option>
                     ))}
                   </select>
@@ -290,7 +290,7 @@ const Dashboard = () => {
                     onChange={(e) => setSelectedUserWeek(e.target.value)}
                     className="week-select"
                   >
-                    <option value="">Select Week</option>
+                    <option value="">{t('SelectWeek')}</option>
                     {weeks.map((week) => (
                       <option key={week.value} value={week.value}>
                         {week.label}
@@ -304,7 +304,7 @@ const Dashboard = () => {
                     onChange={(e) => setSelectedUserYear(e.target.value)}
                     className="year-select"
                   >
-                    <option value="">Select Year</option>
+                    <option value="">{t('SelectYear')}</option>
                     {years.map((year) => (
                       <option key={year.value} value={year.value}>
                         {year.label}
@@ -316,8 +316,8 @@ const Dashboard = () => {
             </div>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={[
-                { name: "Previous", value: usersByTimePeriod.previous },
-                { name: "Current", value: usersByTimePeriod.current },
+                { name: t('Previous'), value: usersByTimePeriod.previous },
+                { name: t('Current'), value: usersByTimePeriod.current },
               ]}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
@@ -331,16 +331,16 @@ const Dashboard = () => {
           {/* Chart 2: Statistics Student */}
           <div className="chart-card">
             <div className="chart-header">
-              <h3 className="chart-title">STATISTICS STUDENT</h3>
+              <h3 className="chart-title">{t('StatisticsStudent')}</h3>
               <div className="chart-controls">
                 <select
                   value={pupilTimePeriod}
                   onChange={(e) => setPupilTimePeriod(e.target.value)}
                   className="period-select"
                 >
-                  <option value="month">Month</option>
-                  <option value="week">Week</option>
-                  <option value="year">Year</option>
+                  <option value="month">{t('Month')}</option>
+                  <option value="week">{t('Week')}</option>
+                  <option value="year">{t('Year')}</option>
                 </select>
                 {pupilTimePeriod === "month" && (
                   <select
@@ -348,10 +348,10 @@ const Dashboard = () => {
                     onChange={(e) => setSelectedPupilMonth(e.target.value)}
                     className="month-select"
                   >
-                    <option value="">Select Month</option>
+                    <option value="">{t('SelectMonth')}</option>
                     {months.map((month) => (
                       <option key={month.value} value={month.value}>
-                        {month.label}
+                        {t(month.label)}
                       </option>
                     ))}
                   </select>
@@ -362,7 +362,7 @@ const Dashboard = () => {
                     onChange={(e) => setSelectedPupilWeek(e.target.value)}
                     className="week-select"
                   >
-                    <option value="">Select Week</option>
+                    <option value="">{t('SelectWeek')}</option>
                     {weeks.map((week) => (
                       <option key={week.value} value={week.value}>
                         {week.label}
@@ -376,7 +376,7 @@ const Dashboard = () => {
                     onChange={(e) => setSelectedPupilYear(e.target.value)}
                     className="year-select"
                   >
-                    <option value="">Select Year</option>
+                    <option value="">{t('SelectYear')}</option>
                     {years.map((year) => (
                       <option key={year.value} value={year.value}>
                         {year.label}
@@ -388,8 +388,8 @@ const Dashboard = () => {
             </div>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={[
-                { name: "Previous", value: pupilsByTimePeriod.previous },
-                { name: "Current", value: pupilsByTimePeriod.current },
+                { name: t('Previous'), value: pupilsByTimePeriod.previous },
+                { name: t('Current'), value: pupilsByTimePeriod.current },
               ]}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />

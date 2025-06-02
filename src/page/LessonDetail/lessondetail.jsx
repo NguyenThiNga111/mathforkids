@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Input, Button, Modal, Select, Image } from 'antd';
+import { Input, Button, Modal, Select, Image, Breadcrumb } from 'antd';
 import axios from 'axios';
 import { UploadOutlined } from '@ant-design/icons';
 import { FaEdit } from 'react-icons/fa';
@@ -34,7 +34,12 @@ const LessonDetail = () => {
     const fetchLessonDetails = async () => {
         try {
             const response = await api.get(`/lessondetail/lesson/${lessonId}`);
-            setLessonDetails(response.data);
+            const sortedLessonDetails = response.data.sort((a, b) => {
+                const dateA = parseDate(a.createdAt);
+                const dateB = parseDate(b.createdAt);
+                return dateB - dateA; // Mới nhất lên đầu
+            });
+            setLessonDetails(sortedLessonDetails);
         } catch (error) {
             toast.error(t('errorFetchData', { ns: 'common' }), {
                 position: 'top-right',
@@ -253,6 +258,13 @@ const LessonDetail = () => {
             });
         }
     };
+    const parseDate = (dateString) => {
+        // Chuyển đổi định dạng "09:02:13 21/5/2025" thành Date object
+        const [time, date] = dateString.split(' ');
+        const [hours, minutes, seconds] = time.split(':').map(Number);
+        const [day, month, year] = date.split('/').map(Number);
+        return new Date(year, month - 1, day, hours, minutes, seconds);
+    };
     const filteredLessonDetails = lessonDetails.filter((lessonDetail) => {
         const matchStatus =
             filterStatus === 'all'
@@ -262,10 +274,19 @@ const LessonDetail = () => {
                     : lessonDetail.isDisabled === true;
         return matchStatus;
     });
-
+    const breadcrumbItems = [
+        {
+            title: t('lesson'),
+            onClick: () => navigate('/lesson'),
+        },
+        {
+            title: lesson?.name?.[i18n.language] || lessonId,
+        },
+    ];
     return (
         <div className="containers">
             <Navbar />
+            <Breadcrumb items={breadcrumbItems} style={{ marginBottom: 16 }} />
             <h1 className="container-title">
                 {t('managementLessonDetail')} - {lesson?.name?.[i18n.language] || lessonId}
             </h1>
@@ -312,7 +333,7 @@ const LessonDetail = () => {
                                 + {t('addNew', { ns: 'common' })}
                             </button>
                             <button
-                                className="bg-blue-500 px-4 py-2 rounded-add"
+                                className="bg-blue-500 px-4 py-2 rounded-add button-margin-left"
                                 onClick={() => openModal('addFull')}
                             >
                                 + {t('addFullLesson')}

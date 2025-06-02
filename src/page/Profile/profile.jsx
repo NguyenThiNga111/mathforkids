@@ -3,35 +3,39 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../../component/Navbar';
 import { Input, Button, Select, Modal, DatePicker } from 'antd';
 import moment from 'moment';
-import { Imgs } from '../../assets/theme/images';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import api from '../../assets/api/Api';
 import './profile.css';
 
-const profile = () => {
-    const { t, i18n } = useTranslation(['profile', 'common']);
-    const { id } = useParams(); // Get userID from URL params
+const Profile = () => {
+    const { t } = useTranslation(['profile', 'common']);
+    const { id } = useParams();
     const navigate = useNavigate();
-    const userID = localStorage.getItem('userID'); // Get userID from localStorage
+    const userID = localStorage.getItem('userID');
+    const [isEmailModalVisible, setIsEmailModalVisible] = useState(false);
+    const [otpModalVisible, setOtpModalVisible] = useState(false);
+    const [otpCode, setOtpCode] = useState('');
+    const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
+    const [newEmail, setNewEmail] = useState('');
+    const [confirmEmail, setConfirmEmail] = useState(''); // Thêm ô xác nhận email
     const [userData, setUserData] = useState({});
-    const [loading, setLoading] = useState(true);
     const { Option } = Select;
-    // Fetch user data on component mount
+
+    // Fetch user data
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const response = await api.get(`/user/${userID}`);
-                console.log("đư", response.data);
+                const response = await api.get(`/user/${userID}`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                });
                 if (response.data) {
                     const { id, fullName, phoneNumber, email, gender, dateOfBirth, address, avatar } = response.data;
                     let formattedDOB = '';
                     if (dateOfBirth?.seconds) {
-                        // Handle Firebase timestamp
-                        formattedDOB = moment(dateOfBirth.seconds * 1000).format('YYYY/MM/DD');
+                        formattedDOB = moment(dateOfBirth.seconds * 1000).format('YYYY-MM-DD');
                     } else if (typeof dateOfBirth === 'string') {
-                        // Handle string date
-                        formattedDOB = moment(dateOfBirth).isValid() ? moment(dateOfBirth).format('YYYY/MM/DD') : '';
+                        formattedDOB = moment(dateOfBirth).isValid() ? moment(dateOfBirth).format('YYYY-MM-DD') : '';
                     }
                     setUserData({
                         id: id || '',
@@ -44,24 +48,18 @@ const profile = () => {
                         avatar: avatar || 'https://i.pravatar.cc/100',
                     });
                 } else {
-                    toast.error(t('fetchFailed', { ns: 'common' }), {
-                        position: 'top-right',
-                        autoClose: 2000,
-                    });
+                    toast.error(t('fetchFailed', { ns: 'common' }));
                 }
             } catch (error) {
-                toast.error(t('fetchFailed', { ns: 'common' }), {
-                    position: 'top-right',
-                    autoClose: 2000,
-                });
-            } finally {
-                setLoading(false);
+                toast.error(error.response?.data?.message || t('fetchFailed', { ns: 'common' }));
+                if (error.response?.status === 401) navigate('/login');
             }
         };
         fetchUserData();
     }, [userID, id, navigate, t]);
 
     // Validate form fields
+    // Validate form fields - trả về đối tượng lỗi chi tiết
     const validateForm = () => {
         const newErrors = {};
         if (!userData.phoneNumber || !/^\d{10}$/.test(userData.phoneNumber)) {
@@ -81,7 +79,7 @@ const profile = () => {
                 const ageDifMs = now - dob;
                 const ageDate = new Date(ageDifMs);
                 const age = Math.abs(ageDate.getUTCFullYear() - 1970);
-                if (age < 10) {
+                if (age < 20) {
                     newErrors.dateOfBirth = t('dateOfBirtholdRequired');
                 }
             }
@@ -95,71 +93,102 @@ const profile = () => {
         if (!userData.gender || userData.gender === '') {
             newErrors.gender = t('genderRequired');
         }
-        // setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        return newErrors;
     };
 
     // Handle profile update
     const handleUpdate = async () => {
-        if (validateForm()) {
+        const errors = validateForm();
+        if (Object.keys(errors).length === 0) {
             try {
                 const payload = {
                     fullName: userData.fullName,
                     phoneNumber: userData.phoneNumber,
                     email: userData.email,
                     gender: userData.gender,
-                    dateOfBirth: userData.dateOfBirth, // Ensure backend accepts YYYY-MM-DD
+                    dateOfBirth: userData.dateOfBirth,
                     address: userData.address,
-                    // Include avatar if your API supports it
-                    // avatar: userData.avatar,
                 };
-                console.log('Update payload:', payload);
-                const response = await api.put(`/user/${userID}`, payload);
-                console.log('Update response:', response.data);
-
-                // Adjust based on your API's response structure
-                if (response.status === 200 || response.data) {
-                    toast.success(t('updateSuccess', { ns: 'common' }), {
-                        position: 'top-right',
-                        autoClose: 2000,
-                    });
-                    // Optionally update local state with response data
+                const response = await api.put(`/user/${userID}`, payload, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                });
+                if (response.status === 200) {
+                    toast.success(t('updateSuccess', { ns: 'common' }));
                     setUserData({ ...userData, ...response.data });
                 } else {
-                    toast.error(t('updateFailed', { ns: 'common' }), {
-                        position: 'top-right',
-                        autoClose: 2000,
-                    });
+                    toast.error(t('updateFailed', { ns: 'common' }));
                 }
             } catch (error) {
-                toast.error(t('updateFailed', { ns: 'common' }), {
-                    position: 'top-right',
-                    autoClose: 2000,
-                });
+                toast.error(error.response?.data?.message || t('updateFailed', { ns: 'common' }));
             }
         } else {
-            toast.error(t('validationFailed', { ns: 'common' }), {
-                position: 'top-right',
-                autoClose: 2000,
+            Object.values(errors).forEach((errorMsg) => {
+                toast.error(errorMsg);
             });
         }
     };
 
-    // Handle avatar upload (placeholder)
-    const handleAvatarUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                setUserData({ ...userData, avatar: reader.result });
-            };
-            reader.readAsDataURL(file);
+    // Handle send OTP
+    const handleSendOTP = async () => {
+        if (!newEmail || !/\S+@\S+\.\S+/.test(newEmail)) {
+            toast.error(t('emailInvalid'));
+            return false;
+        }
+        if (newEmail !== confirmEmail) {
+            toast.error(t('emailsDoNotMatch'));
+            return false;
+        }
+        try {
+            const res = await api.post(`/auth/sendOTPByEmailChange/${newEmail}`, {}, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+            });
+            if (res.status === 200) {
+                toast.success(t('otpSent'));
+                setIsEmailModalVisible(false);
+                setOtpModalVisible(true);
+                return true;
+            }
+            toast.error(res.data?.message || t('updateFailed', { ns: 'common' }));
+            return false;
+        } catch (err) {
+            toast.error(err.response?.data?.message || t('updateFailed', { ns: 'common' }));
+            return false;
         }
     };
 
-    if (loading) {
-        return <div>{t('loading', { ns: 'common' })}</div>;
-    }
+    // Handle OTP verification
+    const handleVerifyOTP = async () => {
+        if (!otpCode) {
+            toast.error(t('otpRequired'));
+            return;
+        }
+        try {
+            setIsVerifyingOTP(true);
+            const res = await api.post(`/auth/verifyOTP`, { email: newEmail, otp: otpCode }, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+            });
+            if (res.data.success) {
+                const updateRes = await api.put(`/user/${userID}`, { ...userData, email: newEmail }, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                });
+                if (updateRes.status === 200) {
+                    setUserData({ ...userData, email: newEmail });
+                    toast.success(t('updateSuccess', { ns: 'common' }));
+                    setOtpModalVisible(false);
+                    setOtpCode('');
+                } else {
+                    toast.error(updateRes.data?.message || t('updateFailed', { ns: 'common' }));
+                }
+            } else {
+                toast.error(res.data?.message || t('otpInvalid'));
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || t('otpInvalid'));
+        } finally {
+            setIsVerifyingOTP(false);
+        }
+    };
+
     return (
         <div className="containers">
             <Navbar />
@@ -168,11 +197,7 @@ const profile = () => {
                 <div className="flex justify-between items-center mb-4">
                     <div className="profile-card">
                         <div className="avatar-section">
-                            <img
-                                src="https://i.pravatar.cc/100" // Ảnh mặc định
-                                alt="Avatar"
-                                className="avatar-img"
-                            />
+                            <img src={userData.avatar} alt="Avatar" className="avatar-img" />
                             <p className="upload-text">Upload Photo</p>
                         </div>
                         <div className="form-wrapper">
@@ -181,7 +206,7 @@ const profile = () => {
                                     <label>{t('fullName')}</label>
                                     <Input
                                         type="text"
-                                        className='inputprofile'
+                                        className="inputprofile"
                                         placeholder={t('enterFullName')}
                                         value={userData.fullName}
                                         onChange={(e) => setUserData({ ...userData, fullName: e.target.value })}
@@ -192,20 +217,20 @@ const profile = () => {
                                     <DatePicker
                                         placeholder={t('inputDateOfBirth')}
                                         style={{ width: '100%', height: '50px' }}
-                                        value={userData.dateOfBirth ? moment(userData.dateOfBirth, 'YYYY/MM/DD') : null}
+                                        value={userData.dateOfBirth ? moment(userData.dateOfBirth, 'YYYY-MM-DD') : null}
                                         onChange={(date) =>
                                             setUserData({
                                                 ...userData,
-                                                dateOfBirth: date.format('YYYY/MM/DD')
-                                            })}
+                                                dateOfBirth: date ? date.format('YYYY-MM-DD') : '',
+                                            })
+                                        }
                                     />
                                 </div>
-
                                 <div className="form-group">
                                     <label>{t('address')}</label>
                                     <Input
                                         type="text"
-                                        className='inputprofile'
+                                        className="inputprofile"
                                         placeholder={t('enterAddress')}
                                         value={userData.address}
                                         onChange={(e) => setUserData({ ...userData, address: e.target.value })}
@@ -227,18 +252,30 @@ const profile = () => {
                                     <label>{t('email')}</label>
                                     <Input
                                         type="email"
-                                        className='inputprofile'
+                                        style={{ height: '50px' }}
                                         placeholder={t('enterEmail')}
                                         value={userData.email}
-                                        onChange={(e) => setUserData({ ...userData, email: e.target.value })}
                                         readOnly
+                                        suffix={
+                                            <Button
+                                                type="link"
+                                                size="small"
+                                                onClick={() => {
+                                                    setNewEmail(userData.email);
+                                                    setConfirmEmail(userData.email);
+                                                    setIsEmailModalVisible(true);
+                                                }}
+                                            >
+                                                {t('change')}
+                                            </Button>
+                                        }
                                     />
                                 </div>
                                 <div className="form-group">
                                     <label>{t('phoneNumber')}</label>
                                     <Input
                                         type="tel"
-                                        className='inputprofile'
+                                        className="inputprofile"
                                         placeholder={t('enterPhoneNumber')}
                                         value={userData.phoneNumber}
                                         onChange={(e) => setUserData({ ...userData, phoneNumber: e.target.value })}
@@ -247,6 +284,67 @@ const profile = () => {
                                 </div>
                             </div>
                         </div>
+                        <Modal
+                            title={
+                                <div style={{ textAlign: 'center', fontSize: '24px' }}>
+                                    {t('changeEmail')}
+                                </div>
+                            }
+                            open={isEmailModalVisible}
+                            onCancel={() => {
+                                setIsEmailModalVisible(false);
+                                setNewEmail('');
+                                setConfirmEmail('');
+                            }}
+                            footer={null}
+                            className='modal-content'
+                        >
+                            <Input
+                                placeholder={t('enterNewEmail')}
+                                value={newEmail}
+                                onChange={(e) => setNewEmail(e.target.value)}
+                                style={{ marginBottom: '10px' }}
+                            />
+                            <Input
+                                placeholder={t('confirmNewEmail')}
+                                value={confirmEmail}
+                                onChange={(e) => setConfirmEmail(e.target.value)}
+                            />
+                            <div className="button-row">
+                                <Button className="save-button" onClick={handleSendOTP} block>
+                                    {t('change')}
+                                </Button>
+                            </div>
+                        </Modal>
+                        <Modal
+                            title={
+                                <div style={{ textAlign: 'center', fontSize: '24px' }}>
+                                    {t('verifyOTP')}
+                                </div>
+                            }
+                            open={otpModalVisible}
+                            footer={null}
+                            onCancel={() => {
+                                setOtpModalVisible(false);
+                                setOtpCode('');
+                            }}
+                            className='modal-content'
+
+                        >
+                            <Input
+                                placeholder={t('enterOTP')}
+                                value={otpCode}
+                                onChange={(e) => setOtpCode(e.target.value)}
+                            />
+                            <div className="button-row">
+                                <Button className="save-button" onClick={handleSendOTP} block>
+                                    {t('resendOTP')}
+                                </Button>
+                                <Button className="save-button" onClick={handleVerifyOTP} block>
+                                    {t('verify')}
+                                </Button>
+                            </div>
+                        </Modal>
 
                         <div className="btn-wrapper">
                             <Button className="update-btn" onClick={handleUpdate}>
@@ -257,6 +355,7 @@ const profile = () => {
                 </div>
             </div>
         </div>
-    )
-}
-export default profile;
+    );
+};
+
+export default Profile;

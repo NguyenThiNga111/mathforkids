@@ -1,7 +1,7 @@
 {
     "managementLessonDetail": "Lesson Detail Management",
-    "addLessonDetail": "Add Lesson Detail",
-    "addFullLesson": "Add Full Lesson",
+    "addLessonDetail": "Add Lesson",
+    "addFullLesson": "Add Lesson",
     "updateLessonDetail": "Update Lesson Detail",
     "lessonId": "Lesson ID",
     "inputLessonId": "Enter Lesson ID",
@@ -21,5 +21,6 @@
     "contentViRequired": "Content (Vietnamese) is required",
     "contentEnRequired": "Content (English) is required",
     "image": "Image",
+    "lesson": "Lesson",
     "inputImage": "Upload Image"
 }

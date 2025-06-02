@@ -1,0 +1,10 @@
+{
+    "managementQuestionTest": "Quản lý câu hỏi kiểm tra",
+    "question": "Câu hỏi",
+    "image": "Hình ảnh",
+    "option": "Các lựa chọn",
+    "correctAnswer": "Đáp án đúng",
+    "selectedAnswer": "Đáp án đã chọn",
+    "level": "Cấp độ",
+    "questionTestDetail": "Chi tiết câu hỏi kiểm tra"
+  }

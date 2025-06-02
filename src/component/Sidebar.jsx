@@ -55,7 +55,7 @@ const Dashboard = () => {
                         </Link>
 
                         <div className="sidebar-divider"></div>
-                        <a className="sidebar-a">User Page</a>
+                        <a className="sidebar-a">User Pages</a>
 
                         <Link to="/lesson" className={`sidebar-item ${activeItem === '/lesson' ? 'active' : ''}`}>
                             <FaBook className={getIconClass('/lesson')} />

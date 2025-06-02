@@ -46,10 +46,20 @@ const PupilManagement = () => {
                 ...p,
                 parentName: map[p.userId] || 'Unknown',
             }));
-            enrichedPupils.sort((a, b) => a.userId.localeCompare(b.userId));
+            const sortedPupils = enrichedPupils.sort((a, b) => {
+                const dateA = parseDate(a.createdAt);
+                const dateB = parseDate(b.createdAt);
+
+                if (dateB - dateA !== 0) {
+                    return dateB - dateA; // Ưu tiên createdAt mới nhất lên đầu
+                }
+
+                return a.userId.localeCompare(b.userId); // Nếu thời gian bằng nhau, so sánh theo userId
+            });
+
             setUsersData(users);
             setParentMap(map);
-            setPupilsData(enrichedPupils);
+            setPupilsData(sortedPupils);
         } catch (error) {
             toast.error(t('errorFetchData', { ns: 'common' }));
         }
@@ -138,6 +148,13 @@ const PupilManagement = () => {
                 autoClose: 2000,
             });
         }
+    };
+    const parseDate = (dateString) => {
+        // Chuyển đổi định dạng "09:02:13 21/5/2025" thành Date object
+        const [time, date] = dateString.split(' ');
+        const [hours, minutes, seconds] = time.split(':').map(Number);
+        const [day, month, year] = date.split('/').map(Number);
+        return new Date(year, month - 1, day, hours, minutes, seconds);
     };
     const filteredPupils = pupilsData.filter(pupil => {
         const matchStatus =

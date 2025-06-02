@@ -7,6 +7,7 @@ import api from '../assets/api/Api';
 const Navbar = () => {
     const { t, i18n } = useTranslation();
     const [userName, setUserName] = useState('');
+    const [userId, setUserID] = useState(null);
     const [selectedLanguage, setSelectedLanguage] = useState(
         i18n.language === 'en' ? 'English' : 'Việt Nam'
     );
@@ -14,33 +15,47 @@ const Navbar = () => {
         English: Imgs.English,
         'Việt Nam': Imgs.VietNam
     };
+
     useEffect(() => {
-        fetchUserData();
+        const storedUserId = localStorage.getItem('userID');
+        setUserID(storedUserId);
+        if (storedUserId) {
+            fetchUserData(storedUserId);
+        }
     }, []);
-    const fetchUserData = async () => {
-        const userID = localStorage.getItem('userID');
-        if (!userID) return;
+
+    const fetchUserData = async (id) => {
         try {
-            const response = await api.get(`/user/${userID}`);
+            const response = await api.get(`/user/${id}`);
             if (response.data) {
                 setUserName(response.data.fullName || 'Admin');
+                const langCode = response.data.language || 'vi';
+                i18n.changeLanguage(langCode);
+                setSelectedLanguage(langCode === 'en' ? 'English' : 'Việt Nam');
             }
         } catch (error) {
             console.error('Failed to fetch user data:', error);
         }
     };
-    const handleLanguage = (event) => {
+    const handleLanguage = async (event) => {
         const selected = event.target.value;
         const newLang = selected === 'English' ? 'en' : 'vi';
+
         i18n.changeLanguage(newLang);
         setSelectedLanguage(selected);
+        if (userId) {
+            try {
+                await api.put(`/user/${userId}`, { language: newLang });
+                fetchUserData();
+            } catch (error) {
+                console.error('Failed to update language:', error);
+            }
+        }
     };
 
     return (
         <div className="navbar">
-            <div className="navbar-left">
-                <input type="text" className="search-bar" placeholder="Search" />
-            </div>
+          
             <div className="navbar-right">
                 <div className="navbar-icon language">
                     <img

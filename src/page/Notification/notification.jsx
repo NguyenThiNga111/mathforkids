@@ -28,7 +28,12 @@ const Notification = () => {
     const fetchNotifications = async () => {
         try {
             const response = await api.get(`/generalnotification`);
-            setNotificationsData(response.data);
+            const sortedNotifications = response.data.sort((a, b) => {
+                const dateA = parseDate(a.createdAt);
+                const dateB = parseDate(b.createdAt);
+                return dateB - dateA; // Mới nhất lên đầu
+            });
+            setNotificationsData(sortedNotifications);
         } catch (error) {
             toast.error(t('errorFetchData', { ns: 'common' }), {
                 position: 'top-right',
@@ -142,7 +147,13 @@ const Notification = () => {
         setErrors({});
         setSearchUser('');
     };
-
+    const parseDate = (dateString) => {
+        // Chuyển đổi định dạng "09:02:13 21/5/2025" thành Date object
+        const [time, date] = dateString.split(' ');
+        const [hours, minutes, seconds] = time.split(':').map(Number);
+        const [day, month, year] = date.split('/').map(Number);
+        return new Date(year, month - 1, day, hours, minutes, seconds);
+    };
     const filteredNotifications = notificationsData.filter(notification => {
         const matchStatus =
             filterStatus === 'all'

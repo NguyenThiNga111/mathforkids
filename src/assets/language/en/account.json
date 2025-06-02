@@ -31,5 +31,11 @@
     "roleAdmin": "Admin",
     "accountStatus": "Account user status",
     "addAccountUser": "Add Account User",
-    "updateAccountUser": "Update Account User"
+    "updateAccountUser": "Update Account User",
+    "emailExists": "This email is already in use.",
+    "phoneExists": "This phoneNumber is already in use.",
+    "noPupilProfile": "No pupil account",
+    "male":"Male",
+    "female":"Female"
+
 }
