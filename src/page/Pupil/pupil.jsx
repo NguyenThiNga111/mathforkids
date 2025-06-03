@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Input, Button, Select, Modal, DatePicker, Upload, Switch } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
+import { Input, Button, Select, Modal, DatePicker, Table, Pagination, Switch } from 'antd';
 import { toast } from 'react-toastify';
-import { Imgs } from '../../assets/theme/images';
 import { useTranslation } from 'react-i18next';
 import { FaEdit } from 'react-icons/fa';
 import moment from 'moment';
@@ -18,6 +16,7 @@ const PupilManagement = () => {
     const [parentMap, setParentMap] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
     const [filterStatus, setFilterStatus] = useState('all');
+    const [searchQuery, setSearchQuery] = useState('');
     const [errors, setErrors] = useState({});
     const pupilsPerPage = 16;
 
@@ -51,10 +50,10 @@ const PupilManagement = () => {
                 const dateB = parseDate(b.createdAt);
 
                 if (dateB - dateA !== 0) {
-                    return dateB - dateA; // Ưu tiên createdAt mới nhất lên đầu
+                    return dateB - dateA; // Latest first
                 }
 
-                return a.userId.localeCompare(b.userId); // Nếu thời gian bằng nhau, so sánh theo userId
+                return a.userId.localeCompare(b.userId);
             });
 
             setUsersData(users);
@@ -64,41 +63,54 @@ const PupilManagement = () => {
             toast.error(t('errorFetchData', { ns: 'common' }));
         }
     };
+
     const formatFirebaseTimestamp = (timestamp) => {
         if (!timestamp || !timestamp.seconds) return '';
-        const date = new Date(timestamp.seconds * 1000); // Convert seconds to milliseconds
+        const date = new Date(timestamp.seconds * 1000);
         const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+        const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = date.getFullYear();
         return `${day}/${month}/${year}`;
     };
+
     const openModal = (mode, pupil = null) => {
         if (mode === 'add') {
-            setEditingPupil(null);
+            setEditingPupil({
+                fullName: '',
+                nickName: '',
+                gender: undefined,
+                userId: undefined,
+                dateOfBirth: null,
+                grade: undefined,
+                isDisabled: false,
+            });
         } else if (mode === 'update' && pupil) {
             let formattedDOB = '';
             if (pupil.dateOfBirth?.seconds) {
-                // Nếu là timestamp Firebase
                 formattedDOB = moment(pupil.dateOfBirth.seconds * 1000).format('YYYY/MM/DD');
             } else if (typeof pupil.dateOfBirth === 'string') {
-                // Nếu đã là chuỗi string
                 formattedDOB = moment(pupil.dateOfBirth).isValid() ? moment(pupil.dateOfBirth).format('YYYY/MM/DD') : '';
             }
             setEditingPupil({ ...pupil, dateOfBirth: formattedDOB });
         }
+        setErrors({});
         setIsModalOpen(true);
     };
 
     const closeModal = () => {
         setIsModalOpen(false);
+        setEditingPupil(null);
         setErrors({});
     };
 
     const validateForm = () => {
         const newErrors = {};
-        if (!editingPupil.fullName) newErrors.fullName = t('fullNameRequired');
-        if (!editingPupil.grade) newErrors.grade = t('gradeRequired');
-        if (!editingPupil.userId) newErrors.userId = t('parentRequired');
+        if (!editingPupil?.fullName?.trim()) newErrors.fullName = t('fullNameRequired');
+        if (!editingPupil?.nickName?.trim()) newErrors.nickName = t('nickNameRequired');
+        if (!editingPupil?.gender) newErrors.gender = t('genderRequired');
+        if (!editingPupil?.userId) newErrors.userId = t('parentRequired');
+        if (!editingPupil?.dateOfBirth) newErrors.dateOfBirth = t('dateOfBirthRequired');
+        if (!editingPupil?.grade) newErrors.grade = t('gradeRequired');
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -128,12 +140,13 @@ const PupilManagement = () => {
                 });
             }
         } else {
-            toast.error('Validation failed', {
+            toast.error(t('validationFailed', { ns: 'common' }), {
                 position: 'top-right',
                 autoClose: 2000,
             });
         }
     };
+
     const handleToggleDisabled = async (pupil) => {
         try {
             await api.put(`/pupil/${pupil.id}`, { isDisabled: !pupil.isDisabled });
@@ -149,13 +162,14 @@ const PupilManagement = () => {
             });
         }
     };
+
     const parseDate = (dateString) => {
-        // Chuyển đổi định dạng "09:02:13 21/5/2025" thành Date object
         const [time, date] = dateString.split(' ');
         const [hours, minutes, seconds] = time.split(':').map(Number);
         const [day, month, year] = date.split('/').map(Number);
         return new Date(year, month - 1, day, hours, minutes, seconds);
     };
+
     const filteredPupils = pupilsData.filter(pupil => {
         const matchStatus =
             filterStatus === 'all'
@@ -163,136 +177,172 @@ const PupilManagement = () => {
                 : filterStatus === 'no'
                     ? pupil.isDisabled === false
                     : pupil.isDisabled === true;
-
-        return matchStatus;
+        const searchText = searchQuery.toLowerCase();
+        const pupilName = pupil.fullName?.toLowerCase() || '';
+        return matchStatus && pupilName.includes(searchText);
     });
-    const indexOfLastPupil = currentPage * pupilsPerPage;
-    const indexOfFirstPupil = indexOfLastPupil - pupilsPerPage;
-    const currentPupils = filteredPupils.slice(indexOfFirstPupil, indexOfLastPupil);
-    const totalPages = Math.ceil(filteredPupils.length / pupilsPerPage);
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+    // Ant Design Table columns
+    const columns = [
+        {
+            title: t('no', { ns: 'common' }),
+            dataIndex: 'index',
+            key: 'index',
+            width: 80,
+            render: (_, __, index) => (currentPage - 1) * pupilsPerPage + index + 1,
+        },
+        {
+            title: t('fullName'),
+            dataIndex: 'fullName',
+            key: 'fullName',
+        },
+        {
+            title: t('nickName'),
+            dataIndex: 'nickName',
+            key: 'nickName',
+        },
+        {
+            title: t('parentName'),
+            dataIndex: 'parentName',
+            key: 'parentName',
+        },
+        {
+            title: t('grade'),
+            dataIndex: 'grade',
+            key: 'grade',
+            align: 'center',
+        },
+        {
+            title: t('gender'),
+            dataIndex: 'gender',
+            key: 'gender',
+        },
+        {
+            title: t('dateOfBirth'),
+            dataIndex: 'dateOfBirth',
+            key: 'dateOfBirth',
+            render: (dateOfBirth) => formatFirebaseTimestamp(dateOfBirth),
+        },
+        {
+            title: t('action', { ns: 'common' }),
+            key: 'action',
+            align: 'center',
+            render: (_, record) => (
+                <button
+                    className="text-white px-3 py-1 buttonupdate"
+                    onClick={() => openModal('update', record)}
+                >
+                    <FaEdit className="iconupdate" />
+                    {t('update', { ns: 'common' })}
+                </button>
+            ),
+        },
+        {
+            title: t('available', { ns: 'common' }),
+            dataIndex: 'isDisabled',
+            key: 'isDisabled',
+            align: 'center',
+            render: (isDisabled, record) => (
+                <Switch
+                    checked={isDisabled}
+                    onChange={() => handleToggleDisabled(record)}
+                    className="custom-switch"
+                />
+            ),
+        },
+    ];
 
     return (
         <div className="containers">
             <Navbar />
-            <h1 className="container-title">{t('managementLessons')}</h1>
+            <div className="title-search">
+                <h1 className="container-title">{t('managementLessons')}</h1>
+                <div className="search">
+                    <Input
+                        type="text"
+                        className="inputsearch"
+                        placeholder={t('searchPlaceholder', { ns: 'common' })}
+                        value={searchQuery}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setCurrentPage(1);
+                        }}
+                    />
+                </div>
+            </div>
             <div className="containers-content">
-                <div className="flex justify-between items-center mb-2">
-                    <div className="filter-bar">
-                        <div className="filter-container">
-                            <div className="filter-containers">
-                                <span className="filter-icon">
-                                    <svg
-                                        className="iconfilter"
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round">
-                                        <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
-                                    </svg>
-                                    <button className="filter-text">
-                                        {t('filterBy', { ns: 'common' })}
-                                    </button>
-                                </span>
-                                <select
-                                    className="filter-dropdown"
-                                    value={filterStatus}
-                                    onChange={(e) => {
-                                        setFilterStatus(e.target.value);
-                                        setCurrentPage(1);
-                                    }}
-                                >
-                                    <option value="all">{t('pupilStatus')}</option>
-                                    <option value="yes">{t('yes', { ns: 'common' })}</option>
-                                    <option value="no">{t('no', { ns: 'common' })}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button
-                            className="bg-blue-500 px-4 py-2 rounded-add"
-                            onClick={() => openModal('add')}
+                <div className="filter-bar mb-2">
+                    <div className="filter-containers">
+                        <span className="filter-icon">
+                            <svg
+                                className="iconfilter"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+                            </svg>
+                            <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
+                        </span>
+                        <Select
+                            className="filter-dropdown"
+                            value={filterStatus}
+                            onChange={(value) => {
+                                setFilterStatus(value);
+                                setCurrentPage(1);
+                            }}
                         >
-                            + {t('addNew', { ns: 'common' })}
-                        </button>
+                            <Select.Option value="all">{t('pupilStatus')}</Select.Option>
+                            <Select.Option value="yes">{t('yes', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="no">{t('no', { ns: 'common' })}</Select.Option>
+                        </Select>
                     </div>
+                    <Button className="rounded-add" onClick={() => openModal('add')}>
+                        + {t('addNew', { ns: 'common' })}
+                    </Button>
                 </div>
                 <div className="table-container-pupil">
-                    <table className="w-full bg-white shadow-md rounded-lg">
-                        <thead>
-                            <tr className="bg-gray-200">
-                                <th className="p-3">{t('.no', { ns: 'common' })}</th>
-                                <th className="p-3">{t('fullName')}</th>
-                                <th className="p-3">{t('nickName')}</th>
-                                <th className="p-3">{t('parentName')}</th>
-                                <th className="p-3 text-center">{t('grade')}</th>
-                                <th className="p-3">{t('gender')}</th>
-                                <th className="p-3">{t('dateOfBirth')}</th>
-                                <th className="p-3 text-center">{t('available', { ns: 'common' })}</th>
-                                <th className="p-3 text-center">{t('action', { ns: 'common' })}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {currentPupils.map((pupil, index) => (
-                                <tr key={pupil.id} className="border-t">
-                                    <td className="p-3">{indexOfFirstPupil + index + 1}</td>
-                                    <td className="p-3">{pupil.fullName}</td>
-                                    <td className="p-3">{pupil.nickName}</td>
-                                    <td className="p-3">{pupil.parentName}</td>
-                                    <td className="p-3 text-center">{pupil.grade}</td>
-                                    <td className="p-3">{pupil.gender}</td>
-                                    <td className="p-3">{formatFirebaseTimestamp(pupil.dateOfBirth)}</td>
-                                    <td className="p-3 text-center">
+                    <Table
+                        columns={columns}
+                        dataSource={filteredPupils.slice((currentPage - 1) * pupilsPerPage, currentPage * pupilsPerPage)}
+                        pagination={false}
+                        rowKey="id"
+                        className="custom-table"
+                    />
+                    <div className="paginations">
+                        <Pagination
+                            current={currentPage}
+                            total={filteredPupils.length}
+                            pageSize={pupilsPerPage}
+                            onChange={(page) => setCurrentPage(page)}
+                            className="pagination"
+                            itemRender={(page, type, originalElement) => {
+                                if (type === 'prev') {
+                                    return <button className="around" disabled={currentPage === 1}>{'<'}</button>;
+                                }
+                                if (type === 'next') {
+                                    return (
                                         <button
-                                            className="text-white px-3 py-1 buttonupdate"
-                                            onClick={() => openModal('update', pupil)}
+                                            className="around"
+                                            disabled={currentPage === Math.ceil(filteredPupils.length / pupilsPerPage)}
                                         >
-                                            <FaEdit className='iconupdate' />
-                                            {t('update', { ns: 'common' })}
+                                            {'>'}
                                         </button>
-                                    </td>
-                                    <td className="p-3 text-center">
-                                        <label className="switch">
-                                            <input type="checkbox" checked={pupil.isDisabled} onChange={() => handleToggleDisabled(pupil)} />
-                                            <span className="slider round"></span>
-                                        </label>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    <div className="flex justify-end items-center mt-4 ml-auto paginations">
-                        <div className="pagination">
-                            <button
-                                className="around"
-                                onClick={() => currentPage > 1 && paginate(currentPage - 1)}
-                                disabled={currentPage === 1}
-                            >
-                                &lt;
-                            </button>
-                            {Array.from({ length: totalPages }, (_, index) => (
-                                <button
-                                    key={index + 1}
-                                    className={`around ${currentPage === index + 1 ? 'active' : ''}`}
-                                    onClick={() => paginate(index + 1)}
-                                >
-                                    {index + 1}
-                                </button>
-                            ))}
-                            <button
-                                className="around"
-                                onClick={() => currentPage < totalPages && paginate(currentPage + 1)}
-                                disabled={currentPage === totalPages}
-                            >
-                                &gt;
-                            </button>
-                        </div>
+                                    );
+                                }
+                                if (type === 'page') {
+                                    return <button className={`around ${currentPage === page ? 'active' : ''}`}>{page}</button>;
+                                }
+                                return originalElement;
+                            }}
+                        />
                     </div>
                 </div>
-
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
@@ -311,7 +361,6 @@ const PupilManagement = () => {
                                 placeholder={t('fullName')}
                                 value={editingPupil?.fullName || ''}
                                 onChange={e => setEditingPupil({ ...editingPupil, fullName: e.target.value })}
-
                             />
                             {errors.fullName && <div className="error-text">{errors.fullName}</div>}
                         </div>
@@ -332,8 +381,8 @@ const PupilManagement = () => {
                                 value={editingPupil?.gender || undefined}
                                 onChange={(value) => setEditingPupil({ ...editingPupil, gender: value })}
                             >
-                                <Option value="Male">Male</Option>
-                                <Option value="Female">Female</Option>
+                                <Select.Option value="Male">Male</Select.Option>
+                                <Select.Option value="Female">Female</Select.Option>
                             </Select>
                             {errors.gender && <div className="error-text">{errors.gender}</div>}
                         </div>
@@ -346,19 +395,17 @@ const PupilManagement = () => {
                                 onChange={(value) => setEditingPupil({ ...editingPupil, userId: value })}
                             >
                                 {usersData.map(user => (
-                                    <Option key={user.id} value={user.id}>
+                                    <Select.Option key={user.id} value={user.id}>
                                         {user.fullName}
-                                    </Option>
+                                    </Select.Option>
                                 ))}
                             </Select>
                             {errors.userId && <div className="error-text">{errors.userId}</div>}
                         </div>
-
                         <div className="inputtext">
-                            <label className='titleinput'>Birthday <span style={{ color: 'red' }}>*</span></label>
+                            <label className="titleinput">{t('dateOfBirth')} <span style={{ color: 'red' }}>*</span></label>
                             <DatePicker
                                 style={{ width: '100%', height: '50px' }}
-                                defaultValue={moment()}
                                 value={editingPupil?.dateOfBirth ? moment(editingPupil.dateOfBirth, 'YYYY/MM/DD') : null}
                                 onChange={(date) =>
                                     setEditingPupil({
@@ -377,14 +424,13 @@ const PupilManagement = () => {
                                 value={editingPupil?.grade || undefined}
                                 onChange={(value) => setEditingPupil({ ...editingPupil, grade: value })}
                             >
-                                <Option value="1">1</Option>
-                                <Option value="2">2</Option>
-                                <Option value="3">3</Option>
+                                <Select.Option value="1">1</Select.Option>
+                                <Select.Option value="2">2</Select.Option>
+                                <Select.Option value="3">3</Select.Option>
                             </Select>
                             {errors.grade && <div className="error-text">{errors.grade}</div>}
                         </div>
                     </div>
-
                     <div className="button-row">
                         <Button className="cancel-button" onClick={closeModal} block>
                             {t('cancel', { ns: 'common' })}

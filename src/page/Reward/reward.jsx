@@ -1,7 +1,7 @@
-import { useState, useContext, useEffect } from 'react';
-import { Input, Button, Modal } from 'antd';
-import { FaEdit, FaBook } from 'react-icons/fa';
-import { UploadOutlined } from '@ant-design/icons';
+import { useState, useEffect } from 'react';
+import { Input, Button, Modal, Table, Pagination, Switch, Image, message, Select } from 'antd';
+import { FaEdit } from 'react-icons/fa';
+import { UploadOutlined, DeleteOutlined } from '@ant-design/icons';
 import { Upload } from 'antd';
 import { Imgs } from "../../assets/theme/images";
 import { toast } from 'react-toastify';
@@ -17,11 +17,11 @@ const Rewards = () => {
     const [imageUrl, setImageUrl] = useState('');
     const [rewards, setRewards] = useState([]);
     const [fileList, setFileList] = useState([]);
-    const [filterAlphabet, setFilterAlphabet] = useState('alphabet'); // mặc định chưa chọn kiểu sắp xếp
-    const [filterStatus, setFilterStatus] = useState('all'); // all / enabled / disabled
-    const [errors, setErrors] = useState('');
-    const [searchQuery, setSearchQuery] = useState(''); // New state for search query
-    const rewardPage = 10;
+    const [filterAlphabet, setFilterAlphabet] = useState('alphabet');
+    const [filterStatus, setFilterStatus] = useState('all');
+    const [errors, setErrors] = useState({});
+    const [searchQuery, setSearchQuery] = useState('');
+    const rewardsPerPage = 10;
     const { t, i18n } = useTranslation(['reward', 'common']);
 
     useEffect(() => {
@@ -34,7 +34,7 @@ const Rewards = () => {
             const sortedRewards = response.data.sort((a, b) => {
                 const dateA = parseDate(a.createdAt);
                 const dateB = parseDate(b.createdAt);
-                return dateB - dateA; // Mới nhất lên đầu
+                return dateB - dateA; // Latest first
             });
             setRewards(sortedRewards);
         } catch (error) {
@@ -43,10 +43,10 @@ const Rewards = () => {
                 autoClose: 2000,
             });
         }
-    }
+    };
 
     const handleSave = async () => {
-        if (Validation()) {
+        if (validate()) {
             try {
                 const formData = new FormData();
                 formData.append('name', JSON.stringify(editingReward.name));
@@ -56,9 +56,7 @@ const Rewards = () => {
                 }
                 if (editingReward.id) {
                     await api.put(`/reward/${editingReward.id}`, formData, {
-                        headers: {
-                            'Content-Type': 'multipart/form-data',
-                        },
+                        headers: { 'Content-Type': 'multipart/form-data' },
                     });
                     toast.success(t('updateSuccess', { ns: 'common' }), {
                         position: 'top-right',
@@ -66,9 +64,7 @@ const Rewards = () => {
                     });
                 } else {
                     await api.post(`/reward`, formData, {
-                        headers: {
-                            "Content-Type": "multipart/form-data",
-                        },
+                        headers: { "Content-Type": "multipart/form-data" },
                     });
                     toast.success(t('addSuccess', { ns: 'common' }), {
                         position: 'top-right',
@@ -107,9 +103,8 @@ const Rewards = () => {
         }
     };
 
-    const Validation = () => {
+    const validate = () => {
         const newErrors = {};
-
         if (!editingReward?.name?.vi || editingReward.name.vi.trim() === '') {
             newErrors.nameVi = t('nameViRequired');
         }
@@ -122,21 +117,24 @@ const Rewards = () => {
         if (!editingReward?.description?.en || editingReward.description.en.trim() === '') {
             newErrors.descriptionEn = t('descriptionEnRequired');
         }
-        if (!imageUrl && fileList.length === 0) {
+        if (!imageUrl && !editingReward?.image) {
             newErrors.image = t('imageRequired');
         }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    }
+    };
 
     const openModal = (mode, reward = null) => {
         if (mode === 'add') {
             setEditingReward({ name: { en: '', vi: '' }, description: { en: '', vi: '' }, image: '' });
             setImageUrl('');
+            setFileList([]);
         } else if (mode === 'update') {
             setEditingReward(reward);
             setImageUrl(reward.image);
+            setFileList(reward.image ? [{ url: reward.image }] : []);
         }
+        setErrors({});
         setIsModalOpen(true);
     };
 
@@ -144,6 +142,8 @@ const Rewards = () => {
         setIsModalOpen(false);
         setEditingReward(null);
         setImageUrl('');
+        setFileList([]);
+        setErrors({});
     };
 
     const handleImageChange = (info) => {
@@ -154,25 +154,29 @@ const Rewards = () => {
                 setImageUrl(e.target.result);
             };
             reader.readAsDataURL(fileObj);
-
-            // Cập nhật fileList để Upload hiển thị đúng ảnh
             setFileList([info.fileList[info.fileList.length - 1]]);
-
-            // Cập nhật file vào state editingReward
-            setEditingReward(prev => ({
-                ...prev,
-                image: fileObj
-            }));
+            setEditingReward(prev => ({ ...prev, image: e.target.result }));
+        } else {
+            setFileList([]);
+            setImageUrl('');
+            setEditingReward(prev => ({ ...prev, image: '' }));
         }
     };
 
+    const handleRemoveImage = () => {
+        setFileList([]);
+        setImageUrl('');
+        setEditingReward(prev => ({ ...prev, image: '' }));
+        message.info('Ảnh đã được xóa.');
+    };
+
     const parseDate = (dateString) => {
-        // Chuyển đổi định dạng "09:02:13 21/5/2025" thành Date object
         const [time, date] = dateString.split(' ');
         const [hours, minutes, seconds] = time.split(':').map(Number);
         const [day, month, year] = date.split('/').map(Number);
         return new Date(year, month - 1, day, hours, minutes, seconds);
     };
+
     const filteredRewards = rewards.filter(reward => {
         const matchStatus =
             filterStatus === 'all'
@@ -183,9 +187,7 @@ const Rewards = () => {
 
         const searchText = searchQuery.toLowerCase();
         const rewardName = reward.name?.[i18n.language]?.toLowerCase() || '';
-        return matchStatus && (
-            rewardName.includes(searchText)
-        );
+        return matchStatus && rewardName.includes(searchText);
     });
 
     if (filterAlphabet === 'A-Z') {
@@ -197,16 +199,76 @@ const Rewards = () => {
             (b.name[i18n.language] || '').localeCompare(a.name[i18n.language] || '')
         );
     }
-    const indexOfLastReward = currentPage * rewardPage;
-    const indexOfFirtsReward = indexOfLastReward - rewardPage;
-    const currentRewards = filteredRewards.slice(indexOfFirtsReward, indexOfLastReward);
-    const totalPage = Math.ceil(filteredRewards.length / rewardPage);
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+    // Ant Design Table columns
+    const columns = [
+        {
+            title: t('no', { ns: 'common' }),
+            dataIndex: 'index',
+            key: 'index',
+            width: 80,
+            render: (_, __, index) => (currentPage - 1) * rewardsPerPage + index + 1,
+        },
+        {
+            title: t('name'),
+            dataIndex: 'name',
+            key: 'name',
+            render: (name) => name?.[i18n.language] || '',
+        },
+        {
+            title: t('description'),
+            dataIndex: 'description',
+            key: 'description',
+            render: (description) => description?.[i18n.language] || '',
+        },
+        {
+            title: t('image'),
+            dataIndex: 'image',
+            key: 'image',
+            align: 'center',
+            render: (image, record) => (
+                <Image
+                    src={image}
+                    alt={record.name?.[i18n.language]}
+                    width={150}
+                    height={150}
+                    style={{ objectFit: 'cover', borderRadius: '8px' }}
+                />
+            ),
+        },
+        {
+            title: t('action', { ns: 'common' }),
+            key: 'action',
+            align: 'center',
+            render: (_, record) => (
+                <button
+                    className="text-white px-3 py-1 buttonupdate"
+                    onClick={() => openModal('update', record)}
+                >
+                    <FaEdit className="iconupdate" />
+                    {t('update', { ns: 'common' })}
+                </button>
+            ),
+        },
+        {
+            title: t('available', { ns: 'common' }),
+            dataIndex: 'isDisabled',
+            key: 'isDisabled',
+            align: 'center',
+            render: (isDisabled, record) => (
+                <Switch
+                    checked={isDisabled}
+                    onChange={() => handleToggleAvailable(record)}
+                    className="custom-switch"
+                />
+            ),
+        },
+    ];
 
     return (
         <div className="containers">
             <Navbar />
-            <div className='title-search'>
+            <div className="title-search">
                 <h1 className="container-title">{t('managementReward')}</h1>
                 <div className="search">
                     <Input
@@ -236,121 +298,80 @@ const Rewards = () => {
                                         stroke="currentColor"
                                         strokeWidth="2"
                                         strokeLinecap="round"
-                                        strokeLinejoin="round">
+                                        strokeLinejoin="round"
+                                    >
                                         <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
                                     </svg>
-                                    <button className="filter-text">
-                                        {t('filterBy', { ns: 'common' })}
-                                    </button>
+                                    <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
                                 </span>
-
-                                <select
+                                <Select
                                     className="filter-dropdown"
                                     value={filterAlphabet}
-                                    onChange={(e) => {
-                                        setFilterAlphabet(e.target.value);
+                                    onChange={(value) => {
+                                        setFilterAlphabet(value);
                                         setCurrentPage(1);
                                     }}
                                 >
-                                    <option value="alphabet">{t('alphabet')}</option>
-                                    <option value="A-Z">A-Z</option>
-                                    <option value="Z-A">Z-A</option>
-                                </select>
-                                <select
+                                    <Select.Option value="alphabet">{t('alphabet')}</Select.Option>
+                                    <Select.Option value="A-Z">A-Z</Select.Option>
+                                    <Select.Option value="Z-A">Z-A</Select.Option>
+                                </Select>
+                                <Select
                                     className="filter-dropdown"
                                     value={filterStatus}
-                                    onChange={(e) => {
-                                        setFilterStatus(e.target.value);
+                                    onChange={(value) => {
+                                        setFilterStatus(value);
                                         setCurrentPage(1);
                                     }}
                                 >
-                                    <option value="all">{t('rewardStatus')}</option>
-                                    <option value="yes">{t('yes', { ns: 'common' })}</option>
-                                    <option value="no">{t('no', { ns: 'common' })}</option>
-                                </select>
+                                    <Select.Option value="all">{t('rewardStatus')}</Select.Option>
+                                    <Select.Option value="yes">{t('yes', { ns: 'common' })}</Select.Option>
+                                    <Select.Option value="no">{t('no', { ns: 'common' })}</Select.Option>
+                                </Select>
                             </div>
                         </div>
-                        <button
-                            className="bg-blue-500 px-4 py-2 rounded-add"
-                            onClick={() => openModal('add')}
-                        >
+                        <Button className="rounded-add" onClick={() => openModal('add')}>
                             + {t('addNew', { ns: 'common' })}
-                        </button>
+                        </Button>
                     </div>
                 </div>
                 <div className="table-container-reward">
-                    <table className="w-full bg-white shadow-md rounded-lg">
-                        <thead>
-                            <tr className="bg-gray-200 text-left">
-                                <th className="p-3">{t('.no', { ns: 'common' })}</th>
-                                <th className="p-3">{t('name')}</th>
-                                <th className="p-3">{t('description')}</th>
-                                <th className="p-3 text-center">{t('image')}</th>
-                                <th className="p-3 text-center">{t('action', { ns: 'common' })}</th>
-                                <th className="p-3 text-center">{t('available', { ns: 'common' })}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {currentRewards.map((reward, index) => (
-                                <tr key={reward.id} className="border-t">
-                                    <td className="p-3">{indexOfFirtsReward + index + 1}</td>
-                                    <td className="p-3">{reward.name?.[i18n.language]}</td>
-                                    <td className="p-3">{reward.description?.[i18n.language]}</td>
-                                    <td className="p-3 text-center">
-                                        <img src={reward.image} alt={reward.name?.[i18n.language]} width="150" height="150" style={{ objectFit: 'cover', borderRadius: '8px' }} />
-                                    </td>
-                                    <td className="p-3 text-center">
+                    <Table
+                        columns={columns}
+                        dataSource={filteredRewards.slice((currentPage - 1) * rewardsPerPage, currentPage * rewardsPerPage)}
+                        pagination={false}
+                        rowKey="id"
+                        className="custom-table"
+                    />
+                    <div className="paginations">
+                        <Pagination
+                            current={currentPage}
+                            total={filteredRewards.length}
+                            pageSize={rewardsPerPage}
+                            onChange={(page) => setCurrentPage(page)}
+                            className="pagination"
+                            itemRender={(page, type, originalElement) => {
+                                if (type === 'prev') {
+                                    return <button className="around" disabled={currentPage === 1}>{'<'}</button>;
+                                }
+                                if (type === 'next') {
+                                    return (
                                         <button
-                                            className="text-white px-3 py-1 buttonupdate"
-                                            onClick={() => openModal('update', reward)}>
-                                            <FaEdit className='iconupdate' />
-                                            {t('update', { ns: 'common' })}
+                                            className="around"
+                                            disabled={currentPage === Math.ceil(filteredRewards.length / rewardsPerPage)}
+                                        >
+                                            {'>'}
                                         </button>
-                                    </td>
-                                    <td className="p-3 text-center">
-                                        <label className="switch">
-                                            <input
-                                                type="checkbox"
-                                                checked={reward.isDisabled}
-                                                onChange={() => handleToggleAvailable(reward)}
-                                            />
-                                            <span className="slider round"></span>
-                                        </label>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-
-                    <div className="flex justify-end items-center mt-4 ml-auto paginations">
-                        <div className="pagination">
-                            <button
-                                className="around"
-                                onClick={() => currentPage > 1 && paginate(currentPage - 1)}
-                                disabled={currentPage === 1}
-                            >
-                                &lt;
-                            </button>
-                            {Array.from({ length: totalPage }, (_, index) => (
-                                <button
-                                    key={index + 1}
-                                    className={`around ${currentPage === index + 1 ? 'active' : ''}`}
-                                    onClick={() => paginate(index + 1)}
-                                >
-                                    {index + 1}
-                                </button>
-                            ))}
-                            <button
-                                className="around"
-                                onClick={() => currentPage < totalPage && paginate(currentPage + 1)}
-                                disabled={currentPage === totalPage}
-                            >
-                                &gt;
-                            </button>
-                        </div>
+                                    );
+                                }
+                                if (type === 'page') {
+                                    return <button className={`around ${currentPage === page ? 'active' : ''}`}>{page}</button>;
+                                }
+                                return originalElement;
+                            }}
+                        />
                     </div>
                 </div>
-
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
@@ -405,8 +426,22 @@ const Rewards = () => {
                                 </Button>
                             </Upload>
                             {imageUrl && (
-                                <div className="image-preview-box">
-                                    <img src={imageUrl} alt="Preview" className="preview-image" />
+                                <div className="image-preview-box-option">
+                                    <Image src={imageUrl} alt="Preview" className="preview-image-option" />
+                                    <DeleteOutlined
+                                        onClick={handleRemoveImage}
+                                        style={{
+                                            position: 'absolute',
+                                            top: 8,
+                                            right: 8,
+                                            fontSize: 20,
+                                            color: '#ff4d4f',
+                                            cursor: 'pointer',
+                                            background: '#fff',
+                                            borderRadius: '50%',
+                                            padding: 4,
+                                        }}
+                                    />
                                 </div>
                             )}
                             {errors.image && <div className="error-text">{errors.image}</div>}
@@ -452,7 +487,7 @@ const Rewards = () => {
                     </div>
                 </Modal>
             </div>
-        </div >
+        </div>
     );
 };
 

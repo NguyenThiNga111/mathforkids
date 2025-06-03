@@ -12,17 +12,11 @@
 .table-container-test th,
 .table-container-test td {
     padding: 12px;
-    /* Match your existing padding (p-3) */
     text-align: left;
-    /* Default alignment */
     white-space: normal;
-    /* Allow text to wrap */
     word-wrap: break-word;
-    /* Break long words */
     overflow-wrap: break-word;
-    /* Modern equivalent of word-wrap */
     max-width: 200px;
-    /* Adjust this value based on your design */
 }
 
 /* Specific column widths */

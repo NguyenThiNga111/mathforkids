@@ -1,10 +1,9 @@
 /* Nền tổng thể */
 .containers {
-    background-color: #EDEFF5;
     background-color: var(--background-content);
 }
 
-/* Tiêu đề giữ nguyên màu nền */
+/* Tiêu đề */
 .container-title {
     font-size: 28px;
     margin: 20px 0 10px 20px;
@@ -19,7 +18,7 @@
 
 /* Phần content có nền trắng (trừ h1 ra) */
 .containers-content {
-    background-color: white;
+    background-color: var(--background-white);
     margin: 20px;
     border-radius: 10px;
     padding: 10px;
@@ -27,17 +26,11 @@
 }
 
 /* Thanh filter và các thành phần bên trong */
-
 .filter-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-}
-
-.filter-container {
-    display: flex;
-    align-items: center;
 }
 
 .filter-containers {
@@ -52,35 +45,37 @@
 }
 
 .iconfilter {
-    color: #555;
+    color: var(--color-filter);
 }
 
 .filter-text {
     background: none;
     border: none;
     font-size: 16px;
-    color: #333;
+    color: var(--color-filter);
     cursor: pointer;
     font-weight: 500;
 }
 
-.filter-dropdown {
+.filter-dropdown .ant-select-selector {
     padding: 8px 12px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-search);
     border-radius: 8px;
     font-size: 14px;
-    background-color: white;
+    background-color: var(--background-white);
     min-width: 120px;
+    color: var(--color-text);
 }
 
 .rounded-add {
     padding: 8px 16px;
-    color: var(--color-text);
+    background-color: var(--background-buttonadd);
+    color: var(--color-buttonadd);
     border: none;
     border-radius: 8px;
     cursor: pointer;
     font-weight: 500;
-    border: 1px solid black;
+    border: 1px solid var(--color-border);
 }
 
 /* Bảng chính */
@@ -91,22 +86,63 @@ table {
 }
 
 thead tr {
-    background-color: #dcdcdc;
+    background-color: var(--table-name);
 }
 
-
 tbody tr:nth-child(odd) {
-    background-color: white;
+    background-color: var(--background-white);
 }
 
 tbody tr:nth-child(even) {
-    background-color: #EDEFF5;
+    background-color: var(--background-content);
 }
 
 th,
 td {
+    color: var(--color-title);
     padding: 12px;
     text-align: left;
+}
+
+/* Search */
+.title-search {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Xóa ảnh vừa thêm */
+.remove-image-icon {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 20px;
+    text-align: center;
+    color: var(--color-text);
+}
+
+.inputsearch {
+    font-size: 14px;
+    width: 250px;
+    padding: 8px 10px;
+    border: 1px solid var(--border-search);
+    background-color: var(--background-navbar);
+    color: var(--color-search);
+    border-radius: 20px;
+    height: 35px;
+    outline: none;
+    margin-right: 20px;
+}
+
+.search ::placeholder {
+    color: var(--color-textsearch);
 }
 
 .buttonaction {
@@ -120,8 +156,8 @@ td {
 .buttonupdate {
     padding: 8px 16px;
     border: none;
-    background-color: #3366FF;
-    color: #ffff;
+    background-color: var(--button-update);
+    color: var(--color-textwhite);
     border-radius: 8px;
     cursor: pointer;
     font-weight: 500;
@@ -130,8 +166,9 @@ td {
 .buttondetail {
     padding: 8px 16px;
     border: none;
-    background-color: #F4A100;
-    color: #ffff;
+    background-color: var(--color-export);
+    /* Using color-export as a close match for #F4A100 */
+    color: var(--color-textwhite);
     border-radius: 8px;
     cursor: pointer;
     font-weight: 500;
@@ -140,8 +177,9 @@ td {
 .buttonlessondetail {
     padding: 8px 16px;
     border: none;
-    background-color: #60D56C;
-    color: #ffff;
+    background-color: var(--background-save);
+    /* Using background-save as a close match for #60D56C */
+    color: var(--color-textwhite);
     border-radius: 8px;
     cursor: pointer;
     font-weight: 500;
@@ -173,7 +211,7 @@ td {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc;
+    background-color: var(--color-border);
     border-radius: 24px;
     cursor: pointer;
     transition: 0.4s;
@@ -186,13 +224,13 @@ td {
     width: 18px;
     left: 3px;
     bottom: 3px;
-    background-color: white;
+    background-color: var(--background-white);
     border-radius: 50%;
     transition: 0.4s;
 }
 
 input:checked+.slider {
-    background-color: #4A90E2;
+    background-color: var(--background-button);
 }
 
 input:checked+.slider::before {
@@ -205,32 +243,36 @@ input:checked+.slider::before {
     float: right;
 }
 
-.pagination {
+.pagination ant-pagination-item {
     display: flex;
     gap: 8px;
 }
 
+.ant-pagination .ant-pagination-item {
+    height: 33px;
+}
+
 .around {
-    padding: 6px 12px;
-    background-color: white;
-    border: 1px solid #ccc;
+    padding: 0px 11px;
+    background-color: var(--background-white);
+    color: var(--background-around);
+    border: 1px solid var(--color-border);
     border-radius: 5px;
 }
 
 .around.active {
-    background-color: #4A90E2;
-    color: white;
+    background-color: var(--background-button);
+    color: var(--color-textwhite);
     font-weight: bold;
 }
 
 /* Modal bảng con */
-
 .modal-content tbody tr:nth-child(even) {
-    background-color: #EDEFF5;
+    background-color: var(--background-content);
 }
 
 .modal-content tbody tr:nth-child(odd) {
-    background-color: white;
+    background-color: var(--background-white);
 }
 
 .ant-modal-content {
@@ -262,7 +304,6 @@ input:checked+.slider::before {
     margin-top: 15px;
     font-weight: bold;
 }
-
 
 .modal-content button {
     flex: 1;
@@ -298,28 +339,24 @@ input:checked+.slider::before {
 }
 
 .error-text {
-    color: red;
+    color: var(--error-text);
     font-size: 13px;
     margin-top: 4px;
 }
 
-.gender-icon {
-    font-size: 25px;
-    vertical-align: middle;
-}
-
+.gender-icon,
 .role-icon {
     font-size: 25px;
     vertical-align: middle;
 }
 
-/* nút save và cancel */
+/* Nút save và cancel */
 .button-row {
     display: flex;
     justify-content: flex-end;
     gap: 6px;
     margin-top: 1rem;
-    padding-left: 350px !important;
+    padding-left: 350px;
 }
 
 .save-button {
@@ -335,11 +372,10 @@ input:checked+.slider::before {
 }
 
 .save-button:hover {
-    background-color: var(--background-savehover) !important;
-    color: var(--color-textwhite) !important;
+    background-color: var(--background-savehover);
+    color: var(--color-textwhite);
 }
 
-/* Cancel Button (Red) */
 .cancel-button {
     background-color: var(--background-cancel);
     color: var(--color-textwhite);
@@ -352,11 +388,11 @@ input:checked+.slider::before {
 }
 
 .cancel-button:hover {
-    background-color: var(--background-cancelhover) !important;
-    color: var(--color-textwhite) !important;
+    background-color: var(--background-cancelhover);
+    color: var(--color-textwhite);
 }
 
-/* bảng dữ liệu */
+/* Bảng dữ liệu */
 .table-container-user table {
     width: 100%;
     border-collapse: collapse;
@@ -370,7 +406,7 @@ input:checked+.slider::before {
     max-width: 200px;
 }
 
-/* Optional: Specific column widths */
+/* Specific column widths */
 .table-container-user th:nth-child(1),
 .table-container-user td:nth-child(1) {
     width: 80px;
@@ -411,7 +447,7 @@ input:checked+.slider::before {
     max-width: 100px;
 }
 
-/* user detail */
+/* User detail */
 .pupil-detail-content {
     height: 400px;
     overflow-x: auto;
@@ -432,7 +468,6 @@ input:checked+.slider::before {
 
 .user-detail-label {
     width: 150px;
-    /* Fixed width for labels to align values */
     font-weight: 600;
     color: var(--color-title);
 }
@@ -449,4 +484,25 @@ input:checked+.slider::before {
 .user-detail-value .role-icon {
     font-size: 20px;
     vertical-align: middle;
+}
+/* ảnh */
+.image-preview-box {
+    position: relative;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    padding: 6px;
+    width: 200px;
+    height: 100px;
+    display: flex;
+    margin-left: auto;
+    justify-content: center;
+    background-color: #fff;
+}
+
+.preview-image {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+    object-fit: contain;
 }

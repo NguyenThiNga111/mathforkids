@@ -6,5 +6,9 @@
     "correctAnswer": "Correct Answer",
     "selectedAnswer": "Selected Answer",
     "level": "Level",
-    "questionTestDetail": "Question Test Details"
+    "questionTestDetail": "Question Test Details",
+    "test": "Test",
+    "testquestion": "Test Question"
+
+
 }

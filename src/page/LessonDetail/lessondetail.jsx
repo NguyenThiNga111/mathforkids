@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Input, Button, Modal, Select, Image, Breadcrumb } from 'antd';
-import axios from 'axios';
-import { UploadOutlined } from '@ant-design/icons';
+import { Input, Button, Modal, Select, Image, Breadcrumb, Table, Switch } from 'antd';
+import { UploadOutlined, DeleteOutlined } from '@ant-design/icons';
 import { FaEdit } from 'react-icons/fa';
 import { Upload } from 'antd';
 import { toast } from 'react-toastify';
@@ -21,6 +20,7 @@ const LessonDetail = () => {
     const [filterStatus, setFilterStatus] = useState('all');
     const [errors, setErrors] = useState({});
     const [creationMode, setCreationMode] = useState('single'); // 'single' or 'full'
+    const [searchQuery, setSearchQuery] = useState('');
 
     const { t, i18n } = useTranslation(['lessondetail', 'common']);
     const navigate = useNavigate();
@@ -37,7 +37,7 @@ const LessonDetail = () => {
             const sortedLessonDetails = response.data.sort((a, b) => {
                 const dateA = parseDate(a.createdAt);
                 const dateB = parseDate(b.createdAt);
-                return dateB - dateA; // Mới nhất lên đầu
+                return dateB - dateA; // Latest first
             });
             setLessonDetails(sortedLessonDetails);
         } catch (error) {
@@ -47,6 +47,7 @@ const LessonDetail = () => {
             });
         }
     };
+
     const fetchLesson = async () => {
         try {
             const response = await api.get(`/lesson/${lessonId}`);
@@ -237,6 +238,7 @@ const LessonDetail = () => {
             reader.readAsDataURL(fileObj);
         }
     };
+
     const handleToggleAvailable = async (lessonDetail) => {
         try {
             await api.put(`/lessondetail/${lessonDetail.id}`, {
@@ -258,13 +260,22 @@ const LessonDetail = () => {
             });
         }
     };
+
+    const handleRemoveImage = () => {
+        setFileList([]);
+        setImageUrl(null);
+        if (imageUrl) {
+            URL.revokeObjectURL(imageUrl); // Free memory
+        }
+    };
+
     const parseDate = (dateString) => {
-        // Chuyển đổi định dạng "09:02:13 21/5/2025" thành Date object
         const [time, date] = dateString.split(' ');
         const [hours, minutes, seconds] = time.split(':').map(Number);
         const [day, month, year] = date.split('/').map(Number);
         return new Date(year, month - 1, day, hours, minutes, seconds);
     };
+
     const filteredLessonDetails = lessonDetails.filter((lessonDetail) => {
         const matchStatus =
             filterStatus === 'all'
@@ -272,8 +283,11 @@ const LessonDetail = () => {
                 : filterStatus === 'no'
                     ? lessonDetail.isDisabled === false
                     : lessonDetail.isDisabled === true;
-        return matchStatus;
+        const searchText = searchQuery.toLowerCase();
+        const lessonDetailName = lessonDetail.title?.[i18n.language]?.toLowerCase() || '';
+        return matchStatus && lessonDetailName.includes(searchText);
     });
+
     const breadcrumbItems = [
         {
             title: t('lesson'),
@@ -283,122 +297,147 @@ const LessonDetail = () => {
             title: lesson?.name?.[i18n.language] || lessonId,
         },
     ];
+
+    // Ant Design Table columns
+    const columns = [
+        {
+            title: t('order'),
+            dataIndex: 'order',
+            key: 'order',
+            width: 100,
+        },
+        {
+            title: t('title'),
+            dataIndex: 'title',
+            key: 'title',
+            render: (title) => title?.[i18n.language] || '',
+        },
+        {
+            title: t('content'),
+            dataIndex: 'content',
+            key: 'content',
+            render: (content) => content?.[i18n.language] || '',
+        },
+        {
+            title: t('image'),
+            dataIndex: 'image',
+            key: 'image',
+            align: 'center',
+            render: (image, record) => (
+                image ? (
+                    <Image
+                        src={image}
+                        alt={record.title?.[i18n.language]}
+                        width={150}
+                        height={150}
+                        style={{ objectFit: 'cover', borderRadius: '8px', border: '2px solid #ccc' }}
+                    />
+                ) : (
+                    <span>{t('image')}</span>
+                )
+            ),
+        },
+        {
+            title: t('action', { ns: 'common' }),
+            key: 'action',
+            align: 'center',
+            render: (_, record) => (
+                <button
+                    className="text-white px-3 py-1 buttonupdate"
+                    onClick={() => openModal('update', record)}
+                >
+                    <FaEdit className="iconupdate" />
+                    {t('update', { ns: 'common' })}
+                </button>
+            ),
+        },
+        {
+            title: t('available', { ns: 'common' }),
+            dataIndex: 'isDisabled',
+            key: 'isDisabled',
+            align: 'center',
+            render: (isDisabled, record) => (
+                <Switch
+                    checked={isDisabled}
+                    onChange={() => handleToggleAvailable(record)}
+                    className="custom-switch"
+                />
+            ),
+        },
+    ];
+
     return (
         <div className="containers">
             <Navbar />
-            <Breadcrumb items={breadcrumbItems} style={{ marginBottom: 16 }} />
-            <h1 className="container-title">
-                {t('managementLessonDetail')} - {lesson?.name?.[i18n.language] || lessonId}
-            </h1>
+            <Breadcrumb items={breadcrumbItems} style={{ marginTop: 10, marginBottom: -20 }} />
+            <div className="title-search">
+                <h1 className="container-title">
+                    {t('managementLessonDetail')} - {lesson?.name?.[i18n.language] || lessonId}
+                </h1>
+                <div className="search">
+                    <Input
+                        type="text"
+                        className="inputsearch"
+                        placeholder={t('searchPlaceholder', { ns: 'common' })}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
+            </div>
             <div className="containers-content">
-                <div className="flex justify-between items-center mb-2">
-                    <div className="filter-bar">
-                        <div className="filter-container">
-                            <div className="filter-containers">
-                                <span className="filter-icon">
-                                    <svg
-                                        className="iconfilter"
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
-                                    </svg>
-                                    <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
-                                </span>
-
-                                <select
-                                    className="filter-dropdown"
-                                    value={filterStatus}
-                                    onChange={(e) => {
-                                        setFilterStatus(e.target.value);
-                                    }}
-                                >
-                                    <option value="all">{t('status')}</option>
-                                    <option value="no">{t('no', { ns: 'common' })}</option>
-                                    <option value="yes">{t('yes', { ns: 'common' })}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <button
-                                className="bg-blue-500 px-4 py-2 rounded-add"
-                                onClick={() => openModal('add')}
+                <div className="filter-bar mb-2">
+                    <div className="filter-containers">
+                        <span className="filter-icon">
+                            <svg
+                                className="iconfilter"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
                             >
-                                + {t('addNew', { ns: 'common' })}
-                            </button>
-                            <button
-                                className="bg-blue-500 px-4 py-2 rounded-add button-margin-left"
-                                onClick={() => openModal('addFull')}
-                            >
-                                + {t('addFullLesson')}
-                            </button>
-                        </div>
+                                <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+                            </svg>
+                            <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
+                        </span>
+                        <Select
+                            className="filter-dropdown"
+                            value={filterStatus}
+                            onChange={(value) => setFilterStatus(value)}
+                            placeholder={t('status')}
+                        >
+                            <Select.Option value="all">{t('status')}</Select.Option>
+                            <Select.Option value="no">{t('no', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="yes">{t('yes', { ns: 'common' })}</Select.Option>
+                        </Select>
+                    </div>
+                    <div>
+                        <Button
+                            className="rounded-add"
+                            onClick={() => openModal('add')}
+                        >
+                            + {t('addNew', { ns: 'common' })}
+                        </Button>
+                        <Button
+                            className="rounded-add button-margin-left"
+                            onClick={() => openModal('addFull')}
+                        >
+                            + {t('addFullLesson')}
+                        </Button>
                     </div>
                 </div>
                 <div className="table-container-lessondetail">
-                    <table className="w-full bg-white shadow-md rounded-lg">
-                        <thead>
-                            <tr className="bg-gray-200 text-left">
-                                <th className="p-3">{t('order')}</th>
-                                <th className="p-3">{t('title')}</th>
-                                <th className="p-3">{t('content')}</th>
-                                <th className="p-3 text-center">{t('image')}</th>
-                                <th className="p-3 text-center">{t('action', { ns: 'common' })}</th>
-                                <th className="p-3 text-center">{t('available', { ns: 'common' })}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredLessonDetails.map((lessonDetail) => (
-                                <tr key={lessonDetail.id} className="border-t">
-                                    <td className="p-3">{lessonDetail.order}</td>
-                                    <td className="p-3">{lessonDetail.title?.[i18n.language]}</td>
-                                    <td className="p-3">{lessonDetail.content?.[i18n.language]}</td>
-                                    <td className="p-3 text-center">
-                                        {lessonDetail.image ? (
-                                            <img
-                                                src={lessonDetail.image}
-                                                alt={lessonDetail.title?.[i18n.language]}
-                                                width="150"
-                                                height="150"
-                                                style={{ objectFit: 'cover', borderRadius: '8px', border: '2px solid #ccc' }}
-                                            />
-                                        ) : (
-                                            <span>
-                                                {t('image')}
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="p-3 text-center">
-                                        <button
-                                            className="text-white px-3 py-1 buttonupdate"
-                                            onClick={() => openModal('update', lessonDetail)}
-                                        >
-                                            <FaEdit className="iconupdate" />
-                                            {t('update', { ns: 'common' })}
-                                        </button>
-                                    </td>
-                                    <td className="p-3 text-center">
-                                        <label className="switch">
-                                            <input
-                                                type="checkbox"
-                                                checked={lessonDetail.isDisabled}
-                                                onChange={() => handleToggleAvailable(lessonDetail)}
-                                            />
-                                            <span className="slider round"></span>
-                                        </label>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                    <Table
+                        columns={columns}
+                        dataSource={filteredLessonDetails}
+                        pagination={false}
+                        rowKey="id"
+                        className="custom-table"
+                    />
                 </div>
-
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
@@ -464,7 +503,21 @@ const LessonDetail = () => {
                                 </Upload>
                                 {imageUrl && (
                                     <div className="image-preview-box">
-                                        <img src={imageUrl} alt="Preview" className="preview-image" />
+                                        <Image src={imageUrl} alt="Preview" className="preview-image" />
+                                        <DeleteOutlined
+                                            onClick={handleRemoveImage}
+                                            style={{
+                                                position: 'absolute',
+                                                top: 8,
+                                                right: 8,
+                                                fontSize: 20,
+                                                color: '#ff4d4f',
+                                                cursor: 'pointer',
+                                                background: '#fff',
+                                                borderRadius: '50%',
+                                                padding: 4,
+                                            }}
+                                        />
                                     </div>
                                 )}
                             </div>
@@ -562,7 +615,7 @@ const LessonDetail = () => {
                                 </Upload>
                                 {fileList.define?.[0]?.url && (
                                     <div className="image-preview-box">
-                                        <img src={fileList.define[0].url} alt="Define Preview" className="preview-image" />
+                                        <Image src={fileList.define[0].url} alt="Define Preview" className="preview-image" />
                                     </div>
                                 )}
                             </div>
@@ -623,7 +676,7 @@ const LessonDetail = () => {
                                 </Upload>
                                 {fileList.example?.[0]?.url && (
                                     <div className="image-preview-box">
-                                        <img src={fileList.example[0].url} alt="Example Preview" className="preview-image" />
+                                        <Image src={fileList.example[0].url} alt="Example Preview" className="preview-image" />
                                     </div>
                                 )}
                             </div>
@@ -684,7 +737,7 @@ const LessonDetail = () => {
                                 </Upload>
                                 {fileList.remember?.[0]?.url && (
                                     <div className="image-preview-box">
-                                        <img src={fileList.remember[0].url} alt="Remember Preview" className="preview-image" />
+                                        <Image src={fileList.remember[0].url} alt="Remember Preview" className="preview-image" />
                                     </div>
                                 )}
                             </div>

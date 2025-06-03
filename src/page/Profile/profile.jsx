@@ -18,7 +18,7 @@ const Profile = () => {
     const [otpCode, setOtpCode] = useState('');
     const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
     const [newEmail, setNewEmail] = useState('');
-    const [confirmEmail, setConfirmEmail] = useState(''); // Thêm ô xác nhận email
+    const [confirmEmail, setConfirmEmail] = useState('');
     const [userData, setUserData] = useState({});
     const { Option } = Select;
 
@@ -59,7 +59,6 @@ const Profile = () => {
     }, [userID, id, navigate, t]);
 
     // Validate form fields
-    // Validate form fields - trả về đối tượng lỗi chi tiết
     const validateForm = () => {
         const newErrors = {};
         if (!userData.phoneNumber || !/^\d{10}$/.test(userData.phoneNumber)) {
@@ -198,14 +197,13 @@ const Profile = () => {
                     <div className="profile-card">
                         <div className="avatar-section">
                             <img src={userData.avatar} alt="Avatar" className="avatar-img" />
-                            <p className="upload-text">Upload Photo</p>
+                            <p className="upload-text">{t('uploadPhoto')}</p>
                         </div>
                         <div className="form-wrapper">
                             <div className="form-grid">
                                 <div className="form-group">
                                     <label>{t('fullName')}</label>
                                     <Input
-                                        type="text"
                                         className="inputprofile"
                                         placeholder={t('enterFullName')}
                                         value={userData.fullName}
@@ -215,6 +213,7 @@ const Profile = () => {
                                 <div className="form-group">
                                     <label>{t('birthday')}</label>
                                     <DatePicker
+                                        className="inputprofile"
                                         placeholder={t('inputDateOfBirth')}
                                         style={{ width: '100%', height: '50px' }}
                                         value={userData.dateOfBirth ? moment(userData.dateOfBirth, 'YYYY-MM-DD') : null}
@@ -229,7 +228,6 @@ const Profile = () => {
                                 <div className="form-group">
                                     <label>{t('address')}</label>
                                     <Input
-                                        type="text"
                                         className="inputprofile"
                                         placeholder={t('enterAddress')}
                                         value={userData.address}
@@ -239,25 +237,29 @@ const Profile = () => {
                                 <div className="form-group">
                                     <label>{t('gender')}</label>
                                     <Select
+                                        className="inputprofile"
                                         style={{ width: '100%', height: '50px' }}
                                         placeholder={t('selectionGender')}
                                         value={userData.gender || undefined}
                                         onChange={(value) => setUserData({ ...userData, gender: value })}
                                     >
-                                        <Option value="Male">{t('male')}</Option>
-                                        <Option value="Female">{t('female')}</Option>
+                                        <Select.Option value="Male">{t('male')}</Select.Option>
+                                        <Select.Option value="Female">{t('female')}</Select.Option>
                                     </Select>
                                 </div>
                                 <div className="form-group">
                                     <label>{t('email')}</label>
                                     <Input
-                                        type="email"
-                                        style={{ height: '50px' }}
+                                        className="inputprofile"
+                                        style={{
+                                            height: '50px',
+                                        }}
                                         placeholder={t('enterEmail')}
                                         value={userData.email}
-                                        readOnly
+                                        disabled
                                         suffix={
                                             <Button
+
                                                 type="link"
                                                 size="small"
                                                 onClick={() => {
@@ -274,12 +276,10 @@ const Profile = () => {
                                 <div className="form-group">
                                     <label>{t('phoneNumber')}</label>
                                     <Input
-                                        type="tel"
                                         className="inputprofile"
                                         placeholder={t('enterPhoneNumber')}
                                         value={userData.phoneNumber}
-                                        onChange={(e) => setUserData({ ...userData, phoneNumber: e.target.value })}
-                                        readOnly
+                                        disabled
                                     />
                                 </div>
                             </div>
@@ -297,7 +297,7 @@ const Profile = () => {
                                 setConfirmEmail('');
                             }}
                             footer={null}
-                            className='modal-content'
+                            className="modal-content"
                         >
                             <Input
                                 placeholder={t('enterNewEmail')}
@@ -328,8 +328,7 @@ const Profile = () => {
                                 setOtpModalVisible(false);
                                 setOtpCode('');
                             }}
-                            className='modal-content'
-
+                            className="modal-content"
                         >
                             <Input
                                 placeholder={t('enterOTP')}
@@ -340,12 +339,16 @@ const Profile = () => {
                                 <Button className="save-button" onClick={handleSendOTP} block>
                                     {t('resendOTP')}
                                 </Button>
-                                <Button className="save-button" onClick={handleVerifyOTP} block>
+                                <Button
+                                    className="save-button"
+                                    onClick={handleVerifyOTP}
+                                    block
+                                    loading={isVerifyingOTP}
+                                >
                                     {t('verify')}
                                 </Button>
                             </div>
                         </Modal>
-
                         <div className="btn-wrapper">
                             <Button className="update-btn" onClick={handleUpdate}>
                                 {t('update', { ns: 'common' })}

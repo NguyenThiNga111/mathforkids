@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Input, Button, Select, Modal } from 'antd';
+import { Input, Button, Select, Modal, Table, Pagination, Switch } from 'antd';
 import { toast } from 'react-toastify';
 import { Imgs } from '../../assets/theme/images';
 import { useTranslation } from 'react-i18next';
@@ -17,8 +17,9 @@ const SystemTask = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
     const [filterStatus, setFilterStatus] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
     const [errors, setErrors] = useState({});
-    const taskPage = 16;
+    const tasksPerPage = 16;
 
     useEffect(() => {
         fetchTasks();
@@ -28,12 +29,12 @@ const SystemTask = () => {
     const fetchTasks = async () => {
         try {
             const response = await api.get('/dailytask');
-            const sortedSystemtasks = response.data.sort((a, b) => {
+            const sortedTasks = response.data.sort((a, b) => {
                 const dateA = parseDate(a.createdAt);
                 const dateB = parseDate(b.createdAt);
-                return dateB - dateA; // Mới nhất lên đầu
+                return dateB - dateA; // Latest first
             });
-            setTasks(sortedSystemtasks);
+            setTasks(sortedTasks);
         } catch {
             toast.error(t('errorFetchData', { ns: 'common' }), {
                 position: 'top-right',
@@ -120,137 +121,185 @@ const SystemTask = () => {
         setEditingTask(null);
         setErrors({});
     };
+
     const parseDate = (dateString) => {
-        // Chuyển đổi định dạng "09:02:13 21/5/2025" thành Date object
         const [time, date] = dateString.split(' ');
         const [hours, minutes, seconds] = time.split(':').map(Number);
         const [day, month, year] = date.split('/').map(Number);
         return new Date(year, month - 1, day, hours, minutes, seconds);
     };
+
     const filteredTasks = tasks.filter(task => {
         const matchStatus = filterStatus === ''
             ? true
             : filterStatus === 'no'
                 ? task.isDisabled === true
                 : task.isDisabled === false;
-        return matchStatus;
+        const searchText = searchQuery.toLowerCase();
+        const taskName = task.title?.[i18n.language]?.toLowerCase() || '';
+        return matchStatus && taskName.includes(searchText);
     });
-    const indexOfLastTask = currentPage * taskPage;
-    const indexOfFirtsTask = indexOfLastTask - taskPage;
-    const currentTask = filteredTasks.slice(indexOfFirtsTask, indexOfLastTask);
-    const totalPage = Math.ceil(filteredTasks.length / taskPage);
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+    // Ant Design Table columns
+    const columns = [
+        {
+            title: t('no', { ns: 'common' }),
+            dataIndex: 'index',
+            key: 'index',
+            width: 80,
+            render: (_, __, index) => (currentPage - 1) * tasksPerPage + index + 1,
+        },
+        {
+            title: t('title'),
+            dataIndex: 'title',
+            key: 'title',
+            render: (title) => title?.[i18n.language] || '',
+        },
+        {
+            title: t('reward'),
+            dataIndex: 'rewardId',
+            key: 'reward',
+            render: (rewardId) => rewards.find(r => r.id === rewardId)?.name?.[i18n.language] || '',
+        },
+        {
+            title: t('quantity'),
+            dataIndex: 'quantityReward',
+            key: 'quantity',
+            align: 'center',
+        },
+        {
+            title: t('description'),
+            dataIndex: 'description',
+            key: 'description',
+            render: (description) => description?.[i18n.language] || '',
+        },
+        {
+            title: t('action', { ns: 'common' }),
+            key: 'action',
+            align: 'center',
+            render: (_, record) => (
+                <button
+                    className="text-white px-3 py-1 buttonupdate"
+                    onClick={() => openModal('update', record)}
+                >
+                    <FaEdit className="iconupdate" />
+                    {t('update', { ns: 'common' })}
+                </button>
+            ),
+        },
+        {
+            title: t('available', { ns: 'common' }),
+            dataIndex: 'isDisabled',
+            key: 'isDisabled',
+            align: 'center',
+            render: (isDisabled, record) => (
+                <Switch
+                    checked={isDisabled}
+                    onChange={() => handleToggleDisabled(record)}
+                    className="custom-switch"
+                />
+            ),
+        },
+    ];
 
     return (
         <div className="containers">
             <Navbar />
-            <h1 className="container-title">{t('taskManagement')}</h1>
+            <div className="title-search">
+                <h1 className="container-title">{t('taskManagement')}</h1>
+                <div className="search">
+                    <Input
+                        type="text"
+                        className="inputsearch"
+                        placeholder={t('searchPlaceholder', { ns: 'common' })}
+                        value={searchQuery}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setCurrentPage(1); // Reset to first page on search
+                        }}
+                    />
+                </div>
+            </div>
             <div className="containers-content">
-                <div className="flex justify-between items-center mb-2">
-                    <div className="filter-bar">
-                        <div className="filter-container">
-                            <div className="filter-containers">
-                                <span className="filter-icon">
-                                    <svg
-                                        className="iconfilter"
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round">
-                                        <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
-                                    </svg>
-                                    <button className="filter-text">
-                                        {t('filterBy', { ns: 'common' })}
-                                    </button>
-                                </span>
-                                <select
-                                    className="filter-dropdown"
-                                    onChange={(e) => setFilterStatus(e.target.value)}
-                                >
-                                    <option value="">{t('systemtaskStatus')}</option>
-                                    <option value="yes">{t('yes', { ns: 'common' })}</option>
-                                    <option value="no">{t('no', { ns: 'common' })}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button
-                            className="bg-blue-500 px-4 py-2 rounded-add"
-                            onClick={() => openModal('add')}
+                <div className="filter-bar mb-2">
+                    <div className="filter-containers">
+                        <span className="filter-icon">
+                            <svg
+                                className="iconfilter"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+                            </svg>
+                            <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
+                        </span>
+                        <Select
+                            className="filter-dropdown"
+                            value={filterStatus}
+                            onChange={(value) => {
+                                setFilterStatus(value);
+                                setCurrentPage(1);
+                            }}
+                            placeholder={t('systemtaskStatus')}
                         >
-                            + {t('addNew', { ns: 'common' })}
-                        </button>
+                            <Select.Option value="">{t('systemtaskStatus')}</Select.Option>
+                            <Select.Option value="yes">{t('yes', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="no">{t('no', { ns: 'common' })}</Select.Option>
+                        </Select>
                     </div>
+                    <Button className="rounded-add" onClick={() => openModal('add')}>
+                        + {t('addNew', { ns: 'common' })}
+                    </Button>
                 </div>
                 <div className="table-container-systemtask">
-                    <table className="w-full bg-white shadow-md rounded-lg">
-                        <thead>
-                            <tr className="bg-gray-200">
-                                <th className="p-3">{t('.no', { ns: 'common' })}</th>
-                                <th className="p-3">{t('title')}</th>
-                                <th className="p-3">{t('reward')}</th>
-                                <th className="p-3 text-center">{t('quantity')}</th>
-                                <th className="p-3">{t('description')}</th>
-                                <th className="p-3 text-center">{t('action', { ns: 'common' })}</th>
-                                <th className="p-3 text-center">{t('available', { ns: 'common' })}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {currentTask.map((task, index) => (
-                                <tr key={task.id} className="border-t">
-                                    <td className="p-3">{indexOfFirtsTask + index + 1}</td>
-                                    <td className="p-3">{task.title?.[i18n.language]}</td>
-                                    <td className="p-3">{rewards.find(r => r.id === task.rewardId)?.name?.[i18n.language]}</td>
-                                    <td className="p-3 text-center">{task.quantityReward}</td>
-                                    <td className="p-3">{task.description?.[i18n.language]}</td>
-                                    <td className="p-3 text-center">
-                                        <button
-                                            className="text-white px-3 py-1 buttonupdate"
-                                            onClick={() => openModal('update', task)}
-                                        >
-                                            <FaEdit className='iconupdate' />
-                                            {t('update', { ns: 'common' })}
+                    <Table
+                        columns={columns}
+                        dataSource={filteredTasks.slice((currentPage - 1) * tasksPerPage, currentPage * tasksPerPage)}
+                        pagination={false}
+                        rowKey="id"
+                        className="custom-table"
+                    />
+                    <div className="paginations">
+                        <Pagination
+                            current={currentPage}
+                            total={filteredTasks.length}
+                            pageSize={tasksPerPage}
+                            onChange={(page) => setCurrentPage(page)}
+                            className="pagination"
+                            itemRender={(page, type, originalElement) => {
+                                if (type === 'prev') {
+                                    return (
+                                        <button className="around" disabled={currentPage === 1}>
+                                            {'<'}
                                         </button>
-                                    </td>
-                                    <td className="p-3 text-center">
-                                        <label className="switch">
-                                            <input type="checkbox" checked={task.isDisabled} onChange={() => handleToggleDisabled(task)} />
-                                            <span className="slider round"></span>
-                                        </label>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    <div className="flex justify-end items-center mt-4 ml-auto paginations">
-                        <div className="pagination">
-                            <button
-                                className="around"
-                                onClick={() => currentPage > 1 && paginate(currentPage - 1)}
-                                disabled={currentPage === 1}
-                            >
-                                &lt;
-                            </button>
-                            {Array.from({ length: totalPage }, (_, index) => (
-                                <button
-                                    key={index + 1}
-                                    className={`around ${currentPage === index + 1 ? 'active' : ''}`}
-                                    onClick={() => paginate(index + 1)}
-                                >
-                                    {index + 1}
-                                </button>
-                            ))}
-                            <button
-                                className="around"
-                                onClick={() => currentPage < totalPage && paginate(currentPage + 1)}
-                                disabled={currentPage === totalPage}
-                            >
-                                &gt;
-                            </button>
-                        </div>
+                                    );
+                                }
+                                if (type === 'next') {
+                                    return (
+                                        <button
+                                            className="around"
+                                            disabled={currentPage === Math.ceil(filteredTasks.length / tasksPerPage)}
+                                        >
+                                            {'>'}
+                                        </button>
+                                    );
+                                }
+                                if (type === 'page') {
+                                    return (
+                                        <button className={`around ${currentPage === page ? 'active' : ''}`}>
+                                            {page}
+                                        </button>
+                                    );
+                                }
+                                return originalElement;
+                            }}
+                        />
                     </div>
                 </div>
 
@@ -284,7 +333,6 @@ const SystemTask = () => {
                             />
                             {errors.titleEn && <div className="error-text">{errors.titleEn}</div>}
                         </div>
-
                         <div className="inputtext">
                             <label className="titleinput">{t('description')} (Vietnamese) <span style={{ color: 'red' }}>*</span></label>
                             <Input
@@ -303,7 +351,6 @@ const SystemTask = () => {
                             />
                             {errors.descriptionEn && <div className="error-text">{errors.descriptionEn}</div>}
                         </div>
-
                         <div className="inputtext">
                             <label className="titleinput">{t('reward')} <span style={{ color: 'red' }}>*</span></label>
                             <Select
@@ -313,9 +360,9 @@ const SystemTask = () => {
                                 onChange={value => setEditingTask({ ...editingTask, rewardId: value })}
                             >
                                 {rewards.map(r => (
-                                    <Option key={r.id} value={r.id}>
+                                    <Select.Option key={r.id} value={r.id}>
                                         {r.name?.[i18n.language]}
-                                    </Option>
+                                    </Select.Option>
                                 ))}
                             </Select>
                             {errors.rewardId && <div className="error-text">{errors.rewardId}</div>}
