@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import Navbar from '../../component/Navbar';
-import { Input, Button, Select, Modal } from 'antd';
+import { Input, Button, Select, Modal, Table, Pagination } from 'antd';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import { Imgs } from '../../assets/theme/images';
 import api from '../../assets/api/Api';
 import './notification.css';
+
+const { Option } = Select;
 
 const Notification = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -16,7 +18,7 @@ const Notification = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [filterStatus, setFilterStatus] = useState('all'); // all / read / unread
     const { t, i18n } = useTranslation(['notification', 'common']);
-    const { Option } = Select;
+    const [searchQuery, setSearchQuery] = useState('');
     const notificationsPerPage = 16;
     const [errors, setErrors] = useState({});
 
@@ -31,7 +33,7 @@ const Notification = () => {
             const sortedNotifications = response.data.sort((a, b) => {
                 const dateA = parseDate(a.createdAt);
                 const dateB = parseDate(b.createdAt);
-                return dateB - dateA; // Mới nhất lên đầu
+                return dateB - dateA; // Latest first
             });
             setNotificationsData(sortedNotifications);
         } catch (error) {
@@ -53,6 +55,7 @@ const Notification = () => {
             });
         }
     };
+
     const handleSave = async () => {
         if (validateForm()) {
             try {
@@ -147,13 +150,14 @@ const Notification = () => {
         setErrors({});
         setSearchUser('');
     };
+
     const parseDate = (dateString) => {
-        // Chuyển đổi định dạng "09:02:13 21/5/2025" thành Date object
         const [time, date] = dateString.split(' ');
         const [hours, minutes, seconds] = time.split(':').map(Number);
         const [day, month, year] = date.split('/').map(Number);
         return new Date(year, month - 1, day, hours, minutes, seconds);
     };
+
     const filteredNotifications = notificationsData.filter(notification => {
         const matchStatus =
             filterStatus === 'all'
@@ -161,125 +165,157 @@ const Notification = () => {
                 : filterStatus === 'read'
                     ? notification.isRead === true
                     : notification.isRead === false;
-        return matchStatus;
+        const searchText = searchQuery.toLowerCase();
+        const notificationName = notification.title?.[i18n.language]?.toLowerCase() || '';
+        return matchStatus && notificationName.includes(searchText);
     });
-
-    const indexOfLastNotification = currentPage * notificationsPerPage;
-    const indexOfFirstNotification = indexOfLastNotification - notificationsPerPage;
-    const currentNotifications = filteredNotifications.slice(indexOfFirstNotification, indexOfLastNotification);
-    const totalPages = Math.ceil(filteredNotifications.length / notificationsPerPage);
-
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
     const filteredUsers = usersData.filter(user =>
         user.fullName.toLowerCase().includes(searchUser.toLowerCase())
     );
+    // Ant Design Table columns
+    const columns = [
+        {
+            title: t('no', { ns: 'common' }),
+            dataIndex: 'index',
+            key: 'index',
+            width: 80,
+            render: (_, __, index) => (currentPage - 1) * notificationsPerPage + index + 1,
+        },
+        {
+            title: t('title'),
+            dataIndex: 'title',
+            key: 'title',
+            render: (text, record) => record.title?.[i18n.language] || '',
+        },
+        {
+            title: t('sender'),
+            dataIndex: 'senderId',
+            key: 'senderId',
+            render: (text, record) => usersData.find(user => user.id === record.senderId)?.fullName || 'Unknown',
+        },
+        {
+            title: t('content'),
+            dataIndex: 'content',
+            key: 'content',
+            render: (text, record) => record.content?.[i18n.language] || '',
+        },
+        {
+            title: t('createdAt'),
+            dataIndex: 'createdAt',
+            key: 'createdAt',
+        },
+        {
+            title: t('status'),
+            dataIndex: 'isRead',
+            key: 'isRead',
+            render: (isRead) => (isRead ? t('read') : t('unread')),
+        },
+    ];
 
     return (
         <div className="containers">
             <Navbar />
-            <h1 className="container-title">{t('managementNotifications')}</h1>
+            <div className="title-search">
+                <h1 className="container-title">{t('managementNotifications')}</h1>
+                <div className="search">
+                    <Input
+                        type="text"
+                        className="inputsearch"
+                        placeholder={t('searchPlaceholder', { ns: 'common' })}
+                        value={searchQuery}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setCurrentPage(1); // Reset to first page on search
+                        }}
+                    />
+                </div>
+            </div>
             <div className="containers-content">
-                <div className="flex justify-between items-center mb-2">
-                    <div className="filter-bar">
-                        <div className="filter-container">
-                            <div className="filter-containers">
-                                <span className="filter-icon">
-                                    <svg
-                                        className="iconfilter"
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round">
-                                        <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
-                                    </svg>
-                                    <button className="filter-text">
-                                        {t('filterBy', { ns: 'common' })}
-                                    </button>
-                                </span>
-                                <select
-                                    className="filter-dropdown"
-                                    value={filterStatus}
-                                    onChange={(e) => {
-                                        setFilterStatus(e.target.value);
-                                        setCurrentPage(1);
-                                    }}
-                                >
-                                    <option value="all">{t('status')}</option>
-                                    <option value="read">{t('read')}</option>
-                                    <option value="unread">{t('unread')}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button
-                            className="bg-blue-500 px-4 py-2 rounded-add"
-                            onClick={() => openModal('add')}
+                <div className="filter-bar mb-2">
+                    <div className="filter-containers">
+                        <span className="filter-icon">
+                            <svg
+                                className="iconfilter"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+                            </svg>
+                            <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
+                        </span>
+                        <Select
+                            className="filter-dropdown"
+                            value={filterStatus}
+                            onChange={(value) => {
+                                setFilterStatus(value);
+                                setCurrentPage(1);
+                            }}
+                            placeholder={t('status')}
                         >
-                            + {t('addNew', { ns: 'common' })}
-                        </button>
+                            <Select.Option value="all">{t('status')}</Select.Option>
+                            <Select.Option value="read">{t('read')}</Select.Option>
+                            <Select.Option value="unread">{t('unread')}</Select.Option>
+                        </Select>
                     </div>
+                    <Button className="rounded-add" onClick={() => openModal('add')}>
+                        + {t('addNew', { ns: 'common' })}
+                    </Button>
                 </div>
                 <div className="table-container-notification">
-                    <table className="w-full bg-white shadow-md rounded-lg">
-                        <thead>
-                            <tr className="bg-gray-200 text-left">
-                                <th className="p-3">{t('.no', { ns: 'common' })}</th> {/* New No column */}
-                                <th className="p-3">{t('title')}</th>
-                                <th className="p-3">{t('sender')}</th>
-                                <th className="p-3">{t('content')}</th>
-                                <th className="p-3">{t('createdAt')}</th>
-                                <th className="p-3">{t('status')}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {currentNotifications.map((notification, index) => (
-                                <tr key={notification.id} className="border-t">
-                                    <td className="p-3">{indexOfFirstNotification + index + 1}</td> {/* Sequential number */}
-
-                                    <td className="p-3">{notification.title?.[i18n.language]}</td>
-                                    <td className="p-3">
-                                        {usersData.find(user => user.id === notification.senderId)?.fullName || 'Unknown'}
-                                    </td>
-                                    <td className="p-3">{notification.content?.[i18n.language]}</td>
-                                    <td className="p-3">{notification.createdAt}</td>
-                                    <td className="p-3">
-                                        {notification.isRead ? t('read') : t('unread')}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-
-                    <div className="flex justify-end items-center mt-4 ml-auto paginations">
-                        <div className="pagination">
-                            <button
-                                className="around"
-                                onClick={() => currentPage > 1 && paginate(currentPage - 1)}
-                                disabled={currentPage === 1}
-                            >
-                                &lt;
-                            </button>
-                            {Array.from({ length: totalPages }, (_, index) => (
-                                <button
-                                    key={index + 1}
-                                    className={`around ${currentPage === index + 1 ? 'active' : ''}`}
-                                    onClick={() => paginate(index + 1)}
-                                >
-                                    {index + 1}
-                                </button>
-                            ))}
-                            <button
-                                className="around"
-                                onClick={() => currentPage < totalPages && paginate(currentPage + 1)}
-                                disabled={currentPage === totalPages}
-                            >
-                                &gt;
-                            </button>
-                        </div>
+                    <Table
+                        columns={columns}
+                        dataSource={filteredNotifications.slice(
+                            (currentPage - 1) * notificationsPerPage,
+                            currentPage * notificationsPerPage
+                        )}
+                        pagination={false}
+                        rowKey="id"
+                        className="custom-table"
+                    />
+                    <div className="paginations">
+                        <Pagination
+                            current={currentPage}
+                            total={filteredNotifications.length}
+                            pageSize={notificationsPerPage}
+                            onChange={(page) => setCurrentPage(page)}
+                            className="pagination"
+                            itemRender={(page, type, originalElement) => {
+                                if (type === 'prev') {
+                                    return (
+                                        <button className="around" disabled={currentPage === 1}>
+                                            {'<'}
+                                        </button>
+                                    );
+                                }
+                                if (type === 'next') {
+                                    return (
+                                        <button
+                                            className="around"
+                                            disabled={
+                                                currentPage ===
+                                                Math.ceil(filteredNotifications.length / notificationsPerPage)
+                                            }
+                                        >
+                                            {'>'}
+                                        </button>
+                                    );
+                                }
+                                if (type === 'page') {
+                                    return (
+                                        <button className={`around ${currentPage === page ? 'active' : ''}`}>
+                                            {page}
+                                        </button>
+                                    );
+                                }
+                                return originalElement;
+                            }}
+                        />
                     </div>
                 </div>
                 <Modal
@@ -295,7 +331,9 @@ const Notification = () => {
                 >
                     <div className="form-content-notification">
                         <div className="inputtext">
-                            <label className="titleinput">{t('title')} (Vietnamese) <span style={{ color: 'red' }}>*</span></label>
+                            <label className="titleinput">
+                                {t('title')} (Vietnamese) <span style={{ color: 'red' }}>*</span>
+                            </label>
                             <Input
                                 placeholder={t('inputTitleVi')}
                                 value={editingNotification?.title?.vi || ''}
@@ -309,7 +347,9 @@ const Notification = () => {
                             {errors.titleVi && <div className="error-text">{errors.titleVi}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('title')} (English) <span style={{ color: 'red' }}>*</span></label>
+                            <label className="titleinput">
+                                {t('title')} (English) <span style={{ color: 'red' }}>*</span>
+                            </label>
                             <Input
                                 placeholder={t('inputTitleEn')}
                                 value={editingNotification?.title?.en || ''}
@@ -323,26 +363,32 @@ const Notification = () => {
                             {errors.titleEn && <div className="error-text">{errors.titleEn}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('sender')} <span style={{ color: 'red' }}>*</span></label>
+                            <label className="titleinput">
+                                {t('sender')} <span style={{ color: 'red' }}>*</span>
+                            </label>
                             <Select
                                 showSearch
                                 placeholder={t('selectSender')}
                                 value={editingNotification?.senderId || undefined}
-                                onChange={(value) => setEditingNotification({ ...editingNotification, senderId: value })}
+                                onChange={(value) =>
+                                    setEditingNotification({ ...editingNotification, senderId: value })
+                                }
                                 onSearch={(value) => setSearchUser(value)}
                                 filterOption={false}
                                 style={{ width: '100%', height: '50px' }}
                             >
-                                {filteredUsers.map(user => (
-                                    <Option key={user.id} value={user.id}>
+                                {filteredUsers.map((user) => (
+                                    <Select.Option key={user.id} value={user.id}>
                                         {user.fullName}
-                                    </Option>
+                                    </Select.Option>
                                 ))}
                             </Select>
                             {errors.senderId && <div className="error-text">{errors.senderId}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('content')} (Vietnamese) <span style={{ color: 'red' }}>*</span></label>
+                            <label className="titleinput">
+                                {t('content')} (Vietnamese) <span style={{ color: 'red' }}>*</span>
+                            </label>
                             <Input.TextArea
                                 placeholder={t('inputContentVi')}
                                 value={editingNotification?.content?.vi || ''}
@@ -357,7 +403,9 @@ const Notification = () => {
                             {errors.contentVi && <div className="error-text">{errors.contentVi}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('content')} (English) <span style={{ color: 'red' }}>*</span></label>
+                            <label className="titleinput">
+                                {t('content')} (English) <span style={{ color: 'red' }}>*</span>
+                            </label>
                             <Input.TextArea
                                 placeholder={t('inputContentEn')}
                                 value={editingNotification?.content?.en || ''}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import './accountuser.css';
-import Navbar from "../../component/Navbar";
-import { Input, Button, Select, Modal, DatePicker, message } from 'antd';
+import Navbar from '../../component/Navbar';
+import { Input, Button, Select, Modal, DatePicker, Table, Pagination, Switch, message } from 'antd';
 import moment from 'moment';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
@@ -19,11 +19,12 @@ const AccountUser = () => {
     const [pupilData, setPupilData] = useState([]);
     const [errors, setErrors] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
+    const [searchQuery, setSearchQuery] = useState('');
 
-    const { t, i18n } = useTranslation(['account', 'common']);
+    const { t } = useTranslation(['account', 'common']);
     const { Option } = Select;
     const userPerPage = 10;
-    // console.log("token", localStorage.getItem('token'));
+
     useEffect(() => {
         fetchUsers();
     }, []);
@@ -35,7 +36,7 @@ const AccountUser = () => {
             const sortedUsers = response.data.sort((a, b) => {
                 const dateA = new Date(a.createdAt.seconds * 1000 + a.createdAt.nanoseconds / 1e6);
                 const dateB = new Date(b.createdAt.seconds * 1000 + b.createdAt.nanoseconds / 1e6);
-                return dateB - dateA; // Mới nhất lên đầu
+                return dateB - dateA;
             });
 
             setUserData(sortedUsers);
@@ -135,7 +136,7 @@ const AccountUser = () => {
                 const ageDifMs = now - dob;
                 const ageDate = new Date(ageDifMs);
                 const age = Math.abs(ageDate.getUTCFullYear() - 1970);
-                if (age < 25) {
+                if (age < 30) {
                     newErrors.dateOfBirth = t('dateOfBirtholdRequired');
                 }
             }
@@ -196,14 +197,7 @@ const AccountUser = () => {
         setErrors({});
     };
 
-    const parseDate = (dateString) => {
-        // Chuyển đổi định dạng "09:02:13 21/5/2025" thành Date object
-        const [time, date] = dateString.split(' ');
-        const [hours, minutes, seconds] = time.split(':').map(Number);
-        const [day, month, year] = date.split('/').map(Number);
-        return new Date(year, month - 1, day, hours, minutes, seconds);
-    };
-    const filteredUsers = userData.filter(user => {
+    const filteredUsers = userData.filter((user) => {
         const matchRole = selectedRole ? user.role === selectedRole : true;
         const matchStatus =
             filterStatus === 'all'
@@ -211,14 +205,10 @@ const AccountUser = () => {
                 : filterStatus === 'no'
                     ? user.isDisabled === false
                     : user.isDisabled === true;
-        return matchStatus && matchRole;
+        const searchText = searchQuery.toLowerCase();
+        const userName = user.fullName?.toLowerCase() || '';
+        return matchStatus && matchRole && userName.includes(searchText);
     });
-
-    const indexOfLastUser = currentPage * userPerPage;
-    const indexOfFirstUser = indexOfLastUser - userPerPage;
-    const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
-    const totalPage = Math.ceil(filteredUsers.length / userPerPage);
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     const renderGenderIcon = (gender) => {
         if (gender.toLowerCase() === 'male') {
@@ -241,144 +231,244 @@ const AccountUser = () => {
                 return null;
         }
     };
+    // Ant Design Table columns
+    const columns = [
+        {
+            title: t('no', { ns: 'common' }),
+            dataIndex: 'index',
+            key: 'index',
+            width: 80,
+            // render: (_, __, index) => indexOfFirstUser + index + 1,
+            render: (_, __, index) => (currentPage - 1) * userPerPage + index + 1,
+        },
+        {
+            title: t('fullName'),
+            dataIndex: 'fullName',
+            key: 'fullName',
+            width: 150,
+        },
+        {
+            title: t('email'),
+            dataIndex: 'email',
+            key: 'email',
+            width: 200,
+        },
+        {
+            title: t('numberPhone'),
+            dataIndex: 'phoneNumber',
+            key: 'phoneNumber',
+            width: 150,
+        },
+        {
+            title: t('gender'),
+            dataIndex: 'gender',
+            key: 'gender',
+            width: 100,
+            align: 'center',
+            render: (gender) => renderGenderIcon(gender),
+        },
+        {
+            title: t('role'),
+            dataIndex: 'role',
+            key: 'role',
+            width: 80,
+            align: 'center',
+            render: (role) => renderRoleIcon(role),
+        },
+        {
+            title: t('action', { ns: 'common' }),
+            key: 'action',
+            width: 250,
+            render: (_, user) => (
+                <div className="buttonaction">
+                    <button
+                        className="text-white px-3 py-1 buttonupdate"
+                        onClick={() => openModal('update', user)}
+                    >
+                        <FaEdit className="iconupdate" />
+                        {t('update', { ns: 'common' })}
+                    </button>
+                    <button
+                        className="text-white px-3 py-1 buttondetail"
+                        onClick={() => openDetailModal(user)}
+                    >
+                        <FaUserGraduate className="iconupdate" />
+                        {t('pupil')}
+                    </button>
+                </div>
+            ),
+        },
+        {
+            title: t('available', { ns: 'common' }),
+            key: 'available',
+            width: 100,
+            align: 'center',
+            render: (_, user) => (
+                <Switch
+                    checked={user.isDisabled}
+                    onChange={() => handleToggleDisabled(user)}
+                    className="custom-switch"
+                />
+            ),
+        },
+    ];
+
+    // Pupil Table columns for detail modal
+    const pupilColumns = [
+        {
+            title: t('no', { ns: 'common' }),
+            dataIndex: 'index',
+            key: 'index',
+            width: 80,
+            render: (_, __, index) => index + 1,
+        },
+        {
+            title: t('image'),
+            dataIndex: 'image',
+            key: 'image',
+            render: (image, child) => (
+                <img
+                    src={image || 'https://i.pravatar.cc/100'}
+                    alt={child.nickName}
+                    width="50"
+                    height="50"
+                    style={{ objectFit: 'cover', borderRadius: '50px', border: '2px solid #ccc' }}
+                />
+            ),
+        },
+        {
+            title: t('nickName'),
+            dataIndex: 'nickName',
+            key: 'nickName',
+        },
+        {
+            title: t('dateOfBirth'),
+            dataIndex: 'dateOfBirth',
+            key: 'dateOfBirth',
+            render: (dateOfBirth) => formatFirebaseTimestamp(dateOfBirth),
+        },
+        {
+            title: t('grade'),
+            dataIndex: 'grade',
+            key: 'grade',
+            align: 'center',
+        },
+    ];
 
     return (
         <div className="containers">
             <Navbar />
-            <h1 className="container-title">{t('managementAccountUser')}</h1>
+            <div className="title-search">
+                <h1 className="container-title">{t('managementAccountUser')}</h1>
+                <div className="search">
+                    <Input
+                        className="inputsearch"
+                        placeholder={t('searchPlaceholder', { ns: 'common' })}
+                        value={searchQuery}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setCurrentPage(1);
+                        }}
+                    />
+                </div>
+            </div>
             <div className="containers-content">
-                <div className="flex justify-between items-center mb-2">
-                    <div className="filter-bar">
-                        <div className="filter-container">
-                            <div className="filter-containers">
-                                <span className="filter-icon">
-                                    <svg
-                                        className="iconfilter"
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round">
-                                        <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
-                                    </svg>
-                                    <button className="filter-text">
-                                        {t('filterBy', { ns: 'common' })}
-                                    </button>
-                                </span>
-                                <select
-                                    className="filter-dropdown"
-                                    value={selectedRole}
-                                    onChange={(e) => setSelectedRole(e.target.value)}
-                                >
-                                    <option value="">{t('role')}</option>
-                                    <option value="user">{t('roleUser')}</option>
-                                    <option value="admin">{t('roleAdmin')}</option>
-                                </select>
-                                <select
-                                    className="filter-dropdown"
-                                    value={filterStatus}
-                                    onChange={(e) => {
-                                        setFilterStatus(e.target.value);
-                                        setCurrentPage(1);
-                                    }}
-                                >
-                                    <option value="all">{t('accountStatus')}</option>
-                                    <option value="yes">{t('yes', { ns: 'common' })}</option>
-                                    <option value="no">{t('no', { ns: 'common' })}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button
-                            className="bg-blue-500 px-4 py-2 rounded-add"
-                            onClick={() => openModal('add')}
+                <div className="filter-bar mb-2">
+                    <div className="filter-containers">
+                        <span className="filter-icon">
+                            <svg
+                                className="iconfilter"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+                            </svg>
+                            <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
+                        </span>
+                        <Select
+                            className="filter-dropdown"
+                            value={selectedRole}
+                            onChange={(value) => setSelectedRole(value)}
+                            placeholder={t('role')}
                         >
-                            + {t('addNew', { ns: 'common' })}
-                        </button>
+                            <Select.Option value="">{t('role')}</Select.Option>
+                            <Select.Option value="user">{t('roleUser')}</Select.Option>
+                            <Select.Option value="admin">{t('roleAdmin')}</Select.Option>
+                        </Select>
+                        <Select
+                            className="filter-dropdown"
+                            value={filterStatus}
+                            onChange={(value) => {
+                                setFilterStatus(value);
+                                setCurrentPage(1);
+                            }}
+                        >
+                            <Select.Option value="all">{t('accountStatus')}</Select.Option>
+                            <Select.Option value="yes">{t('yes', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="no">{t('no', { ns: 'common' })}</Select.Option>
+                        </Select>
                     </div>
+                    <Button className="rounded-add" onClick={() => openModal('add')}>
+                        + {t('addNew', { ns: 'common' })}
+                    </Button>
                 </div>
                 <div className="table-container-user">
-                    <table className="w-full bg-white shadow-md rounded-lg">
-                        <thead>
-                            <tr className="bg-gray-200 text-left">
-                                <th className="p-3">{t('.no', { ns: 'common' })}</th>
-                                <th className="p-3">{t('fullName')}</th>
-                                <th className="p-3">{t('email')}</th>
-                                <th className="p-3">{t('numberPhone')}</th>
-                                <th className="p-3 text-center">{t('gender')}</th>
-                                <th className="p-3 text-center">{t('role')}</th>
-                                <th className="p-3 text-center">{t('action', { ns: 'common' })}</th>
-                                <th className="p-3 text-center">{t('available', { ns: 'common' })}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {currentUsers.map((user, index) => (
-                                <tr key={user.id} className="border-t">
-                                    <td className="p-3">{indexOfFirstUser + index + 1}</td>
-                                    <td className="p-3">{user.fullName}</td>
-                                    <td className="p-3">{user.email}</td>
-                                    <td className="p-3">{user.phoneNumber}</td>
-                                    <td className="p-3 text-center">{renderGenderIcon(user.gender)}</td>
-                                    <td className="p-3 text-center">{renderRoleIcon(user.role)}</td>
-
-                                    <td className="p-3">
-                                        <div className='buttonaction'>
-                                            <button
-                                                className="text-white px-3 py-1 buttonupdate"
-                                                onClick={() => openModal('update', user)}>
-                                                <FaEdit className='iconupdate' />
-                                                {t('update', { ns: 'common' })}
-                                            </button>
-                                            <button
-                                                className="text-white px-3 py-1 buttondetail"
-                                                onClick={() => openDetailModal(user)}>
-                                                <FaUserGraduate className='iconupdate' />
-                                                {t('pupil')}
-                                            </button>
-                                        </div>
-                                    </td>
-                                    <td className="p-3 text-center">
-                                        <label className="switch">
-                                            <input
-                                                type="checkbox"
-                                                checked={user.isDisabled}
-                                                onChange={() => handleToggleDisabled(user)}
-                                            />
-                                            <span className="slider round"></span>
-                                        </label>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    <div className="flex justify-end items-center mt-4 ml-auto paginations">
-                        <div className="pagination">
-                            <button
-                                className="around"
-                                onClick={() => currentPage > 1 && paginate(currentPage - 1)}
-                                disabled={currentPage === 1}
-                            >
-                                &lt;
-                            </button>
-                            {Array.from({ length: totalPage }, (_, index) => (
-                                <button
-                                    key={index + 1}
-                                    className={`around ${currentPage === index + 1 ? 'active' : ''}`}
-                                    onClick={() => paginate(index + 1)}
-                                >
-                                    {index + 1}
-                                </button>
-                            ))}
-                            <button
-                                className="around"
-                                onClick={() => currentPage < totalPage && paginate(currentPage + 1)}
-                                disabled={currentPage === totalPage}
-                            >
-                                &gt;
-                            </button>
-                        </div>
+                    <Table
+                        columns={columns}
+                        dataSource={filteredUsers.slice(
+                            (currentPage - 1) * userPerPage,
+                            currentPage * userPerPage
+                        )}
+                        pagination={false}
+                        rowKey="id"
+                        className="custom-table"
+                    />
+                    <div className="paginations">
+                        <Pagination
+                            current={currentPage}
+                            total={filteredUsers.length}
+                            pageSize={userPerPage}
+                            onChange={(page) => setCurrentPage(page)}
+                            className="pagination"
+                            itemRender={(page, type, originalElement) => {
+                                if (type === 'prev') {
+                                    return (
+                                        <button
+                                            className="around"
+                                            disabled={currentPage === 1}
+                                        >
+                                            {'<'}
+                                        </button>
+                                    );
+                                }
+                                if (type === 'next') {
+                                    return (
+                                        <button
+                                            className="around"
+                                            disabled={currentPage === Math.ceil(filteredUsers.length / userPerPage)}
+                                        >
+                                            {'>'}
+                                        </button>
+                                    );
+                                }
+                                if (type === 'page') {
+                                    return (
+                                        <button
+                                            className={`around ${currentPage === page ? 'active' : ''}`}
+                                        >
+                                            {page}
+                                        </button>
+                                    );
+                                }
+                                return originalElement;
+                            }}
+                        />
                     </div>
                 </div>
 
@@ -418,41 +508,22 @@ const AccountUser = () => {
                                 </div>
                                 <div className="user-detail-row">
                                     <span className="user-detail-label">{t('gender')}:</span>
-                                    <span className="user-detail-value">{renderGenderIcon(selectedUserDetail.gender)}
-                                    </span>
+                                    <span className="user-detail-value">{renderGenderIcon(selectedUserDetail.gender)}</span>
                                 </div>
                                 <div className="user-detail-row">
                                     <span className="user-detail-label">{t('role')}:</span>
-                                    <span className="user-detail-value"> {renderRoleIcon(selectedUserDetail.role)}
-                                    </span>
+                                    <span className="user-detail-value">{renderRoleIcon(selectedUserDetail.role)}</span>
                                 </div>
                             </div>
                             <h3 style={{ textAlign: 'center', fontSize: '24px' }}>{t('pupil')}</h3>
                             {selectedUserDetail.children?.length > 0 ? (
-                                <table className="w-full bg-white shadow-md rounded-lg">
-                                    <thead>
-                                        <tr className="bg-gray-200 text-left">
-                                            <th className="p-2">{t('no', { ns: 'common' })}</th>
-                                            <th className="p-2">{t('image')}</th>
-                                            <th className="p-2">{t('nickName')}</th>
-                                            <th className="p-2">{t('dateOfBirth')}</th>
-                                            <th className="p-2 text-center">{t('grade')}</ th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {selectedUserDetail.children.map((child, index) => (
-                                            <tr key={index} className="border-t">
-                                                <td className="p-3">{indexOfFirstUser + index + 1}</td>
-                                                <td className="p-3">
-                                                    <img src={child.image || 'https://i.pravatar.cc/100'} alt={child.nickName} width="50" height="50" style={{ objectFit: 'cover', borderRadius: '50px', border: '2px solid #ccc' }} />
-                                                </td>
-                                                <td className="p-2">{child.nickName}</td>
-                                                <td className="p-2">{formatFirebaseTimestamp(child.dateOfBirth)}</td>
-                                                <td className="p-2 text-center">{child.grade}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                <Table
+                                    columns={pupilColumns}
+                                    dataSource={selectedUserDetail.children}
+                                    pagination={false}
+                                    rowKey={(record, index) => index}
+                                    className="custom-table"
+                                />
                             ) : (
                                 <p>{t('noPupilProfile')}</p>
                             )}
@@ -473,9 +544,11 @@ const AccountUser = () => {
                     footer={null}
                     className="modal-content"
                 >
-                    <div className='form-content'>
+                    <div className="form-content">
                         <div className="inputtext">
-                            <label className='titleinput'>{t('numberPhone')} <span style={{ color: 'red' }}>*</span></label>
+                            <label className="titleinput">
+                                {t('numberPhone')} <span style={{ color: 'red' }}>*</span>
+                            </label>
                             <Input
                                 placeholder={t('inputNumberPhone')}
                                 value={edittingUser?.phoneNumber || ''}
@@ -484,7 +557,9 @@ const AccountUser = () => {
                             {errors.phoneNumber && <div className="error-text">{errors.phoneNumber}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className='titleinput'>{t('fullName')} <span style={{ color: 'red' }}>*</span></label>
+                            <label className="titleinput">
+                                {t('fullName')} <span style={{ color: 'red' }}>*</span>
+                            </label>
                             <Input
                                 placeholder={t('inputFullName')}
                                 value={edittingUser?.fullName || ''}
@@ -493,7 +568,9 @@ const AccountUser = () => {
                             {errors.fullName && <div className="error-text">{errors.fullName}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className='titleinput'>{t('address')} <span style={{ color: 'red' }}>*</span></label>
+                            <label className="titleinput">
+                                {t('address')} <span style={{ color: 'red' }}>*</span>
+                            </label>
                             <Input
                                 placeholder={t('inputAddress')}
                                 value={edittingUser?.address || ''}
@@ -502,7 +579,9 @@ const AccountUser = () => {
                             {errors.address && <div className="error-text">{errors.address}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className='titleinput'>{t('email')} <span style={{ color: 'red' }}>*</span></label>
+                            <label className="titleinput">
+                                {t('email')} <span style={{ color: 'red' }}>*</span>
+                            </label>
                             <Input
                                 type="email"
                                 placeholder={t('inputEmail')}
@@ -512,39 +591,47 @@ const AccountUser = () => {
                             {errors.email && <div className="error-text">{errors.email}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className='titleinput'>{t('dateOfBirth')} <span style={{ color: 'red' }}>*</span></label>
+                            <label className="titleinput">
+                                {t('dateOfBirth')} <span style={{ color: 'red' }}>*</span>
+                            </label>
                             <DatePicker
                                 placeholder={t('inputDateOfBirth')}
                                 style={{ width: '100%', height: '50px' }}
                                 defaultValue={moment()}
                                 value={edittingUser?.dateOfBirth ? moment(edittingUser.dateOfBirth, 'YYYY/MM/DD') : null}
-                                onChange={(date) => setEditingUser({ ...edittingUser, dateOfBirth: date ? date.format('YYYY/MM/DD') : '' })}
+                                onChange={(date) =>
+                                    setEditingUser({ ...edittingUser, dateOfBirth: date ? date.format('YYYY/MM/DD') : '' })
+                                }
                             />
                             {errors.dateOfBirth && <div className="error-text">{errors.dateOfBirth}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className='titleinput'>{t('gender')} <span style={{ color: 'red' }}>*</span></label>
+                            <label className="titleinput">
+                                {t('gender')} <span style={{ color: 'red' }}>*</span>
+                            </label>
                             <Select
                                 style={{ width: '100%', height: '50px' }}
                                 placeholder={t('selectionGender')}
                                 value={edittingUser?.gender || undefined}
                                 onChange={(value) => setEditingUser({ ...edittingUser, gender: value })}
                             >
-                                <Option value="Male">{t('male')}</Option>
-                                <Option value="Female">{t('female')}</Option>
+                                <Select.Option value="Male">{t('male')}</Select.Option>
+                                <Select.Option value="Female">{t('female')}</Select.Option>
                             </Select>
                             {errors.gender && <div className="error-text">{errors.gender}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className='titleinput'>{t('role')} <span style={{ color: 'red' }}>*</span></label>
+                            <label className="titleinput">
+                                {t('role')} <span style={{ color: 'red' }}>*</span>
+                            </label>
                             <Select
                                 style={{ width: '100%', height: '50px' }}
                                 placeholder={t('selectionRole')}
                                 value={edittingUser?.role || undefined}
                                 onChange={(value) => setEditingUser({ ...edittingUser, role: value })}
                             >
-                                <Option value="user">{t('roleUser')}</Option>
-                                <Option value="admin">{t('roleAdmin')}</Option>
+                                <Select.Option value="user">{t('roleUser')}</Select.Option>
+                                <Select.Option value="admin">{t('roleAdmin')}</Select.Option>
                             </Select>
                             {errors.role && <div className="error-text">{errors.role}</div>}
                         </div>

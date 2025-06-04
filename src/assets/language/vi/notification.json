@@ -1,7 +1,7 @@
 {
     "managementNotifications": "Quản lý thông báo",
     "title": "Tiêu đề",
-    "sender": "Người nhận",
+    "sender": "Người gửi",
     "content": "Nội dung",
     "createdAt": "Ngày tạo",
     "status": "Trạng thái",

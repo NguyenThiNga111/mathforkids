@@ -64,8 +64,7 @@
 }
 
 .form-group input:disabled {
-    background-color: #eee;
-    color: #777;
+    color: #464646;
 }
 
 .btn-wrapper {

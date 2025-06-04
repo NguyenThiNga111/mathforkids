@@ -1,7 +1,7 @@
 {
     "managementNotifications": "Notification Management",
     "title": "Title",
-    "sender": "User",
+    "sender": "Sender",
     "content": "Content",
     "createdAt": "Created At",
     "status": "Status",

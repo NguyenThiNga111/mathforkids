@@ -4,12 +4,6 @@
     scrollbar-width: none;
 }
 
-.preview-image {
-    max-width: 200px;
-    max-height: 200px;
-    border-radius: 8px;
-    object-fit: contain;
-}
 
 .button-margin-left {
     margin-left: 15px;

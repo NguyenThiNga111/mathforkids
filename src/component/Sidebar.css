@@ -16,7 +16,9 @@
     overflow-x: auto;
     scrollbar-width: none;
 }
-
+.content{
+    background-color: var(--background-content);
+}
 .sidebar-header {
     padding: 1rem;
     text-align: center;

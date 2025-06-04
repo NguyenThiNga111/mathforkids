@@ -32,7 +32,6 @@ import { injectFontsToRoot } from './assets/theme/fonts';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './assets/language/i18n';
-
 function App() {
   useEffect(() => {
     // Initialize theme based on localStorage

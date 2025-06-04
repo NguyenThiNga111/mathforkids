@@ -22,7 +22,7 @@
     "emailRequired": "Email là bắt buộc",
     "dateOfBirthRequired": "Ngày sinh là bắt buộc",
     "dateOfBirthdodRequired": "Ngày sinh không được là ngày trong tương lai",
-    "dateOfBirtholdRequired": "Ngày sinh phải trên 25 tuổi",
+    "dateOfBirtholdRequired": "Ngày sinh phải trên 30 tuổi",
     "addressRequired": "Địa chỉ là bắt buộc",
     "fullNameRequired": "Họ và tên là bắt buộc",
     "genderRequired": "Giới tính là bắt buộc",

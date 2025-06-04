@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Input, Button, Modal, Select, Checkbox, Breadcrumb } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
+import { Input, Button, Modal, Select, Checkbox, Breadcrumb, Table, Pagination, Switch, Image } from 'antd';
+import { UploadOutlined, DeleteOutlined } from '@ant-design/icons';
 import { Upload } from 'antd';
 import { Imgs } from "../../assets/theme/images";
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
-import { FaEdit, FaBook } from 'react-icons/fa';
+import { FaEdit, FaBook, FaInfoCircle } from 'react-icons/fa';
 import api from '../../assets/api/Api';
 import './exercise.css';
 import Navbar from "../../component/Navbar";
 
-const exercise = () => {
+const Exercise = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingExercise, setEditingExercise] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
@@ -23,10 +23,13 @@ const exercise = () => {
     const [optionType, setOptionType] = useState('text');
     const [filterLevel, setFilterLevel] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
+    const [searchQuery, setSearchQuery] = useState('');
     const [levels, setLevels] = useState([]);
     const [errors, setErrors] = useState('');
     const [lesson, setLesson] = useState(null);
-    const exercisePage = 16;
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [selectedExercise, setSelectedExercise] = useState(null);
+    const exercisesPerPage = 16;
     const { Option } = Select;
     const { lessonId } = useParams();
     const navigate = useNavigate();
@@ -35,7 +38,7 @@ const exercise = () => {
     useEffect(() => {
         fetchExercises();
         fetchLevels();
-        fetchLesson(); // Added fetchLessons
+        fetchLesson();
     }, [lessonId]);
 
     const fetchExercises = async () => {
@@ -44,7 +47,7 @@ const exercise = () => {
             const sortedExercises = response.data.sort((a, b) => {
                 const dateA = parseDate(a.createdAt);
                 const dateB = parseDate(b.createdAt);
-                return dateB - dateA; // Mới nhất lên đầu
+                return dateB - dateA; // Latest first
             });
             setExercises(sortedExercises);
         } catch (error) {
@@ -237,6 +240,16 @@ const exercise = () => {
         setIsModalOpen(true);
     };
 
+    const openDetailModal = (exercise) => {
+        setSelectedExercise(exercise);
+        setIsDetailModalOpen(true);
+    };
+
+    const closeDetailModal = () => {
+        setIsDetailModalOpen(false);
+        setSelectedExercise(null);
+    };
+
     const closeModal = () => {
         setIsModalOpen(false);
         setEditingExercise(null);
@@ -306,29 +319,123 @@ const exercise = () => {
             setAnswerFileList([]);
         }
     };
+
+    const handleRemoveImage = () => {
+        setFileList([]);
+        setImageUrl('');
+    };
+
+    const handleRemoveOptionImage = (index) => {
+        const newOptionFileList = [...optionFileList];
+        newOptionFileList[index] = [];
+        setOptionFileList(newOptionFileList);
+
+        const newOptions = [...editingExercise.option];
+        newOptions[index] = '';
+        setEditingExercise((prev) => ({
+            ...prev,
+            option: newOptions,
+        }));
+    };
+
+    const handleRemoveAnswerImage = () => {
+        setAnswerFileList([]);
+        setEditingExercise((prev) => ({
+            ...prev,
+            answer: '',
+        }));
+    };
+
     const parseDate = (dateString) => {
-        // Chuyển đổi định dạng "09:02:13 21/5/2025" thành Date object
         const [time, date] = dateString.split(' ');
         const [hours, minutes, seconds] = time.split(':').map(Number);
         const [day, month, year] = date.split('/').map(Number);
         return new Date(year, month - 1, day, hours, minutes, seconds);
     };
+
     const filteredExercises = exercises.filter(exercise => {
         const matchLevel = filterLevel === 'all' ? true : exercise.levelId === filterLevel;
         const matchStatus =
             filterStatus === 'all'
                 ? true
                 : filterStatus === 'no'
-                    ? exercise.isDisabled === false
-                    : exercise.isDisabled === true;
-        return matchStatus && matchLevel;
+                ? exercise.isDisabled === false
+                : exercise.isDisabled === true;
+        const searchText = searchQuery.toLowerCase();
+        const exerciseName = exercise.question?.[i18n.language]?.toLowerCase() || '';
+        return matchStatus && matchLevel && exerciseName.includes(searchText);
     });
 
-    const indexOfLastExercise = currentPage * exercisePage;
-    const indexOfFirstExercise = indexOfLastExercise - exercisePage;
-    const currentExercises = filteredExercises.slice(indexOfFirstExercise, indexOfLastExercise);
-    const totalPages = Math.ceil(filteredExercises.length / exercisePage);
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+    // Ant Design Table columns
+    const columns = [
+        {
+            title: t('no', { ns: 'common' }),
+            dataIndex: 'index',
+            key: 'index',
+            width: 80,
+            render: (_, __, index) => (currentPage - 1) * exercisesPerPage + index + 1,
+        },
+        {
+            title: t('question'),
+            dataIndex: 'question',
+            key: 'question',
+            render: (question) => question?.[i18n.language] || '',
+        },
+        {
+            title: t('image'),
+            dataIndex: 'image',
+            key: 'image',
+            align: 'center',
+            render: (image, record) => (
+                image ? (
+                    <Image
+                        src={image}
+                        alt={record.question?.[i18n.language]}
+                        width={200}
+                        height={100}
+                        style={{ objectFit: 'cover', borderRadius: '8px', border: '2px solid #ccc' }}
+                    />
+                ) : null
+            ),
+        },
+        {
+            title: t('action', { ns: 'common' }),
+            key: 'action',
+            align: 'center',
+            render: (_, record) => (
+                <div className="buttonaction">
+                    <button
+                        className="text-white px-3 py-1 buttonupdate"
+                        onClick={() => openModal('update', record)}
+                    >
+                        <FaEdit className="iconupdate" />
+                        {t('update', { ns: 'common' })}
+                    </button>
+                    <button
+                        className="text-white px-3 py-1 buttondetail"
+                        onClick={() => openDetailModal(record)}
+                    >
+                        <FaInfoCircle className="iconupdate" />
+                        {t('detail')}
+                    </button>
+                </div>
+            ),
+        },
+        {
+            title: t('available', { ns: 'common' }),
+            dataIndex: 'isDisabled',
+            key: 'isDisabled',
+            align: 'center',
+            render: (isDisabled, record) => (
+                <Switch
+                    checked={isDisabled}
+                    onChange={() => handleToggleAvailable(record)}
+                    className="custom-switch"
+                />
+            ),
+        },
+    ];
+
     const breadcrumbItems = [
         {
             title: t('lesson'),
@@ -338,13 +445,28 @@ const exercise = () => {
             title: lesson?.name?.[i18n.language] || lessonId,
         },
     ];
+
     return (
         <div className="containers">
             <Navbar />
-            <Breadcrumb items={breadcrumbItems} style={{ marginBottom: 16 }} />
-            <h1 className="container-title">
-                {t('managementExercise')} - {lesson?.name?.[i18n.language] || lessonId}
-            </h1>
+            <Breadcrumb items={breadcrumbItems} style={{ marginTop: 10, marginBottom: -20 }} />
+            <div className="title-search">
+                <h1 className="container-title">
+                    {t('managementExercise')} - {lesson?.name?.[i18n.language] || lessonId}
+                </h1>
+                <div className="search">
+                    <Input
+                        type="text"
+                        className="inputsearch"
+                        placeholder={t('searchPlaceholder', { ns: 'common' })}
+                        value={searchQuery}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setCurrentPage(1); // Reset to first page on search
+                        }}
+                    />
+                </div>
+            </div>
             <div className="containers-content">
                 <div className="flex justify-between items-center mb-2">
                     <div className="filter-bar">
@@ -360,167 +482,174 @@ const exercise = () => {
                                         stroke="currentColor"
                                         strokeWidth="2"
                                         strokeLinecap="round"
-                                        strokeLinejoin="round">
+                                        strokeLinejoin="round"
+                                    >
                                         <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
                                     </svg>
-                                    <button className="filter-text">
-                                        {t('filterBy', { ns: 'common' })}
-                                    </button>
+                                    <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
                                 </span>
-                                <select
+                                <Select
                                     className="filter-dropdown"
                                     value={filterLevel}
-                                    onChange={(e) => {
-                                        setFilterLevel(e.target.value);
+                                    onChange={(value) => {
+                                        setFilterLevel(value);
                                         setCurrentPage(1);
                                     }}
+                                    placeholder={t('level')}
                                 >
-                                    <option value="all">{t('level')}</option>
+                                    <Select.Option value="all">{t('level')}</Select.Option>
                                     {levels.map((level) => (
-                                        <option key={level.id} value={level.id}>
+                                        <Select.Option key={level.id} value={level.id}>
                                             {level.name?.[i18n.language] || level.name || level.id}
-                                        </option>
+                                        </Select.Option>
                                     ))}
-                                </select>
-                                <select
+                                </Select>
+                                <Select
                                     className="filter-dropdown"
                                     value={filterStatus}
-                                    onChange={(e) => {
-                                        setFilterStatus(e.target.value);
+                                    onChange={(value) => {
+                                        setFilterStatus(value);
                                         setCurrentPage(1);
                                     }}
+                                    placeholder={t('exerciseStatus')}
                                 >
-                                    <option value="all">{t('exerciseStatus')}</option>
-                                    <option value="yes">{t('yes', { ns: 'common' })}</option>
-                                    <option value="no">{t('no', { ns: 'common' })}</option>
-                                </select>
+                                    <Select.Option value="all">{t('exerciseStatus')}</Select.Option>
+                                    <Select.Option value="yes">{t('yes', { ns: 'common' })}</Select.Option>
+                                    <Select.Option value="no">{t('no', { ns: 'common' })}</Select.Option>
+                                </Select>
                             </div>
                         </div>
-                        <button
-                            className="bg-blue-500 px-4 py-2 rounded-add"
-                            onClick={() => openModal('add')}
-                        >
+                        <Button className="rounded-add" onClick={() => openModal('add')}>
                             + {t('addNew', { ns: 'common' })}
-                        </button>
+                        </Button>
                     </div>
                 </div>
                 <div className="table-container-exercise">
-                    <table className="w-full bg-white shadow-md rounded-lg">
-                        <thead>
-                            <tr className="bg-gray-200 text-left">
-                                <th className="p-3">{t('.no', { ns: 'common' })}</th>
-                                <th className="p-3">{t('question')}</th>
-                                <th className="p-3">{t('image')}</th>
-                                <th className="p-3">{t('option')}</th>
-                                <th className="p-3  text-center">{t('answer')}</th>
-                                <th className="p-3 text-center">{t('level')}</th>
-                                <th className="p-3 text-center">{t('action', { ns: 'common' })}</th>
-                                <th className="p-3 text-center">{t('available', { ns: 'common' })}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {currentExercises.map((exercise, index) => (
-                                <tr key={exercise.id} className="border-t">
-                                    <td className="p-3">{indexOfFirstExercise + index + 1}</td>
-                                    <td className="p-3">{exercise.question?.[i18n.language]}</td>
-                                    <td className="p-3">
-                                        {exercise.image && (
-                                            <img
-                                                src={exercise.image}
-                                                alt={exercise.question?.[i18n.language]}
-                                                width="200"
-                                                height="100"
-                                                style={{ objectFit: 'cover', borderRadius: '8px', border: '2px solid #ccc' }}
-                                            />
-                                        )}
-                                    </td>
-                                    <td className="p-3">
-                                        {exercise.option.map((item, index) => (
-                                            item && item.startsWith("http") ? (
-                                                <img
-                                                    key={index}
-                                                    src={item}
-                                                    alt={`Option ${index + 1}`}
-                                                    width="90"
-                                                    height="90"
-                                                    style={{ objectFit: 'cover', borderRadius: '10px', border: '2px solid #ccc', marginRight: '10px' }}
-                                                />
-                                            ) : (
-                                                <span key={index} style={{ marginRight: '45px' }}>
-                                                    {item}
-                                                </span>
-                                            )
-                                        ))}
-                                    </td>
-                                    <td className="p-3  text-center">
-                                        {exercise.answer && exercise.answer.startsWith("http") ? (
-                                            <img
-                                                src={exercise.answer}
-                                                alt="Answer"
-                                                width="90"
-                                                height="90"
-                                                style={{ objectFit: 'cover', borderRadius: '10px', border: '2px solid #ccc' }}
-                                            />
-                                        ) : (
-                                            <span>
-                                                {exercise.answer}
-                                            </span>
-                                        )}
-                                    </td>
-
-                                    <td className="p-3 text-center">{getLevelName(exercise.levelId)}</td>
-                                    <td className="p-3 text-center">
-                                        <button
-                                            className="text-white px-3 py-1 buttonupdate"
-                                            onClick={() => openModal('update', exercise)}
-                                        >
-                                            <FaEdit className="iconupdate" />
-                                            {t('update', { ns: 'common' })}
+                    <Table
+                        columns={columns}
+                        dataSource={filteredExercises.slice(
+                            (currentPage - 1) * exercisesPerPage,
+                            currentPage * exercisesPerPage
+                        )}
+                        pagination={false}
+                        rowKey="id"
+                        className="custom-table"
+                    />
+                    <div className="paginations">
+                        <Pagination
+                            current={currentPage}
+                            total={filteredExercises.length}
+                            pageSize={exercisesPerPage}
+                            onChange={(page) => setCurrentPage(page)}
+                            className="pagination"
+                            itemRender={(page, type, originalElement) => {
+                                if (type === 'prev') {
+                                    return (
+                                        <button className="around" disabled={currentPage === 1}>
+                                            {'<'}
                                         </button>
-                                    </td>
-                                    <td className="p-3 text-center">
-                                        <label className="switch">
-                                            <input
-                                                type="checkbox"
-                                                checked={exercise.isDisabled}
-                                                onChange={() => handleToggleAvailable(exercise)}
-                                            />
-                                            <span className="slider round"></span>
-                                        </label>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    <div className="flex justify-end items-center mt-4 ml-auto paginations">
-                        <div className="pagination">
-                            <button
-                                className="around"
-                                onClick={() => currentPage > 1 && paginate(currentPage - 1)}
-                                disabled={currentPage === 1}
-                            >
-                                &lt;
-                            </button>
-                            {Array.from({ length: totalPages }, (_, index) => (
-                                <button
-                                    key={index + 1}
-                                    className={`around ${currentPage === index + 1 ? 'active' : ''}`}
-                                    onClick={() => paginate(index + 1)}
-                                >
-                                    {index + 1}
-                                </button>
-                            ))}
-                            <button
-                                className="around"
-                                onClick={() => currentPage < totalPages && paginate(currentPage + 1)}
-                                disabled={currentPage === totalPages}
-                            >
-                                &gt;
-                            </button>
-                        </div>
+                                    );
+                                }
+                                if (type === 'next') {
+                                    return (
+                                        <button
+                                            className="around"
+                                            disabled={
+                                                currentPage === Math.ceil(filteredExercises.length / exercisesPerPage)
+                                            }
+                                        >
+                                            {'>'}
+                                        </button>
+                                    );
+                                }
+                                if (type === 'page') {
+                                    return (
+                                        <button className={`around ${currentPage === page ? 'active' : ''}`}>
+                                            {page}
+                                        </button>
+                                    );
+                                }
+                                return originalElement;
+                            }}
+                        />
                     </div>
                 </div>
-
+                {/* Detail Modal */}
+                <Modal
+                    title={
+                        <div style={{ textAlign: 'center', fontSize: '24px', fontWeight: 'bold', color: '#1a1a1a' }}>
+                            {t('exercisedetail')}
+                        </div>
+                    }
+                    open={isDetailModalOpen}
+                    onCancel={closeDetailModal}
+                    footer={null}
+                    className="modal-content"
+                >
+                    {selectedExercise && (
+                        <div className="form-content-assessment-detail">
+                            <div className="detail-item">
+                                <label className="detail-label">{t('question')} (Vietnamese)</label>
+                                <div className="detail-content">{selectedExercise.question?.vi || '-'}</div>
+                            </div>
+                            <div className="detail-item">
+                                <label className="detail-label">{t('question')} (English)</label>
+                                <div className="detail-content">{selectedExercise.question?.en || '-'}</div>
+                            </div>
+                            <div className="detail-item">
+                                <label className="detail-label">{t('level')}</label>
+                                <div className="detail-content">{getLevelName(selectedExercise.levelId)}</div>
+                            </div>
+                            <div className="detail-item">
+                                <label className="detail-label">{t('image')}</label>
+                                <div className="detail-content">
+                                    {selectedExercise.image ? (
+                                        <Image
+                                            src={selectedExercise.image}
+                                            alt="Assessment"
+                                            className="assessment-image"
+                                        />
+                                    ) : (
+                                        <span>-</span>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="detail-item">
+                                <label className="detail-label">{t('option')}</label>
+                                <div className="detail-content option-grid">
+                                    {selectedExercise.option?.map((opt, index) => (
+                                        <div key={index} className="option-item">
+                                            {opt && opt.startsWith("http") ? (
+                                                <Image
+                                                    src={opt}
+                                                    alt={`Option ${index + 1}`}
+                                                    className="option-image"
+                                                />
+                                            ) : (
+                                                <span>{opt || '-'}</span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="detail-item">
+                                <label className="detail-label">{t('answer')}</label>
+                                <div className="detail-content">
+                                    {selectedExercise.answer && selectedExercise.answer.startsWith("http") ? (
+                                        <Image
+                                            src={selectedExercise.answer}
+                                            alt="Answer"
+                                            className="answer-image"
+                                        />
+                                    ) : (
+                                        <span>{selectedExercise.answer || '-'}</span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </Modal>
+                {/* Edit/Add Modal */}
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
@@ -582,10 +711,9 @@ const exercise = () => {
                             </Select>
                             {errors.levelId && <div className="error-text">{errors.levelId}</div>}
                         </div>
-
                         <div className="inputtexts">
                             <div style={{ display: 'flex', gap: '20px' }}>
-                                <label className="titleinput"> {t('textOption')}</label>
+                                <label className="titleinput">{t('textOption')}</label>
                                 <Checkbox
                                     checked={optionType === 'text'}
                                     onChange={(e) => {
@@ -600,9 +728,8 @@ const exercise = () => {
                                             setAnswerFileList([]);
                                         }
                                     }}
-                                >
-                                </Checkbox>
-                                <label className="titleinput"> {t('imageOption')}</label>
+                                />
+                                <label className="titleinput">{t('imageOption')}</label>
                                 <Checkbox
                                     checked={optionType === 'image'}
                                     onChange={(e) => {
@@ -617,8 +744,7 @@ const exercise = () => {
                                             setAnswerFileList([]);
                                         }
                                     }}
-                                >
-                                </Checkbox>
+                                />
                             </div>
                         </div>
                         <div className="inputtext">
@@ -656,10 +782,25 @@ const exercise = () => {
                                         </Upload>
                                         {optionFileList[index].length > 0 && (
                                             <div className="image-preview-box-option">
-                                                <img
+                                                <Image
                                                     src={opt}
                                                     alt={`Option ${index + 1}`}
-                                                    className="preview-image-option" />
+                                                    className="preview-image-option"
+                                                />
+                                                <DeleteOutlined
+                                                    onClick={() => handleRemoveOptionImage(index)}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: 8,
+                                                        right: 8,
+                                                        fontSize: 20,
+                                                        color: '#ff4d4f',
+                                                        cursor: 'pointer',
+                                                        background: '#fff',
+                                                        borderRadius: '50%',
+                                                        padding: 4,
+                                                    }}
+                                                />
                                             </div>
                                         )}
                                     </div>
@@ -695,10 +836,25 @@ const exercise = () => {
                                     </Upload>
                                     {answerFileList.length > 0 && (
                                         <div className="image-preview-box-option">
-                                            <img
+                                            <Image
                                                 src={editingExercise.answer}
                                                 alt="Answer"
-                                                className="preview-image-option" />
+                                                className="preview-image-option"
+                                            />
+                                            <DeleteOutlined
+                                                onClick={handleRemoveAnswerImage}
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: 8,
+                                                    right: 8,
+                                                    fontSize: 20,
+                                                    color: '#ff4d4f',
+                                                    cursor: 'pointer',
+                                                    background: '#fff',
+                                                    borderRadius: '50%',
+                                                    padding: 4,
+                                                }}
+                                            />
                                         </div>
                                     )}
                                 </div>
@@ -706,7 +862,7 @@ const exercise = () => {
                             {errors.answer && <div className="error-text">{errors.answer}</div>}
                         </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('image')} </label>
+                            <label className="titleinput">{t('image')}</label>
                             <Upload
                                 accept="image/*"
                                 showUploadList={false}
@@ -720,7 +876,21 @@ const exercise = () => {
                             </Upload>
                             {imageUrl && (
                                 <div className="image-preview-box">
-                                    <img src={imageUrl} alt="Preview" className="preview-image" />
+                                    <Image src={imageUrl} alt="Preview" className="preview-image" />
+                                    <DeleteOutlined
+                                        onClick={handleRemoveImage}
+                                        style={{
+                                            position: 'absolute',
+                                            top: 8,
+                                            right: 8,
+                                            fontSize: 20,
+                                            color: '#ff4d4f',
+                                            cursor: 'pointer',
+                                            background: '#fff',
+                                            borderRadius: '50%',
+                                            padding: 4,
+                                        }}
+                                    />
                                 </div>
                             )}
                         </div>
@@ -732,7 +902,6 @@ const exercise = () => {
                         <Button className="save-button" onClick={handleSave} block>
                             {t('save', { ns: 'common' })}
                         </Button>
-
                     </div>
                 </Modal>
             </div>
@@ -740,4 +909,4 @@ const exercise = () => {
     );
 };
 
-export default exercise;
+export default Exercise;

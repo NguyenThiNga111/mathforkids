@@ -22,7 +22,7 @@
     "emailRequired": "Email is required",
     "dateOfBirthRequired": "Date of birth is required",
     "dateOfBirthdodRequired": "Date of birth cannot be future date",
-    "dateOfBirtholdRequired": "Date of birth must be over 25 years old",
+    "dateOfBirtholdRequired": "Date of birth must be over 30 years old",
     "addressRequired": "Address is required",
     "fullNameRequired": "Fullname is required",
     "genderRequired": "Gender is required",
