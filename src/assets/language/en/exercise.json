@@ -1,4 +1,4 @@
-{
+    {
     "managementExercise": "Management exercise",
     "updateExercise": "Update Exercise",
     "addExercise": "Add Exercise",
@@ -16,7 +16,7 @@
     "answer": "Answer",
     "inputAnswer": "Enter answer",
     "uploadAnswer": "Upload answer",
-    "image": "Image",
+    "image": "Image question",
     "inputImage": "Upload image",
     "exerciseStatus": "Exercise status",
     "levelIdRequired": "Level is required",

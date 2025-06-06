@@ -19,6 +19,7 @@ const Lesson = () => {
     const [errors, setErrors] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
     const [filterStatus, setFilterStatus] = useState('all'); // all / enabled / disabled
+    const [filterType, setFilterType] = useState('all'); // all / addition / subtraction / multiplication / division
     const [searchQuery, setSearchQuery] = useState('');
 
     const { t, i18n } = useTranslation(['lesson', 'common']);
@@ -122,15 +123,11 @@ const Lesson = () => {
             newErrors.nameVi = t('nameViRequired');
         } else if (editingLesson.name.vi.trim().length < 3) {
             newErrors.nameVi = t('nameViMinLength');
-        } else if (!/^[a-zA-Z0-9\s\u00C0-\u1EF9]*$/.test(editingLesson.name.vi.trim())) {
-            newErrors.nameVi = t('nameViInvalid');
         }
         if (!editingLesson?.name?.en || editingLesson.name.en.trim() === '') {
             newErrors.nameEn = t('nameEnRequired');
         } else if (editingLesson.name.en.trim().length < 3) {
             newErrors.nameEn = t('nameEnMinLength');
-        } else if (!/^[a-zA-Z0-9\s]*$/.test(editingLesson.name.en.trim())) {
-            newErrors.nameEn = t('nameEnInvalid');
         }
         if (!editingLesson?.grade || editingLesson.grade === '') {
             newErrors.grade = t('gradeRequired');
@@ -185,15 +182,16 @@ const Lesson = () => {
                     : filterStatus === 'no'
                         ? lesson.isDisabled === false
                         : lesson.isDisabled === true;
+            const matchType = filterType === 'all' ? true : lesson.type === filterType;
             const searchText = searchQuery.toLowerCase();
             const searchName = lesson.name?.[i18n.language]?.toLowerCase() || '';
-            return matchStatus && matchGrade && searchName.includes(searchText);
+            return matchStatus && matchGrade && matchType && searchName.includes(searchText);
         });
 
     // Ant Design Table columns
     const columns = [
         {
-            title: t('no', { ns: 'common' }),
+            title: t('.no', { ns: 'common' }),
             dataIndex: 'index',
             key: 'index',
             width: 80,
@@ -309,6 +307,21 @@ const Lesson = () => {
                         </span>
                         <Select
                             className="filter-dropdown"
+                            value={filterType}
+                            onChange={(value) => {
+                                setFilterType(value);
+                                setCurrentPage(1);
+                            }}
+                            placeholder={t('type')}
+                        >
+                            <Select.Option value="all">{t('type')}</Select.Option>
+                            <Select.Option value="addition">{t('addition')}</Select.Option>
+                            <Select.Option value="subtraction">{t('subtraction')}</Select.Option>
+                            <Select.Option value="multiplication">{t('multiplication')}</Select.Option>
+                            <Select.Option value="division">{t('division')}</Select.Option>
+                        </Select>
+                        <Select
+                            className="filter-dropdown"
                             value={selectedGrade}
                             onChange={(value) => setSelectedGrade(value)}
                             placeholder={t('grade')}
@@ -347,44 +360,44 @@ const Lesson = () => {
                         rowKey="id"
                         className="custom-table"
                     />
-                    <div className="paginations">
-                        <Pagination
-                            current={currentPage}
-                            total={filteredLessons.length}
-                            pageSize={lessonsPerPage}
-                            onChange={(page) => setCurrentPage(page)}
-                            className="pagination"
-                            itemRender={(page, type, originalElement) => {
-                                if (type === 'prev') {
-                                    return (
-                                        <button className="around" disabled={currentPage === 1}>
-                                            {'<'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'next') {
-                                    return (
-                                        <button
-                                            className="around"
-                                            disabled={
-                                                currentPage === Math.ceil(filteredLessons.length / lessonsPerPage)
-                                            }
-                                        >
-                                            {'>'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'page') {
-                                    return (
-                                        <button className={`around ${currentPage === page ? 'active' : ''}`}>
-                                            {page}
-                                        </button>
-                                    );
-                                }
-                                return originalElement;
-                            }}
-                        />
-                    </div>
+                </div>
+                <div className="paginations">
+                    <Pagination
+                        current={currentPage}
+                        total={filteredLessons.length}
+                        pageSize={lessonsPerPage}
+                        onChange={(page) => setCurrentPage(page)}
+                        className="pagination"
+                        itemRender={(page, type, originalElement) => {
+                            if (type === 'prev') {
+                                return (
+                                    <button className="around" disabled={currentPage === 1}>
+                                        {'<'}
+                                    </button>
+                                );
+                            }
+                            if (type === 'next') {
+                                return (
+                                    <button
+                                        className="around"
+                                        disabled={
+                                            currentPage === Math.ceil(filteredLessons.length / lessonsPerPage)
+                                        }
+                                    >
+                                        {'>'}
+                                    </button>
+                                );
+                            }
+                            if (type === 'page') {
+                                return (
+                                    <button className={`around ${currentPage === page ? 'active' : ''}`}>
+                                        {page}
+                                    </button>
+                                );
+                            }
+                            return originalElement;
+                        }}
+                    />
                 </div>
                 <Modal
                     title={

@@ -185,7 +185,7 @@ const PupilManagement = () => {
     // Ant Design Table columns
     const columns = [
         {
-            title: t('no', { ns: 'common' }),
+            title: t('.no', { ns: 'common' }),
             dataIndex: 'index',
             key: 'index',
             width: 80,
@@ -223,20 +223,20 @@ const PupilManagement = () => {
             key: 'dateOfBirth',
             render: (dateOfBirth) => formatFirebaseTimestamp(dateOfBirth),
         },
-        {
-            title: t('action', { ns: 'common' }),
-            key: 'action',
-            align: 'center',
-            render: (_, record) => (
-                <button
-                    className="text-white px-3 py-1 buttonupdate"
-                    onClick={() => openModal('update', record)}
-                >
-                    <FaEdit className="iconupdate" />
-                    {t('update', { ns: 'common' })}
-                </button>
-            ),
-        },
+        // {
+        //     title: t('action', { ns: 'common' }),
+        //     key: 'action',
+        //     align: 'center',
+        //     render: (_, record) => (
+        //         <button
+        //             className="text-white px-3 py-1 buttonupdate"
+        //             onClick={() => openModal('update', record)}
+        //         >
+        //             <FaEdit className="iconupdate" />
+        //             {t('update', { ns: 'common' })}
+        //         </button>
+        //     ),
+        // },
         {
             title: t('available', { ns: 'common' }),
             dataIndex: 'isDisabled',
@@ -314,34 +314,35 @@ const PupilManagement = () => {
                         rowKey="id"
                         className="custom-table"
                     />
-                    <div className="paginations">
-                        <Pagination
-                            current={currentPage}
-                            total={filteredPupils.length}
-                            pageSize={pupilsPerPage}
-                            onChange={(page) => setCurrentPage(page)}
-                            className="pagination"
-                            itemRender={(page, type, originalElement) => {
-                                if (type === 'prev') {
-                                    return <button className="around" disabled={currentPage === 1}>{'<'}</button>;
-                                }
-                                if (type === 'next') {
-                                    return (
-                                        <button
-                                            className="around"
-                                            disabled={currentPage === Math.ceil(filteredPupils.length / pupilsPerPage)}
-                                        >
-                                            {'>'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'page') {
-                                    return <button className={`around ${currentPage === page ? 'active' : ''}`}>{page}</button>;
-                                }
-                                return originalElement;
-                            }}
-                        />
-                    </div>
+                </div>
+
+                <div className="paginations">
+                    <Pagination
+                        current={currentPage}
+                        total={filteredPupils.length}
+                        pageSize={pupilsPerPage}
+                        onChange={(page) => setCurrentPage(page)}
+                        className="pagination"
+                        itemRender={(page, type, originalElement) => {
+                            if (type === 'prev') {
+                                return <button className="around" disabled={currentPage === 1}>{'<'}</button>;
+                            }
+                            if (type === 'next') {
+                                return (
+                                    <button
+                                        className="around"
+                                        disabled={currentPage === Math.ceil(filteredPupils.length / pupilsPerPage)}
+                                    >
+                                        {'>'}
+                                    </button>
+                                );
+                            }
+                            if (type === 'page') {
+                                return <button className={`around ${currentPage === page ? 'active' : ''}`}>{page}</button>;
+                            }
+                            return originalElement;
+                        }}
+                    />
                 </div>
                 <Modal
                     title={

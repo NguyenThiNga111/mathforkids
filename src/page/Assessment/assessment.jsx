@@ -25,7 +25,7 @@ const Assessment = () => {
     const [imageUrl, setImageUrl] = useState('');
     const [assessments, setAssessments] = useState([]);
     const [fileList, setFileList] = useState([]);
-    const [optionFileList, setOptionFileList] = useState([[], [], []]);
+    const [optionFileList, setOptionFileList] = useState([]);
     const [answerFileList, setAnswerFileList] = useState([]);
     const [optionType, setOptionType] = useState('text');
     const [filterLevel, setFilterLevel] = useState('all');
@@ -99,11 +99,18 @@ const Assessment = () => {
                     formData.append('option', JSON.stringify(validOptions));
                     formData.append('answer', editingAssessment.answer);
                 } else {
-                    optionFileList.forEach((fileList, index) => {
-                        if (fileList[0]?.originFileObj) {
-                            formData.append('option', fileList[0].originFileObj);
+                    const fullOption = [];
+                    for (let i = 0; i < optionFileList.length; i++) {
+                        const fileEntry = optionFileList[i];
+                        if (fileEntry[0]?.originFileObj) {
+                            formData.append('option', fileEntry[0].originFileObj);
+                        } else if (typeof editingAssessment.option[i] === 'string') {
+                            fullOption.push(editingAssessment.option[i]);
                         }
-                    });
+                    }
+                    if (fullOption.length > 0) {
+                        formData.append('existingOptionUrls', JSON.stringify(fullOption));
+                    }
                     if (answerFileList[0]?.originFileObj) {
                         formData.append('answer', answerFileList[0].originFileObj);
                     }
@@ -186,11 +193,11 @@ const Assessment = () => {
         }
         if (optionType === 'text') {
             const validOptions = editingAssessment?.option?.filter(opt => opt && opt.trim() !== '');
-            if (!validOptions || validOptions.length < 3) {
+            if (!validOptions || validOptions.length === 0) {
                 newErrors.option = t('optionRequired');
             }
         } else if (optionType === 'image') {
-            if (optionFileList.filter(list => list.length > 0).length < 3) {
+            if (optionFileList.filter(list => list.length > 0).length === 0) {
                 newErrors.option = t('optionImageRequired');
             }
         }
@@ -211,20 +218,20 @@ const Assessment = () => {
                 grade: '',
                 type: { map: '', en: '', vi: '' },
                 question: { en: '', vi: '' },
-                option: ['', '', ''],
+                option: [''],
                 answer: '',
                 image: '',
             });
             setOptionType('text');
             setImageUrl('');
             setFileList([]);
-            setOptionFileList([[], [], []]);
+            setOptionFileList([[]]);
             setAnswerFileList([]);
         } else if (mode === 'update') {
             const isImageOption = assessment.option?.some(opt => opt.startsWith('http'));
             setEditingAssessment({
                 ...assessment,
-                option: assessment.option || ['', '', ''],
+                option: assessment.option || [''],
                 answer: assessment.answer || '',
                 image: assessment.image || '',
             });
@@ -234,7 +241,7 @@ const Assessment = () => {
             setOptionFileList(
                 isImageOption && assessment.option
                     ? assessment.option.map(url => (url ? [{ url }] : []))
-                    : [[], [], []]
+                    : [[]]
             );
             setAnswerFileList(
                 isImageOption && assessment.answer ? [{ url: assessment.answer }] : []
@@ -259,7 +266,7 @@ const Assessment = () => {
         setOptionType('text');
         setImageUrl('');
         setFileList([]);
-        setOptionFileList([[], [], []]);
+        setOptionFileList([[]]);
         setAnswerFileList([]);
         setErrors({});
     };
@@ -326,7 +333,29 @@ const Assessment = () => {
     const handleRemoveImage = () => {
         setFileList([]);
         setImageUrl('');
-        message.info('Ảnh đã được xóa.');
+    };
+    const addOption = () => {
+        if (editingAssessment.option.length >= 3) {
+            toast.error(t('maxThreeOptions', { ns: 'common' }));
+            return;
+        }
+        setEditingAssessment((prev) => ({
+            ...prev,
+            option: [...prev.option, ''],
+        }));
+        setOptionFileList((prev) => [...prev, []]);
+    };
+
+    const removeOption = (index) => {
+        if (editingAssessment.option.length === 1) {
+            toast.error(t('atLeastOneOption', { ns: 'common' }));
+            return;
+        }
+        setEditingAssessment((prev) => ({
+            ...prev,
+            option: prev.option.filter((_, i) => i !== index),
+        }));
+        setOptionFileList((prev) => prev.filter((_, i) => i !== index));
     };
 
     const handleRemoveOptionImage = (index) => {
@@ -340,7 +369,6 @@ const Assessment = () => {
             ...prev,
             option: newOptions,
         }));
-        message.info(`Ảnh option ${index + 1} đã được xóa.`);
     };
 
     const handleRemoveAnswerImage = () => {
@@ -349,7 +377,6 @@ const Assessment = () => {
             ...prev,
             answer: '',
         }));
-        message.info('Ảnh đáp án đã được xóa.');
     };
 
     const parseDate = (dateString) => {
@@ -377,7 +404,7 @@ const Assessment = () => {
     // Ant Design Table columns
     const columns = [
         {
-            title: t('no', { ns: 'common' }),
+            title: t('.no', { ns: 'common' }),
             dataIndex: 'index',
             key: 'index',
             width: 80,
@@ -575,44 +602,45 @@ const Assessment = () => {
                         rowKey="id"
                         className="custom-table"
                     />
-                    <div className="paginations">
-                        <Pagination
-                            current={currentPage}
-                            total={filteredAssessments.length}
-                            pageSize={assessmentsPerPage}
-                            onChange={(page) => setCurrentPage(page)}
-                            className="pagination"
-                            itemRender={(page, type, originalElement) => {
-                                if (type === 'prev') {
-                                    return (
-                                        <button className="around" disabled={currentPage === 1}>
-                                            {'<'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'next') {
-                                    return (
-                                        <button
-                                            className="around"
-                                            disabled={
-                                                currentPage === Math.ceil(filteredAssessments.length / assessmentsPerPage)
-                                            }
-                                        >
-                                            {'>'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'page') {
-                                    return (
-                                        <button className={`around ${currentPage === page ? 'active' : ''}`}>
-                                            {page}
-                                        </button>
-                                    );
-                                }
-                                return originalElement;
-                            }}
-                        />
-                    </div>
+                </div>
+
+                <div className="paginations">
+                    <Pagination
+                        current={currentPage}
+                        total={filteredAssessments.length}
+                        pageSize={assessmentsPerPage}
+                        onChange={(page) => setCurrentPage(page)}
+                        className="pagination"
+                        itemRender={(page, type, originalElement) => {
+                            if (type === 'prev') {
+                                return (
+                                    <button className="around" disabled={currentPage === 1}>
+                                        {'<'}
+                                    </button>
+                                );
+                            }
+                            if (type === 'next') {
+                                return (
+                                    <button
+                                        className="around"
+                                        disabled={
+                                            currentPage === Math.ceil(filteredAssessments.length / assessmentsPerPage)
+                                        }
+                                    >
+                                        {'>'}
+                                    </button>
+                                );
+                            }
+                            if (type === 'page') {
+                                return (
+                                    <button className={`around ${currentPage === page ? 'active' : ''}`}>
+                                        {page}
+                                    </button>
+                                );
+                            }
+                            return originalElement;
+                        }}
+                    />
                 </div>
                 {/* Detail Modal */}
                 <Modal
@@ -739,6 +767,39 @@ const Assessment = () => {
                             {errors.questionEn && <div className="error-text">{errors.questionEn}</div>}
                         </div>
                         <div className="inputtext">
+                            <label className="titleinput">{t('image')}</label>
+                            <Upload
+                                accept="image/*"
+                                showUploadList={false}
+                                beforeUpload={() => false}
+                                onChange={handleImageChange}
+                                fileList={fileList}
+                            >
+                                <Button icon={<UploadOutlined />} className="custom-upload-button">
+                                    {t('inputImage')}
+                                </Button>
+                            </Upload>
+                            {imageUrl && (
+                                <div className="image-preview-box">
+                                    <Image src={imageUrl} alt="Preview" className="preview-image" />
+                                    <DeleteOutlined
+                                        onClick={handleRemoveImage}
+                                        style={{
+                                            position: 'absolute',
+                                            top: 8,
+                                            right: 8,
+                                            fontSize: 20,
+                                            color: '#ff4d4f',
+                                            cursor: 'pointer',
+                                            background: '#fff',
+                                            borderRadius: '50%',
+                                            padding: 4,
+                                        }}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <div className="inputtext">
                             <label className="titleinput">{t('level')} <span style={{ color: 'red' }}>*</span></label>
                             <Select
                                 style={{ width: '100%', height: '50px' }}
@@ -816,10 +877,10 @@ const Assessment = () => {
                                             setOptionType('text');
                                             setEditingAssessment((prev) => ({
                                                 ...prev,
-                                                option: ['', '', ''],
+                                                option: [''],
                                                 answer: '',
                                             }));
-                                            setOptionFileList([[], [], []]);
+                                            setOptionFileList([[]]);
                                             setAnswerFileList([]);
                                         }
                                     }}
@@ -832,76 +893,15 @@ const Assessment = () => {
                                             setOptionType('image');
                                             setEditingAssessment((prev) => ({
                                                 ...prev,
-                                                option: ['', '', ''],
+                                                option: [''],
                                                 answer: '',
                                             }));
-                                            setOptionFileList([[], [], []]);
+                                            setOptionFileList([[]]);
                                             setAnswerFileList([]);
                                         }
                                     }}
                                 />
                             </div>
-                        </div>
-                        <div className="inputtext">
-                            <label className="titleinput">{t('option')} <span style={{ color: 'red' }}>*</span></label>
-                            {optionType === 'text' ? (
-                                editingAssessment?.option?.map((opt, index) => (
-                                    <Input
-                                        key={index}
-                                        placeholder={`${t('option')} ${index + 1}`}
-                                        value={opt}
-                                        onChange={(e) => {
-                                            const newOptions = [...editingAssessment.option];
-                                            newOptions[index] = e.target.value;
-                                            setEditingAssessment({
-                                                ...editingAssessment,
-                                                option: newOptions,
-                                            });
-                                        }}
-                                        style={{ marginBottom: '10px' }}
-                                    />
-                                ))
-                            ) : (
-                                editingAssessment?.option?.map((opt, index) => (
-                                    <div key={index} style={{ marginBottom: '20px' }}>
-                                        <Upload
-                                            accept="image/*"
-                                            showUploadList={false}
-                                            beforeUpload={() => false}
-                                            onChange={(info) => handleOptionImageChange(index, info)}
-                                            fileList={optionFileList[index]}
-                                        >
-                                            <Button icon={<UploadOutlined />} className="custom-upload-button">
-                                                {t('uploadOption', { number: index + 1 })}
-                                            </Button>
-                                        </Upload>
-                                        {optionFileList[index].length > 0 && (
-                                            <div className="image-preview-box-option">
-                                                <Image
-                                                    src={opt}
-                                                    alt={`Option ${index + 1}`}
-                                                    className="preview-image-option"
-                                                />
-                                                <DeleteOutlined
-                                                    onClick={() => handleRemoveOptionImage(index)}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: 8,
-                                                        right: 8,
-                                                        fontSize: 20,
-                                                        color: '#ff4d4f',
-                                                        cursor: 'pointer',
-                                                        background: '#fff',
-                                                        borderRadius: '50%',
-                                                        padding: 4,
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                ))
-                            )}
-                            {errors.option && <div className="error-text">{errors.option}</div>}
                         </div>
                         <div className="inputtext">
                             <label className="titleinput">{t('answer')} <span style={{ color: 'red' }}>*</span></label>
@@ -956,39 +956,101 @@ const Assessment = () => {
                             )}
                             {errors.answer && <div className="error-text">{errors.answer}</div>}
                         </div>
+
                         <div className="inputtext">
-                            <label className="titleinput">{t('image')}</label>
-                            <Upload
-                                accept="image/*"
-                                showUploadList={false}
-                                beforeUpload={() => false}
-                                onChange={handleImageChange}
-                                fileList={fileList}
-                            >
-                                <Button icon={<UploadOutlined />} className="custom-upload-button">
-                                    {t('inputImage')}
-                                </Button>
-                            </Upload>
-                            {imageUrl && (
-                                <div className="image-preview-box">
-                                    <Image src={imageUrl} alt="Preview" className="preview-image" />
-                                    <DeleteOutlined
-                                        onClick={handleRemoveImage}
-                                        style={{
-                                            position: 'absolute',
-                                            top: 8,
-                                            right: 8,
-                                            fontSize: 20,
-                                            color: '#ff4d4f',
-                                            cursor: 'pointer',
-                                            background: '#fff',
-                                            borderRadius: '50%',
-                                            padding: 4,
-                                        }}
-                                    />
-                                </div>
+                            <label className="titleinput">{t('option')} <span style={{ color: 'red' }}>*</span></label>
+                            {optionType === 'text' ? (
+                                editingAssessment?.option?.map((opt, index) => (
+                                    <div key={index} className='option-text'>
+                                        <Input
+                                            key={index}
+                                            placeholder={`${t('option')} ${index + 1}`}
+                                            value={opt}
+                                            onChange={(e) => {
+                                                const newOptions = [...editingAssessment.option];
+                                                newOptions[index] = e.target.value;
+                                                setEditingAssessment({
+                                                    ...editingAssessment,
+                                                    option: newOptions,
+                                                });
+                                            }}
+                                            style={{ flex: 1 }}
+                                        />
+                                        <Button
+                                            onClick={() => removeOption(index)}
+                                            icon={<DeleteOutlined />}
+                                            style={{
+                                                position: 'absolute',
+                                                top: 3,
+                                                right: 8,
+                                                fontSize: 20,
+                                                color: '#ff4d4f',
+                                                cursor: 'pointer',
+                                                background: '#fff',
+                                                borderRadius: '50%',
+                                                padding: 4,
+                                            }}
+                                        />
+                                    </div>
+                                ))
+                            ) : (
+                                editingAssessment?.option?.map((opt, index) => (
+                                    <div key={index} style={{ marginBottom: '20px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            <Upload
+                                                accept="image/*"
+                                                showUploadList={false}
+                                                beforeUpload={() => false}
+                                                onChange={(info) => handleOptionImageChange(index, info)}
+                                                fileList={optionFileList[index]}
+                                            >
+                                                <Button icon={<UploadOutlined />} className="custom-upload-button">
+                                                    {t('uploadOption', { number: index + 1 })}
+                                                </Button>
+                                            </Upload>
+                                            <Button
+                                                onClick={() => removeOption(index)}
+                                                style={{ marginLeft: '250px', color: '#ff4d4f', backgroundColor: '#ccc' }}
+                                                icon={<DeleteOutlined />}
+                                            />
+                                        </div>
+                                        {optionFileList[index].length > 0 && (
+                                            <div className="image-preview-box-option">
+                                                <Image
+                                                    src={opt}
+                                                    alt={`Option ${index + 1}`}
+                                                    className="preview-image-option"
+                                                />
+                                                <DeleteOutlined
+                                                    onClick={() => handleRemoveOptionImage(index)}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: 8,
+                                                        right: 8,
+                                                        fontSize: 20,
+                                                        color: '#ff4d4f',
+                                                        cursor: 'pointer',
+                                                        background: '#fff',
+                                                        borderRadius: '50%',
+                                                        padding: 4,
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
                             )}
+                            <Button
+                                onClick={addOption}
+                                style={{ marginTop: '10px' }}
+                                className="custom-upload-button"
+                            >
+                                + {t('addOption', { ns: 'common' })}
+                            </Button>
+                            {errors.option && <div className="error-text">{errors.option}</div>}
                         </div>
+
+
                     </div>
                     <div className="button-row">
                         <Button className="cancel-button" onClick={closeModal} block>

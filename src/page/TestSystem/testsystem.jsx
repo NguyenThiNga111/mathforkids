@@ -62,7 +62,18 @@ const TestSystem = () => {
 
   const filteredTests = testSystems.filter(test => {
     const levelMatch = selectedLevel === '' || String(test.levelId) === selectedLevel;
-    const pointMatch = selectedPoint === '' || test.point === Number(selectedPoint);
+    let pointMatch = true;
+    if (selectedPoint !== '') {
+      if (selectedPoint === '>=90') {
+        pointMatch = test.point >= 90;
+      } else if (selectedPoint === '70-89') {
+        pointMatch = test.point >= 70 && test.point < 90;
+      } else if (selectedPoint === '50-69') {
+        pointMatch = test.point >= 50 && test.point < 70;
+      } else if (selectedPoint === '<50') {
+        pointMatch = test.point < 50;
+      }
+    }
     return levelMatch && pointMatch;
   });
 
@@ -166,9 +177,10 @@ const TestSystem = () => {
               placeholder={t('point')}
             >
               <Select.Option value="">{t('point')}</Select.Option>
-              <Select.Option value="85">85</Select.Option>
-              <Select.Option value="90">90</Select.Option>
-              <Select.Option value="100">100</Select.Option>
+              <Select.Option value=">=90">≥ 90</Select.Option>
+              <Select.Option value="70-89">70-90</Select.Option>
+              <Select.Option value="50-69">50-70</Select.Option>
+              <Select.Option value="<50">10-50</Select.Option>
             </Select>
           </div>
         </div>

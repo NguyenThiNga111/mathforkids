@@ -140,10 +140,11 @@ const SystemTask = () => {
         return matchStatus && taskName.includes(searchText);
     });
 
+
     // Ant Design Table columns
     const columns = [
         {
-            title: t('no', { ns: 'common' }),
+            title: t('.no', { ns: 'common' }),
             dataIndex: 'index',
             key: 'index',
             width: 80,
@@ -265,42 +266,43 @@ const SystemTask = () => {
                         rowKey="id"
                         className="custom-table"
                     />
-                    <div className="paginations">
-                        <Pagination
-                            current={currentPage}
-                            total={filteredTasks.length}
-                            pageSize={tasksPerPage}
-                            onChange={(page) => setCurrentPage(page)}
-                            className="pagination"
-                            itemRender={(page, type, originalElement) => {
-                                if (type === 'prev') {
-                                    return (
-                                        <button className="around" disabled={currentPage === 1}>
-                                            {'<'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'next') {
-                                    return (
-                                        <button
-                                            className="around"
-                                            disabled={currentPage === Math.ceil(filteredTasks.length / tasksPerPage)}
-                                        >
-                                            {'>'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'page') {
-                                    return (
-                                        <button className={`around ${currentPage === page ? 'active' : ''}`}>
-                                            {page}
-                                        </button>
-                                    );
-                                }
-                                return originalElement;
-                            }}
-                        />
-                    </div>
+                </div>
+
+                <div className="paginations">
+                    <Pagination
+                        current={currentPage}
+                        total={filteredTasks.length}
+                        pageSize={tasksPerPage}
+                        onChange={(page) => setCurrentPage(page)}
+                        className="pagination"
+                        itemRender={(page, type, originalElement) => {
+                            if (type === 'prev') {
+                                return (
+                                    <button className="around" disabled={currentPage === 1}>
+                                        {'<'}
+                                    </button>
+                                );
+                            }
+                            if (type === 'next') {
+                                return (
+                                    <button
+                                        className="around"
+                                        disabled={currentPage === Math.ceil(filteredTasks.length / tasksPerPage)}
+                                    >
+                                        {'>'}
+                                    </button>
+                                );
+                            }
+                            if (type === 'page') {
+                                return (
+                                    <button className={`around ${currentPage === page ? 'active' : ''}`}>
+                                        {page}
+                                    </button>
+                                );
+                            }
+                            return originalElement;
+                        }}
+                    />
                 </div>
 
                 <Modal

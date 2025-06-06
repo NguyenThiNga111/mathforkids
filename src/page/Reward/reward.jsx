@@ -203,7 +203,7 @@ const Rewards = () => {
     // Ant Design Table columns
     const columns = [
         {
-            title: t('no', { ns: 'common' }),
+            title: t('.no', { ns: 'common' }),
             dataIndex: 'index',
             key: 'index',
             width: 80,
@@ -343,34 +343,35 @@ const Rewards = () => {
                         rowKey="id"
                         className="custom-table"
                     />
-                    <div className="paginations">
-                        <Pagination
-                            current={currentPage}
-                            total={filteredRewards.length}
-                            pageSize={rewardsPerPage}
-                            onChange={(page) => setCurrentPage(page)}
-                            className="pagination"
-                            itemRender={(page, type, originalElement) => {
-                                if (type === 'prev') {
-                                    return <button className="around" disabled={currentPage === 1}>{'<'}</button>;
-                                }
-                                if (type === 'next') {
-                                    return (
-                                        <button
-                                            className="around"
-                                            disabled={currentPage === Math.ceil(filteredRewards.length / rewardsPerPage)}
-                                        >
-                                            {'>'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'page') {
-                                    return <button className={`around ${currentPage === page ? 'active' : ''}`}>{page}</button>;
-                                }
-                                return originalElement;
-                            }}
-                        />
-                    </div>
+                </div>
+
+                <div className="paginations">
+                    <Pagination
+                        current={currentPage}
+                        total={filteredRewards.length}
+                        pageSize={rewardsPerPage}
+                        onChange={(page) => setCurrentPage(page)}
+                        className="pagination"
+                        itemRender={(page, type, originalElement) => {
+                            if (type === 'prev') {
+                                return <button className="around" disabled={currentPage === 1}>{'<'}</button>;
+                            }
+                            if (type === 'next') {
+                                return (
+                                    <button
+                                        className="around"
+                                        disabled={currentPage === Math.ceil(filteredRewards.length / rewardsPerPage)}
+                                    >
+                                        {'>'}
+                                    </button>
+                                );
+                            }
+                            if (type === 'page') {
+                                return <button className={`around ${currentPage === page ? 'active' : ''}`}>{page}</button>;
+                            }
+                            return originalElement;
+                        }}
+                    />
                 </div>
                 <Modal
                     title={
@@ -383,7 +384,7 @@ const Rewards = () => {
                     footer={null}
                     className="modal-content"
                 >
-                    <div className="form-content-lesson">
+                    <div className="form-content-reward">
                         <div className="inputtext">
                             <label className="titleinput">{t('name')} (Vietnamese) <span style={{ color: 'red' }}>*</span></label>
                             <Input

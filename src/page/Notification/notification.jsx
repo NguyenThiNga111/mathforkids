@@ -175,7 +175,7 @@ const Notification = () => {
     // Ant Design Table columns
     const columns = [
         {
-            title: t('no', { ns: 'common' }),
+            title: t('.no', { ns: 'common' }),
             dataIndex: 'index',
             key: 'index',
             width: 80,
@@ -278,45 +278,46 @@ const Notification = () => {
                         rowKey="id"
                         className="custom-table"
                     />
-                    <div className="paginations">
-                        <Pagination
-                            current={currentPage}
-                            total={filteredNotifications.length}
-                            pageSize={notificationsPerPage}
-                            onChange={(page) => setCurrentPage(page)}
-                            className="pagination"
-                            itemRender={(page, type, originalElement) => {
-                                if (type === 'prev') {
-                                    return (
-                                        <button className="around" disabled={currentPage === 1}>
-                                            {'<'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'next') {
-                                    return (
-                                        <button
-                                            className="around"
-                                            disabled={
-                                                currentPage ===
-                                                Math.ceil(filteredNotifications.length / notificationsPerPage)
-                                            }
-                                        >
-                                            {'>'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'page') {
-                                    return (
-                                        <button className={`around ${currentPage === page ? 'active' : ''}`}>
-                                            {page}
-                                        </button>
-                                    );
-                                }
-                                return originalElement;
-                            }}
-                        />
-                    </div>
+                </div>
+
+                <div className="paginations">
+                    <Pagination
+                        current={currentPage}
+                        total={filteredNotifications.length}
+                        pageSize={notificationsPerPage}
+                        onChange={(page) => setCurrentPage(page)}
+                        className="pagination"
+                        itemRender={(page, type, originalElement) => {
+                            if (type === 'prev') {
+                                return (
+                                    <button className="around" disabled={currentPage === 1}>
+                                        {'<'}
+                                    </button>
+                                );
+                            }
+                            if (type === 'next') {
+                                return (
+                                    <button
+                                        className="around"
+                                        disabled={
+                                            currentPage ===
+                                            Math.ceil(filteredNotifications.length / notificationsPerPage)
+                                        }
+                                    >
+                                        {'>'}
+                                    </button>
+                                );
+                            }
+                            if (type === 'page') {
+                                return (
+                                    <button className={`around ${currentPage === page ? 'active' : ''}`}>
+                                        {page}
+                                    </button>
+                                );
+                            }
+                            return originalElement;
+                        }}
+                    />
                 </div>
                 <Modal
                     title={

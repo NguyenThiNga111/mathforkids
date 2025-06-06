@@ -1,12 +1,12 @@
 {
     "filterBy": "Filter By",
     "addNew": "Add New",
-    "yes": "Yes",
-    "no": "No",
+    "yes": "Enabled",
+    "no": "Disabled",
     "exportFile": "Export file",
     "update": "Update",
     "action": "Action",
-    "available": "Available",
+    "available": "Disabled",
     "errorFetchData": "Error fetching data",
     "updateSuccess": "Update successful",
     "addSuccess": "Add successful",
@@ -16,5 +16,6 @@
     "cancel": "Cancel",
     "searchPlaceholder": "Search",
     "adminRole": "Admin",
-    ".no":"No"
+    "status": "All status",
+    ".no": ".No"
 }

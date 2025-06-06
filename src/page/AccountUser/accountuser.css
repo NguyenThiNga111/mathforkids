@@ -11,9 +11,13 @@
 }
 
 .table-container-user {
-    max-height: 520px;
+    max-height: calc(100vh - 260px);
+    min-height: 300px;
     overflow-y: auto;
-    scrollbar-width: none;
+    width: 100%;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #a0a0a0 transparent;
 }
 
 /* Phần content có nền trắng (trừ h1 ra) */
@@ -322,9 +326,11 @@ input:checked+.slider::before {
 .form-content {
     height: 400px;
     overflow-x: auto;
-    scrollbar-width: none;
     flex-wrap: wrap;
     gap: 20px;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #a0a0a0 transparent;
 }
 
 .inputtext {
@@ -414,7 +420,7 @@ input:checked+.slider::before {
 
 .table-container-user th:nth-child(2),
 .table-container-user td:nth-child(2) {
-    max-width: 150px;
+    max-width: 200px;
 }
 
 .table-container-user th:nth-child(3),
@@ -424,7 +430,7 @@ input:checked+.slider::before {
 
 .table-container-user th:nth-child(4),
 .table-container-user td:nth-child(4) {
-    max-width: 150px;
+    max-width: 200px;
 }
 
 .table-container-user th:nth-child(5),
@@ -439,7 +445,7 @@ input:checked+.slider::before {
 
 .table-container-user th:nth-child(7),
 .table-container-user td:nth-child(7) {
-    max-width: 250px;
+    max-width: 100px;
 }
 
 .table-container-user th:nth-child(8),
@@ -451,7 +457,9 @@ input:checked+.slider::before {
 .pupil-detail-content {
     height: 400px;
     overflow-x: auto;
-    scrollbar-width: none;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #a0a0a0 transparent;
 }
 
 .user-detail-section {
@@ -485,6 +493,7 @@ input:checked+.slider::before {
     font-size: 20px;
     vertical-align: middle;
 }
+
 /* ảnh */
 .image-preview-box {
     position: relative;

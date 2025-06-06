@@ -1,13 +1,20 @@
 .form-content-task {
     height: 400px;
     overflow-x: auto;
-    scrollbar-width: none;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #a0a0a0 transparent;
 }
+
 .table-container-systemtask {
-    max-height: 520px;
+    max-height: calc(100vh - 270px);
+    min-height: 300px;
     overflow-y: auto;
-    scrollbar-width: none;
+    width: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: #a0a0a0 transparent;
 }
+
 /* Optional: Specific column widths */
 .table-container-systemtask th:nth-child(1),
 .table-container-systemtask td:nth-child(1) {

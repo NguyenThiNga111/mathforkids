@@ -18,7 +18,6 @@ const Profile = () => {
     const [otpCode, setOtpCode] = useState('');
     const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
     const [newEmail, setNewEmail] = useState('');
-    const [confirmEmail, setConfirmEmail] = useState('');
     const [userData, setUserData] = useState({});
     const { Option } = Select;
 
@@ -131,10 +130,6 @@ const Profile = () => {
     const handleSendOTP = async () => {
         if (!newEmail || !/\S+@\S+\.\S+/.test(newEmail)) {
             toast.error(t('emailInvalid'));
-            return false;
-        }
-        if (newEmail !== confirmEmail) {
-            toast.error(t('emailsDoNotMatch'));
             return false;
         }
         try {
@@ -304,11 +299,6 @@ const Profile = () => {
                                 value={newEmail}
                                 onChange={(e) => setNewEmail(e.target.value)}
                                 style={{ marginBottom: '10px' }}
-                            />
-                            <Input
-                                placeholder={t('confirmNewEmail')}
-                                value={confirmEmail}
-                                onChange={(e) => setConfirmEmail(e.target.value)}
                             />
                             <div className="button-row">
                                 <Button className="save-button" onClick={handleSendOTP} block>

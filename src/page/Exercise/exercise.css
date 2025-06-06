@@ -1,13 +1,30 @@
-.table-container-exercise {
-    max-height: 520px;
-    overflow-y: auto;
-    scrollbar-width: none;
-}
-
 .form-content-exercise {
     height: 400px;
     overflow-x: auto;
-    scrollbar-width: none;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #a0a0a0 transparent;
+}
+
+.table-container-exercise {
+    max-height: calc(100vh - 270px);
+    min-height: 300px;
+    overflow-y: auto;
+    width: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: #a0a0a0 transparent;
+}
+
+.inputtexts {
+    margin-top: 20px;
+}
+
+.option-text {
+    position: relative;
+    display: inline-block;
+    border-radius: 12px;
+    justify-content: center;
+    margin-bottom: 20px;
 }
 
 /* Optional: Specific column widths */

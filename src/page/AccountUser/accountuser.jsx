@@ -24,7 +24,7 @@ const AccountUser = () => {
     const { t } = useTranslation(['account', 'common']);
     const { Option } = Select;
     const userPerPage = 10;
-
+    console.log("ohuc", localStorage.getItem("token"));
     useEffect(() => {
         fetchUsers();
     }, []);
@@ -52,21 +52,13 @@ const AccountUser = () => {
     const handleSave = async () => {
         if (validateForm()) {
             try {
-                if (edittingUser?.id) {
-                    await api.put(`/user/${edittingUser.id}`, edittingUser);
-                    toast.success(t('updateSuccess', { ns: 'common' }), {
-                        position: 'top-right',
-                        autoClose: 2000,
-                    });
-                } else {
-                    const response = await api.post(`/user`, edittingUser);
-                    const newuser = response.data.id;
-                    await api.put(`/user/${newuser}`, { isVerify: true });
-                    toast.success(t('addSuccess', { ns: 'common' }), {
-                        position: 'top-right',
-                        autoClose: 2000,
-                    });
-                }
+                const response = await api.post(`/user`, edittingUser);
+                const newuser = response.data.id;
+                await api.put(`/user/${newuser}`, { isVerify: true });
+                toast.success(t('addSuccess', { ns: 'common' }), {
+                    position: 'top-right',
+                    autoClose: 2000,
+                });
                 fetchUsers();
                 closeModal();
             } catch (error) {
@@ -166,18 +158,8 @@ const AccountUser = () => {
         return `${day}/${month}/${year}`;
     };
 
-    const openModal = (mode, user = null) => {
-        if (mode === 'add') {
-            setEditingUser(null);
-        } else if (mode === 'update' && user) {
-            let formattedDOB = '';
-            if (user.dateOfBirth?.seconds) {
-                formattedDOB = moment(user.dateOfBirth.seconds * 1000).format('YYYY/MM/DD');
-            } else if (typeof user.dateOfBirth === 'string') {
-                formattedDOB = moment(user.dateOfBirth).isValid() ? moment(user.dateOfBirth).format('YYYY/MM/DD') : '';
-            }
-            setEditingUser({ ...user, dateOfBirth: formattedDOB });
-        }
+    const openModal = () => {
+        setEditingUser({ role: 'admin' });
         setIsModalOpen(true);
     };
 
@@ -234,7 +216,7 @@ const AccountUser = () => {
     // Ant Design Table columns
     const columns = [
         {
-            title: t('no', { ns: 'common' }),
+            title: t('.no', { ns: 'common' }),
             dataIndex: 'index',
             key: 'index',
             width: 80,
@@ -278,16 +260,10 @@ const AccountUser = () => {
         {
             title: t('action', { ns: 'common' }),
             key: 'action',
+            align: 'center',
             width: 250,
             render: (_, user) => (
                 <div className="buttonaction">
-                    <button
-                        className="text-white px-3 py-1 buttonupdate"
-                        onClick={() => openModal('update', user)}
-                    >
-                        <FaEdit className="iconupdate" />
-                        {t('update', { ns: 'common' })}
-                    </button>
                     <button
                         className="text-white px-3 py-1 buttondetail"
                         onClick={() => openDetailModal(user)}
@@ -316,7 +292,7 @@ const AccountUser = () => {
     // Pupil Table columns for detail modal
     const pupilColumns = [
         {
-            title: t('no', { ns: 'common' }),
+            title: t('.no', { ns: 'common' }),
             dataIndex: 'index',
             key: 'index',
             width: 80,
@@ -397,7 +373,7 @@ const AccountUser = () => {
                             onChange={(value) => setSelectedRole(value)}
                             placeholder={t('role')}
                         >
-                            <Select.Option value="">{t('role')}</Select.Option>
+                            <Select.Option value="">{t('rolefilter')}</Select.Option>
                             <Select.Option value="user">{t('roleUser')}</Select.Option>
                             <Select.Option value="admin">{t('roleAdmin')}</Select.Option>
                         </Select>
@@ -409,7 +385,7 @@ const AccountUser = () => {
                                 setCurrentPage(1);
                             }}
                         >
-                            <Select.Option value="all">{t('accountStatus')}</Select.Option>
+                            <Select.Option value="all">{t('status', { ns: 'common' })}</Select.Option>
                             <Select.Option value="yes">{t('yes', { ns: 'common' })}</Select.Option>
                             <Select.Option value="no">{t('no', { ns: 'common' })}</Select.Option>
                         </Select>
@@ -429,47 +405,48 @@ const AccountUser = () => {
                         rowKey="id"
                         className="custom-table"
                     />
-                    <div className="paginations">
-                        <Pagination
-                            current={currentPage}
-                            total={filteredUsers.length}
-                            pageSize={userPerPage}
-                            onChange={(page) => setCurrentPage(page)}
-                            className="pagination"
-                            itemRender={(page, type, originalElement) => {
-                                if (type === 'prev') {
-                                    return (
-                                        <button
-                                            className="around"
-                                            disabled={currentPage === 1}
-                                        >
-                                            {'<'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'next') {
-                                    return (
-                                        <button
-                                            className="around"
-                                            disabled={currentPage === Math.ceil(filteredUsers.length / userPerPage)}
-                                        >
-                                            {'>'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'page') {
-                                    return (
-                                        <button
-                                            className={`around ${currentPage === page ? 'active' : ''}`}
-                                        >
-                                            {page}
-                                        </button>
-                                    );
-                                }
-                                return originalElement;
-                            }}
-                        />
-                    </div>
+                </div>
+
+                <div className="paginations">
+                    <Pagination
+                        current={currentPage}
+                        total={filteredUsers.length}
+                        pageSize={userPerPage}
+                        onChange={(page) => setCurrentPage(page)}
+                        className="pagination"
+                        itemRender={(page, type, originalElement) => {
+                            if (type === 'prev') {
+                                return (
+                                    <button
+                                        className="around"
+                                        disabled={currentPage === 1}
+                                    >
+                                        {'<'}
+                                    </button>
+                                );
+                            }
+                            if (type === 'next') {
+                                return (
+                                    <button
+                                        className="around"
+                                        disabled={currentPage === Math.ceil(filteredUsers.length / userPerPage)}
+                                    >
+                                        {'>'}
+                                    </button>
+                                );
+                            }
+                            if (type === 'page') {
+                                return (
+                                    <button
+                                        className={`around ${currentPage === page ? 'active' : ''}`}
+                                    >
+                                        {page}
+                                    </button>
+                                );
+                            }
+                            return originalElement;
+                        }}
+                    />
                 </div>
 
                 <Modal
@@ -536,7 +513,7 @@ const AccountUser = () => {
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
-                            {edittingUser?.id ? t('updateAccountUser') : t('addAccountUser')}
+                            {t('addAccountUser')}
                         </div>
                     }
                     open={isModalOpen}
@@ -620,21 +597,7 @@ const AccountUser = () => {
                             </Select>
                             {errors.gender && <div className="error-text">{errors.gender}</div>}
                         </div>
-                        <div className="inputtext">
-                            <label className="titleinput">
-                                {t('role')} <span style={{ color: 'red' }}>*</span>
-                            </label>
-                            <Select
-                                style={{ width: '100%', height: '50px' }}
-                                placeholder={t('selectionRole')}
-                                value={edittingUser?.role || undefined}
-                                onChange={(value) => setEditingUser({ ...edittingUser, role: value })}
-                            >
-                                <Select.Option value="user">{t('roleUser')}</Select.Option>
-                                <Select.Option value="admin">{t('roleAdmin')}</Select.Option>
-                            </Select>
-                            {errors.role && <div className="error-text">{errors.role}</div>}
-                        </div>
+
                     </div>
                     <div className="button-row">
                         <Button className="cancel-button" onClick={closeModal} block>

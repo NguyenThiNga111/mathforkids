@@ -18,7 +18,7 @@ const Exercise = () => {
     const [imageUrl, setImageUrl] = useState('');
     const [exercises, setExercises] = useState([]);
     const [fileList, setFileList] = useState([]);
-    const [optionFileList, setOptionFileList] = useState([[], [], []]);
+    const [optionFileList, setOptionFileList] = useState([]);
     const [answerFileList, setAnswerFileList] = useState([]);
     const [optionType, setOptionType] = useState('text');
     const [filterLevel, setFilterLevel] = useState('all');
@@ -29,6 +29,7 @@ const Exercise = () => {
     const [lesson, setLesson] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [selectedExercise, setSelectedExercise] = useState(null);
+
     const exercisesPerPage = 16;
     const { Option } = Select;
     const { lessonId } = useParams();
@@ -98,19 +99,37 @@ const Exercise = () => {
                     formData.append('image', fileList[0].originFileObj);
                 }
                 if (optionType === 'text') {
-                    const validOptions = editingExercise.option.filter(opt => opt.trim() !== '');
+                    const validOptions = editingExercise.option.filter(opt => opt && opt.trim() !== '');
                     formData.append('option', JSON.stringify(validOptions));
                     formData.append('answer', editingExercise.answer);
                 } else {
-                    optionFileList.forEach((fileList, index) => {
-                        if (fileList[0]?.originFileObj) {
-                            formData.append('option', fileList[0].originFileObj);
+                    // Build full option array: image cũ (giữ nguyên URL), image mới (dùng file)
+                    const fullOption = [];
+
+                    for (let i = 0; i < optionFileList.length; i++) {
+                        const fileEntry = optionFileList[i];
+                        if (fileEntry[0]?.originFileObj) {
+                            // Ảnh mới => push file
+                            formData.append('option', fileEntry[0].originFileObj);
+                        } else if (typeof editingExercise.option[i] === 'string') {
+                            // Ảnh cũ => gửi lại URL để BE giữ nguyên
+                            fullOption.push(editingExercise.option[i]);
                         }
-                    });
+                    }
+
+                    // Gửi thêm mảng chuỗi URL ảnh cũ để server merge
+                    if (fullOption.length > 0) {
+                        formData.append('existingOptionUrls', JSON.stringify(fullOption));
+                    }
                     if (answerFileList[0]?.originFileObj) {
                         formData.append('answer', answerFileList[0].originFileObj);
                     }
                 }
+                console.log('Form Data to be sent:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(`${key}:`, value instanceof File ? value.name : value);
+                }
+
                 if (editingExercise.id) {
                     await api.put(`/exercise/${editingExercise.id}`, formData, {
                         headers: {
@@ -184,11 +203,11 @@ const Exercise = () => {
         }
         if (optionType === 'text') {
             const validOptions = editingExercise?.option?.filter(opt => opt && opt.trim() !== '');
-            if (!validOptions || validOptions.length < 3) {
+            if (!validOptions || validOptions.length === 0) {
                 newErrors.option = t('optionRequired');
             }
         } else if (optionType === 'image') {
-            if (optionFileList.filter(list => list.length > 0).length < 3) {
+            if (optionFileList.filter(list => list.length > 0).length === 0) {
                 newErrors.option = t('optionImageRequired');
             }
         }
@@ -208,20 +227,20 @@ const Exercise = () => {
                 levelId: '',
                 lessonId: lessonId,
                 question: { en: '', vi: '' },
-                option: ['', '', ''],
+                option: [''],
                 answer: '',
                 image: '',
             });
             setOptionType('text');
             setImageUrl('');
             setFileList([]);
-            setOptionFileList([[], [], []]);
+            setOptionFileList([[]]);
             setAnswerFileList([]);
         } else if (mode === 'update') {
             const isImageOption = exercise.option?.some(opt => opt.startsWith('http'));
             setEditingExercise({
                 ...exercise,
-                option: exercise.option || ['', '', ''],
+                option: exercise.option || [''],
                 answer: exercise.answer || '',
                 image: exercise.image || '',
             });
@@ -231,7 +250,7 @@ const Exercise = () => {
             setOptionFileList(
                 isImageOption && exercise.option
                     ? exercise.option.map(url => (url ? [{ url }] : []))
-                    : [[], [], []]
+                    : [[]]
             );
             setAnswerFileList(
                 isImageOption && exercise.answer ? [{ url: exercise.answer }] : []
@@ -256,7 +275,7 @@ const Exercise = () => {
         setOptionType('text');
         setImageUrl('');
         setFileList([]);
-        setOptionFileList([[], [], []]);
+        setOptionFileList([[]]);
         setAnswerFileList([]);
         setErrors({});
     };
@@ -324,7 +343,29 @@ const Exercise = () => {
         setFileList([]);
         setImageUrl('');
     };
+    const addOption = () => {
+        if (editingExercise.option.length >= 3) {
+            toast.error(t('maxThreeOptions', { ns: 'common' })); // Notify user of the limit
+            return;
+        }
+        setEditingExercise((prev) => ({
+            ...prev,
+            option: [...prev.option, ''], // Add a new empty option
+        }));
+        setOptionFileList((prev) => [...prev, []]); // Add a new empty file list
+    };
 
+    const removeOption = (index) => {
+        if (editingExercise.option.length === 1) {
+            toast.error(t('atLeastOneOption', { ns: 'common' })); // Add this translation to your i18n files
+            return;
+        }
+        setEditingExercise((prev) => ({
+            ...prev,
+            option: prev.option.filter((_, i) => i !== index),
+        }));
+        setOptionFileList((prev) => prev.filter((_, i) => i !== index));
+    };
     const handleRemoveOptionImage = (index) => {
         const newOptionFileList = [...optionFileList];
         newOptionFileList[index] = [];
@@ -359,8 +400,8 @@ const Exercise = () => {
             filterStatus === 'all'
                 ? true
                 : filterStatus === 'no'
-                ? exercise.isDisabled === false
-                : exercise.isDisabled === true;
+                    ? exercise.isDisabled === false
+                    : exercise.isDisabled === true;
         const searchText = searchQuery.toLowerCase();
         const exerciseName = exercise.question?.[i18n.language]?.toLowerCase() || '';
         return matchStatus && matchLevel && exerciseName.includes(searchText);
@@ -369,7 +410,7 @@ const Exercise = () => {
     // Ant Design Table columns
     const columns = [
         {
-            title: t('no', { ns: 'common' }),
+            title: t('.no', { ns: 'common' }),
             dataIndex: 'index',
             key: 'index',
             width: 80,
@@ -535,44 +576,45 @@ const Exercise = () => {
                         rowKey="id"
                         className="custom-table"
                     />
-                    <div className="paginations">
-                        <Pagination
-                            current={currentPage}
-                            total={filteredExercises.length}
-                            pageSize={exercisesPerPage}
-                            onChange={(page) => setCurrentPage(page)}
-                            className="pagination"
-                            itemRender={(page, type, originalElement) => {
-                                if (type === 'prev') {
-                                    return (
-                                        <button className="around" disabled={currentPage === 1}>
-                                            {'<'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'next') {
-                                    return (
-                                        <button
-                                            className="around"
-                                            disabled={
-                                                currentPage === Math.ceil(filteredExercises.length / exercisesPerPage)
-                                            }
-                                        >
-                                            {'>'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'page') {
-                                    return (
-                                        <button className={`around ${currentPage === page ? 'active' : ''}`}>
-                                            {page}
-                                        </button>
-                                    );
-                                }
-                                return originalElement;
-                            }}
-                        />
-                    </div>
+                </div>
+
+                <div className="paginations">
+                    <Pagination
+                        current={currentPage}
+                        total={filteredExercises.length}
+                        pageSize={exercisesPerPage}
+                        onChange={(page) => setCurrentPage(page)}
+                        className="pagination"
+                        itemRender={(page, type, originalElement) => {
+                            if (type === 'prev') {
+                                return (
+                                    <button className="around" disabled={currentPage === 1}>
+                                        {'<'}
+                                    </button>
+                                );
+                            }
+                            if (type === 'next') {
+                                return (
+                                    <button
+                                        className="around"
+                                        disabled={
+                                            currentPage === Math.ceil(filteredExercises.length / exercisesPerPage)
+                                        }
+                                    >
+                                        {'>'}
+                                    </button>
+                                );
+                            }
+                            if (type === 'page') {
+                                return (
+                                    <button className={`around ${currentPage === page ? 'active' : ''}`}>
+                                        {page}
+                                    </button>
+                                );
+                            }
+                            return originalElement;
+                        }}
+                    />
                 </div>
                 {/* Detail Modal */}
                 <Modal
@@ -691,6 +733,39 @@ const Exercise = () => {
                             {errors.questionEn && <div className="error-text">{errors.questionEn}</div>}
                         </div>
                         <div className="inputtext">
+                            <label className="titleinput">{t('image')}</label>
+                            <Upload
+                                accept="image/*"
+                                showUploadList={false}
+                                beforeUpload={() => false}
+                                onChange={handleImageChange}
+                                fileList={fileList}
+                            >
+                                <Button icon={<UploadOutlined />} className="custom-upload-button">
+                                    {t('inputImage')}
+                                </Button>
+                            </Upload>
+                            {imageUrl && (
+                                <div className="image-preview-box">
+                                    <Image src={imageUrl} alt="Preview" className="preview-image" />
+                                    <DeleteOutlined
+                                        onClick={handleRemoveImage}
+                                        style={{
+                                            position: 'absolute',
+                                            top: 8,
+                                            right: 8,
+                                            fontSize: 20,
+                                            color: '#ff4d4f',
+                                            cursor: 'pointer',
+                                            background: '#fff',
+                                            borderRadius: '50%',
+                                            padding: 4,
+                                        }}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <div className="inputtext">
                             <label className="titleinput">{t('level')} <span style={{ color: 'red' }}>*</span></label>
                             <Select
                                 style={{ width: '100%', height: '50px' }}
@@ -710,103 +785,6 @@ const Exercise = () => {
                                 ))}
                             </Select>
                             {errors.levelId && <div className="error-text">{errors.levelId}</div>}
-                        </div>
-                        <div className="inputtexts">
-                            <div style={{ display: 'flex', gap: '20px' }}>
-                                <label className="titleinput">{t('textOption')}</label>
-                                <Checkbox
-                                    checked={optionType === 'text'}
-                                    onChange={(e) => {
-                                        if (e.target.checked) {
-                                            setOptionType('text');
-                                            setEditingExercise((prev) => ({
-                                                ...prev,
-                                                option: ['', '', ''],
-                                                answer: '',
-                                            }));
-                                            setOptionFileList([[], [], []]);
-                                            setAnswerFileList([]);
-                                        }
-                                    }}
-                                />
-                                <label className="titleinput">{t('imageOption')}</label>
-                                <Checkbox
-                                    checked={optionType === 'image'}
-                                    onChange={(e) => {
-                                        if (e.target.checked) {
-                                            setOptionType('image');
-                                            setEditingExercise((prev) => ({
-                                                ...prev,
-                                                option: ['', '', ''],
-                                                answer: '',
-                                            }));
-                                            setOptionFileList([[], [], []]);
-                                            setAnswerFileList([]);
-                                        }
-                                    }}
-                                />
-                            </div>
-                        </div>
-                        <div className="inputtext">
-                            <label className="titleinput">{t('option')} <span style={{ color: 'red' }}>*</span></label>
-                            {optionType === 'text' ? (
-                                editingExercise?.option?.map((opt, index) => (
-                                    <Input
-                                        key={index}
-                                        placeholder={`${t('option')} ${index + 1}`}
-                                        value={opt}
-                                        onChange={(e) => {
-                                            const newOptions = [...editingExercise.option];
-                                            newOptions[index] = e.target.value;
-                                            setEditingExercise({
-                                                ...editingExercise,
-                                                option: newOptions,
-                                            });
-                                        }}
-                                        style={{ marginBottom: '10px' }}
-                                    />
-                                ))
-                            ) : (
-                                editingExercise?.option?.map((opt, index) => (
-                                    <div key={index} style={{ marginBottom: '20px' }}>
-                                        <Upload
-                                            accept="image/*"
-                                            showUploadList={false}
-                                            beforeUpload={() => false}
-                                            onChange={(info) => handleOptionImageChange(index, info)}
-                                            fileList={optionFileList[index]}
-                                        >
-                                            <Button icon={<UploadOutlined />} className="custom-upload-button">
-                                                {t('uploadOption', { number: index + 1 })}
-                                            </Button>
-                                        </Upload>
-                                        {optionFileList[index].length > 0 && (
-                                            <div className="image-preview-box-option">
-                                                <Image
-                                                    src={opt}
-                                                    alt={`Option ${index + 1}`}
-                                                    className="preview-image-option"
-                                                />
-                                                <DeleteOutlined
-                                                    onClick={() => handleRemoveOptionImage(index)}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: 8,
-                                                        right: 8,
-                                                        fontSize: 20,
-                                                        color: '#ff4d4f',
-                                                        cursor: 'pointer',
-                                                        background: '#fff',
-                                                        borderRadius: '50%',
-                                                        padding: 4,
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                ))
-                            )}
-                            {errors.option && <div className="error-text">{errors.option}</div>}
                         </div>
                         <div className="inputtext">
                             <label className="titleinput">{t('answer')} <span style={{ color: 'red' }}>*</span></label>
@@ -861,39 +839,135 @@ const Exercise = () => {
                             )}
                             {errors.answer && <div className="error-text">{errors.answer}</div>}
                         </div>
-                        <div className="inputtext">
-                            <label className="titleinput">{t('image')}</label>
-                            <Upload
-                                accept="image/*"
-                                showUploadList={false}
-                                beforeUpload={() => false}
-                                onChange={handleImageChange}
-                                fileList={fileList}
-                            >
-                                <Button icon={<UploadOutlined />} className="custom-upload-button">
-                                    {t('inputImage')}
-                                </Button>
-                            </Upload>
-                            {imageUrl && (
-                                <div className="image-preview-box">
-                                    <Image src={imageUrl} alt="Preview" className="preview-image" />
-                                    <DeleteOutlined
-                                        onClick={handleRemoveImage}
-                                        style={{
-                                            position: 'absolute',
-                                            top: 8,
-                                            right: 8,
-                                            fontSize: 20,
-                                            color: '#ff4d4f',
-                                            cursor: 'pointer',
-                                            background: '#fff',
-                                            borderRadius: '50%',
-                                            padding: 4,
-                                        }}
-                                    />
-                                </div>
-                            )}
+                        <div className="inputtexts">
+                            <div style={{ display: 'flex', gap: '20px' }}>
+                                <label className="titleinput">{t('textOption')}</label>
+                                <Checkbox
+                                    checked={optionType === 'text'}
+                                    onChange={(e) => {
+                                        if (e.target.checked) {
+                                            setOptionType('text');
+                                            setEditingExercise((prev) => ({
+                                                ...prev,
+                                                option: [''],
+                                                answer: '',
+                                            }));
+                                            setOptionFileList([[]]);
+                                            setAnswerFileList([]);
+                                        }
+                                    }}
+                                />
+                                <label className="titleinput">{t('imageOption')}</label>
+                                <Checkbox
+                                    checked={optionType === 'image'}
+                                    onChange={(e) => {
+                                        if (e.target.checked) {
+                                            setOptionType('image');
+                                            setEditingExercise((prev) => ({
+                                                ...prev,
+                                                option: [''],
+                                                answer: '',
+                                            }));
+                                            setOptionFileList([[]]);
+                                            setAnswerFileList([]);
+                                        }
+                                    }}
+                                />
+                            </div>
                         </div>
+                        <div className="inputtext">
+                            <label className="titleinput">{t('option')} <span style={{ color: 'red' }}>*</span></label>
+                            {optionType === 'text' ? (
+                                editingExercise?.option?.map((opt, index) => (
+                                    <div key={index} className='option-text'>
+                                        <Input
+                                            placeholder={`${t('option')} ${index + 1}`}
+                                            value={opt}
+                                            onChange={(e) => {
+                                                const newOptions = [...editingExercise.option];
+                                                newOptions[index] = e.target.value;
+                                                setEditingExercise({
+                                                    ...editingExercise,
+                                                    option: newOptions,
+                                                });
+                                            }}
+                                            style={{ flex: 1 }}
+                                        />
+                                        <Button
+                                            onClick={() => removeOption(index)}
+                                            icon={<DeleteOutlined />}
+                                            style={{
+                                                position: 'absolute',
+                                                top: 3,
+                                                right: 8,
+                                                fontSize: 20,
+                                                color: '#ff4d4f',
+                                                cursor: 'pointer',
+                                                background: '#fff',
+                                                borderRadius: '50%',
+                                                padding: 4,
+                                            }}
+                                        />
+                                    </div>
+                                ))
+                            ) : (
+                                editingExercise?.option?.map((opt, index) => (
+                                    <div key={index} style={{ marginBottom: '20px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            <Upload
+                                                accept="image/*"
+                                                showUploadList={false}
+                                                beforeUpload={() => false}
+                                                onChange={(info) => handleOptionImageChange(index, info)}
+                                                fileList={optionFileList[index]}
+                                            >
+                                                <Button icon={<UploadOutlined />} className="custom-upload-button">
+                                                    {t('uploadOption', { number: index + 1 })}
+                                                </Button>
+                                            </Upload>
+                                            <Button
+                                                onClick={() => removeOption(index)}
+                                                style={{ marginLeft: '10px', color: '#ff4d4f' }}
+                                                icon={<DeleteOutlined />}
+                                            />
+                                        </div>
+                                        {optionFileList[index].length > 0 && (
+                                            <div className="image-preview-box-option">
+                                                <Image
+                                                    src={opt}
+                                                    alt={`Option ${index + 1}`}
+                                                    className="preview-image-option"
+                                                />
+                                                <DeleteOutlined
+                                                    onClick={() => handleRemoveOptionImage(index)}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: 8,
+                                                        right: 8,
+                                                        fontSize: 20,
+                                                        color: '#ff4d4f',
+                                                        cursor: 'pointer',
+                                                        background: '#fff',
+                                                        borderRadius: '50%',
+                                                        padding: 4,
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            )}
+                            <Button
+                                onClick={addOption}
+                                style={{ marginTop: '10px' }}
+                                className="custom-upload-button"
+                            >
+                                + {t('addOption', { ns: 'common' })}
+                            </Button>
+                            {errors.option && <div className="error-text">{errors.option}</div>}
+                        </div>
+
+
                     </div>
                     <div className="button-row">
                         <Button className="cancel-button" onClick={closeModal} block>

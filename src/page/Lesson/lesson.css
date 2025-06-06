@@ -5,10 +5,15 @@
 }
 
 .table-container-lesson {
-    max-height: 520px;
+    max-height: calc(100vh - 260px);
+    min-height: 300px;
     overflow-y: auto;
-    scrollbar-width: none;
+    width: 100%;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #a0a0a0 transparent;
 }
+
 
 /* Optional: Specific column widths */
 .table-container-lesson th:nth-child(1),

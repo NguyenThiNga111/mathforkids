@@ -7,6 +7,8 @@
     "numberPhone": "Phone Number",
     "dateOfBirth": "Date of birth",
     "gender": "Gender",
+    "rolefilter": "All role",
+    "image": "Image",
     "role": "Role",
     "pupil": "Pupil",
     "nickName": "Nick Name",
@@ -29,13 +31,11 @@
     "roleRequired": "Role is required",
     "roleUser": "User",
     "roleAdmin": "Admin",
-    "accountStatus": "Account user status",
-    "addAccountUser": "Add Account User",
+    "addAccountUser": "Add Account Admin",
     "updateAccountUser": "Update Account User",
     "emailExists": "This email is already in use.",
     "phoneExists": "This phoneNumber is already in use.",
     "noPupilProfile": "No pupil account",
-    "male":"Male",
-    "female":"Female"
-
+    "male": "Male",
+    "female": "Female"
 }

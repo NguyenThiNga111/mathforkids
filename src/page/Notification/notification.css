@@ -1,13 +1,18 @@
 .form-content-notification {
     height: 400px;
     overflow-x: auto;
-    scrollbar-width: none;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #a0a0a0 transparent;
 }
 
 .table-container-notification {
-    max-height: 520px;
+    max-height: calc(100vh - 270px);
+    min-height: 300px;
     overflow-y: auto;
-    scrollbar-width: none;
+    width: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: #a0a0a0 transparent;
 }
 
 .table-container-notification table {
