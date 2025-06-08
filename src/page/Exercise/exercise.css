@@ -27,6 +27,13 @@
     margin-bottom: 20px;
 }
 
+.load-more-btn {
+    height: 40px;
+    border-radius: 8px;
+    padding: 0 20px;
+    overflow: hidden;
+}
+
 /* Optional: Specific column widths */
 .table-container-exercise th:nth-child(1),
 .table-container-exercise td:nth-child(1) {

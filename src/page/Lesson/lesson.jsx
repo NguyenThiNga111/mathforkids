@@ -15,16 +15,18 @@ const Lesson = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingLesson, setEditingLesson] = useState(null);
     const [lessonsData, setLessonsData] = useState([]);
-    const [selectedGrade, setSelectedGrade] = useState('');
+    const [selectedGrade, setSelectedGrade] = useState(1);
     const [errors, setErrors] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
     const [filterStatus, setFilterStatus] = useState('all'); // all / enabled / disabled
-    const [filterType, setFilterType] = useState('all'); // all / addition / subtraction / multiplication / division
+    const [filterType, setFilterType] = useState('addition'); // all / addition / subtraction / multiplication / division
     const [searchQuery, setSearchQuery] = useState('');
 
+    const [visibleExercises, setVisibleExercises] = useState([]);
+    const [nextPageToken, setNextPageToken] = useState(null);
     const { t, i18n } = useTranslation(['lesson', 'common']);
     const navigate = useNavigate();
-    const lessonsPerPage = 16;
+    const lessonsPerPage = 6;
 
     const lessonTypes = [
         { value: 'addition', label: t('addition'), icon: <FaPlus className="icon-type" />, color: '#60D56C' },
@@ -34,18 +36,24 @@ const Lesson = () => {
     ];
 
     useEffect(() => {
-        fetchLessons();
-    }, []);
-
-    const fetchLessons = async () => {
+        // Gọi lần đầu với giá trị mặc định
+        fetchGradeType(selectedGrade, filterType);
+    }, [selectedGrade, filterType]);
+    const fetchGradeType = async (grade, type) => {
         try {
-            const response = await api.get(`/lesson`);
-            const sortedLessons = response.data.sort((a, b) => {
-                const dateA = parseDate(a.createdAt);
-                const dateB = parseDate(b.createdAt);
-                return dateB - dateA; // Latest first
-            });
-            setLessonsData(sortedLessons);
+            const payload = {};
+            // Chỉ thêm grade vào payload nếu nó không rỗng và không phải "all"
+            if (grade && grade !== '') {
+                payload.grade = Number(grade);
+            }
+            // Chỉ thêm type vào payload nếu nó không phải "all"
+            if (type && type !== 'all') {
+                payload.type = type;
+            }
+            const response = await api.post('/lesson/getAll', payload);
+            setLessonsData(response.data.data);
+            setVisibleExercises((response.data.data || []).slice(0, lessonsPerPage));
+            setNextPageToken(response.data.nextPageToken || null);
         } catch (error) {
             toast.error(t('errorFetchData', { ns: 'common' }), {
                 position: 'top-right',
@@ -53,7 +61,11 @@ const Lesson = () => {
             });
         }
     };
-
+    const loadMore = () => {
+        if (!nextPageToken && visibleExercises.length >= lessonsData.length) return;
+        const nextBatch = lessonsData.slice(visibleExercises.length, visibleExercises.length + lessonsPerPage);
+        setVisibleExercises([...visibleExercises, ...nextBatch]);
+    };
     const handleSave = async () => {
         if (validateForm()) {
             try {
@@ -152,7 +164,7 @@ const Lesson = () => {
 
     const handleViewExercises = (lessonId) => {
         console.log('Navigating with lessonId:', lessonId);
-        navigate(`/exercise/lessonId/${lessonId}`);
+        navigate(`/exercise/getByLesson/${lessonId}`);
     };
 
     const handleLessonDetail = (lessonId) => {
@@ -164,14 +176,6 @@ const Lesson = () => {
         setIsModalOpen(false);
         setErrors({});
     };
-
-    const parseDate = (dateString) => {
-        const [time, date] = dateString.split(' ');
-        const [hours, minutes, seconds] = time.split(':').map(Number);
-        const [day, month, year] = date.split('/').map(Number);
-        return new Date(year, month - 1, day, hours, minutes, seconds);
-    };
-
     const filteredLessons = lessonsData
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         .filter(lesson => {
@@ -314,7 +318,6 @@ const Lesson = () => {
                             }}
                             placeholder={t('type')}
                         >
-                            <Select.Option value="all">{t('type')}</Select.Option>
                             <Select.Option value="addition">{t('addition')}</Select.Option>
                             <Select.Option value="subtraction">{t('subtraction')}</Select.Option>
                             <Select.Option value="multiplication">{t('multiplication')}</Select.Option>
@@ -326,7 +329,6 @@ const Lesson = () => {
                             onChange={(value) => setSelectedGrade(value)}
                             placeholder={t('grade')}
                         >
-                            <Select.Option value="">{t('grade')}</Select.Option>
                             <Select.Option value="1">{t('grade')} 1</Select.Option>
                             <Select.Option value="2">{t('grade')} 2</Select.Option>
                             <Select.Option value="3">{t('grade')} 3</Select.Option>
@@ -352,53 +354,20 @@ const Lesson = () => {
                 <div className="table-container-lesson">
                     <Table
                         columns={columns}
-                        dataSource={filteredLessons.slice(
-                            (currentPage - 1) * lessonsPerPage,
-                            currentPage * lessonsPerPage
-                        )}
+                        dataSource={visibleExercises}
                         pagination={false}
                         rowKey="id"
                         className="custom-table"
                     />
+                    <div className="paginations">
+                        {visibleExercises.length < lessonsData.length || nextPageToken ? (
+                            <Button className="load-more-btn" onClick={loadMore}>
+                                {t('More', { ns: 'common' })}
+                            </Button>
+                        ) : null}
+                    </div>
                 </div>
-                <div className="paginations">
-                    <Pagination
-                        current={currentPage}
-                        total={filteredLessons.length}
-                        pageSize={lessonsPerPage}
-                        onChange={(page) => setCurrentPage(page)}
-                        className="pagination"
-                        itemRender={(page, type, originalElement) => {
-                            if (type === 'prev') {
-                                return (
-                                    <button className="around" disabled={currentPage === 1}>
-                                        {'<'}
-                                    </button>
-                                );
-                            }
-                            if (type === 'next') {
-                                return (
-                                    <button
-                                        className="around"
-                                        disabled={
-                                            currentPage === Math.ceil(filteredLessons.length / lessonsPerPage)
-                                        }
-                                    >
-                                        {'>'}
-                                    </button>
-                                );
-                            }
-                            if (type === 'page') {
-                                return (
-                                    <button className={`around ${currentPage === page ? 'active' : ''}`}>
-                                        {page}
-                                    </button>
-                                );
-                            }
-                            return originalElement;
-                        }}
-                    />
-                </div>
+
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>

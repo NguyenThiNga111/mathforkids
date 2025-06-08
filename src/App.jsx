@@ -60,7 +60,7 @@ function App() {
               <Route path="questiontest/:testId" element={<QuestionTestPage />} />
               <Route path="assessment" element={<AssessmentPage />} />
               <Route path="notification" element={<NotificationPage />} />
-              <Route path="/exercise/lessonId/:lessonId" element={<ExercisePage />} />
+              <Route path="/exercise/getByLesson/:lessonId" element={<ExercisePage />} />
               <Route path="contact" element={<ContactPage />} />
               <Route path="pupil" element={<PupilPage />} />
               <Route path="completetask" element={<CompleteTaskPage />} />

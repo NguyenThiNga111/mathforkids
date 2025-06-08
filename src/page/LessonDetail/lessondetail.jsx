@@ -21,7 +21,7 @@ const LessonDetail = () => {
     const [errors, setErrors] = useState({});
     const [creationMode, setCreationMode] = useState('single'); // 'single' or 'full'
     const [searchQuery, setSearchQuery] = useState('');
-
+    const pageSize = 3;
     const { t, i18n } = useTranslation(['lessondetail', 'common']);
     const navigate = useNavigate();
     const { lessonId } = useParams();
@@ -29,17 +29,13 @@ const LessonDetail = () => {
     useEffect(() => {
         fetchLessonDetails();
         fetchLesson();
-    }, [lessonId]);
+        fetchFilterLessonDetails();
+    }, [lessonId, filterStatus]);
 
     const fetchLessonDetails = async () => {
         try {
-            const response = await api.get(`/lessondetail/lesson/${lessonId}`);
-            const sortedLessonDetails = response.data.sort((a, b) => {
-                const dateA = parseDate(a.createdAt);
-                const dateB = parseDate(b.createdAt);
-                return dateB - dateA; // Latest first
-            });
-            setLessonDetails(sortedLessonDetails);
+            const response = await api.get(`/lessondetail/getByLesson/${lessonId}?pageSize=${pageSize}`);
+            setLessonDetails(response.data.data);
         } catch (error) {
             toast.error(t('errorFetchData', { ns: 'common' }), {
                 position: 'top-right',
@@ -53,6 +49,28 @@ const LessonDetail = () => {
             const response = await api.get(`/lesson/${lessonId}`);
             setLesson(response.data);
         } catch (error) {
+            toast.error(t('errorFetchData', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+        }
+    };
+
+    const fetchFilterLessonDetails = async () => {
+        try {
+            let isDisabled = false; // undefined cho 'all'
+            if (filterStatus === 'true') {
+                isDisabled = true;
+            } else if (filterStatus === 'false') {
+                isDisabled = false;
+            }
+
+            const response = await api.get(`/lessondetail/filtergetByLesson/${lessonId}`, {
+                params: { isDisabled } // Gửi isDisabled như query parameter
+            });
+            setLessonDetails(response.data.data); // Cập nhật lessonDetails với dữ liệu đã lọc
+        } catch (error) {
+            console.error('Error fetching lesson details:', error);
             toast.error(t('errorFetchData', { ns: 'common' }), {
                 position: 'top-right',
                 autoClose: 2000,
@@ -268,26 +286,6 @@ const LessonDetail = () => {
             URL.revokeObjectURL(imageUrl); // Free memory
         }
     };
-
-    const parseDate = (dateString) => {
-        const [time, date] = dateString.split(' ');
-        const [hours, minutes, seconds] = time.split(':').map(Number);
-        const [day, month, year] = date.split('/').map(Number);
-        return new Date(year, month - 1, day, hours, minutes, seconds);
-    };
-
-    const filteredLessonDetails = lessonDetails.filter((lessonDetail) => {
-        const matchStatus =
-            filterStatus === 'all'
-                ? true
-                : filterStatus === 'no'
-                    ? lessonDetail.isDisabled === false
-                    : lessonDetail.isDisabled === true;
-        const searchText = searchQuery.toLowerCase();
-        const lessonDetailName = lessonDetail.title?.[i18n.language]?.toLowerCase() || '';
-        return matchStatus && lessonDetailName.includes(searchText);
-    });
-
     const breadcrumbItems = [
         {
             title: t('lesson'),
@@ -409,9 +407,9 @@ const LessonDetail = () => {
                             onChange={(value) => setFilterStatus(value)}
                             placeholder={t('status')}
                         >
-                            <Select.Option value="all">{t('status')}</Select.Option>
-                            <Select.Option value="no">{t('no', { ns: 'common' })}</Select.Option>
-                            <Select.Option value="yes">{t('yes', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="">{t('status')}</Select.Option>
+                            <Select.Option value="false">{t('no', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="true">{t('yes', { ns: 'common' })}</Select.Option>
                         </Select>
                     </div>
                     <div>
@@ -432,7 +430,7 @@ const LessonDetail = () => {
                 <div className="table-container-lessondetail">
                     <Table
                         columns={columns}
-                        dataSource={filteredLessonDetails}
+                        dataSource={lessonDetails}
                         pagination={false}
                         rowKey="id"
                         className="custom-table"

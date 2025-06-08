@@ -21,37 +21,43 @@ const Exercise = () => {
     const [optionFileList, setOptionFileList] = useState([]);
     const [answerFileList, setAnswerFileList] = useState([]);
     const [optionType, setOptionType] = useState('text');
-    const [filterLevel, setFilterLevel] = useState('all');
-    const [filterStatus, setFilterStatus] = useState('all');
+    const [filterLevel, setFilterLevel] = useState(null); // Default to null, will be set to 'easy' after levels load
+    const [filterStatus, setFilterStatus] = useState('false');
     const [searchQuery, setSearchQuery] = useState('');
     const [levels, setLevels] = useState([]);
     const [errors, setErrors] = useState('');
     const [lesson, setLesson] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [selectedExercise, setSelectedExercise] = useState(null);
-
-    const exercisesPerPage = 16;
+    const [visibleExercises, setVisibleExercises] = useState([]);
+    const [nextPageToken, setNextPageToken] = useState(null);
+    const exercisesPerPage = 10;
     const { Option } = Select;
     const { lessonId } = useParams();
     const navigate = useNavigate();
     const { t, i18n } = useTranslation(['exercise', 'common']);
 
     useEffect(() => {
-        fetchExercises();
-        fetchLevels();
-        fetchLesson();
-    }, [lessonId]);
+        const loadInitialData = async () => {
+            await fetchLevels(); // Tải levels và set filterLevel mặc định
+            await fetchLesson(); // Tải thông tin lesson
+            // Sau khi có filterLevel, gọi hàm lọc bài tập
+            if (filterLevel && filterStatus) {
+                await fetchFilterExerciseDisabled(filterStatus);
+            }
+        };
+        loadInitialData();
+    }, [lessonId]); // Chỉ phụ thuộc vào lessonId
 
     const fetchExercises = async () => {
         try {
-            const response = await api.get(`/exercise/lessonId/${lessonId}`);
-            const sortedExercises = response.data.sort((a, b) => {
-                const dateA = parseDate(a.createdAt);
-                const dateB = parseDate(b.createdAt);
-                return dateB - dateA; // Latest first
-            });
-            setExercises(sortedExercises);
+            const response = await api.get(`/exercise/getByLesson/${lessonId}?pageSize=${exercisesPerPage}`);
+            console.log('Fetch Exercises Response:', response.data); // Debug response
+            setExercises(response.data.data || []);
+            setVisibleExercises((response.data.data || []).slice(0, exercisesPerPage));
+            setNextPageToken(response.data.nextPageToken || null);
         } catch (error) {
+            console.error('Error fetching exercises:', error);
             toast.error(t('errorFetchData', { ns: 'common' }), {
                 position: 'top-right',
                 autoClose: 2000,
@@ -61,9 +67,19 @@ const Exercise = () => {
 
     const fetchLevels = async () => {
         try {
-            const response = await api.get(`/level/enabled`);
+            const response = await api.get(`/level/getEnabledLevels`);
+            console.log('Levels:', response.data); // Debug API response
             setLevels(response.data);
+            const defaultLevel = response.data.find(
+                lvl => lvl.name?.[i18n.language]?.toLowerCase().includes('easy')
+            ) || response.data[2]; // Fallback to first level
+            if (defaultLevel) {
+                setFilterLevel(defaultLevel.id);
+            } else {
+                setFilterLevel('all');
+            }
         } catch (error) {
+            console.error('Error fetching levels:', error);
             toast.error(t('errorFetchData', { ns: 'common' }), {
                 position: 'top-right',
                 autoClose: 2000,
@@ -81,6 +97,53 @@ const Exercise = () => {
                 autoClose: 2000,
             });
         }
+    };
+
+    const fetchExerciseLevel = async (selectedLevelId = null) => {
+        try {
+            if (selectedLevelId === 'all') {
+                await fetchExercises();
+            } else {
+                const response = await api.get(`/exercise/filterByLevel/${lessonId}/${selectedLevelId}?pageSize=${exercisesPerPage}`);
+                setExercises(response.data.data || []);
+                setVisibleExercises((response.data.data || []).slice(0, exercisesPerPage));
+                setNextPageToken(response.data.nextPageToken || null);
+            }
+        } catch (error) {
+            console.error('Error fetching exercises by level:', error);
+            toast.error(t('errorFetchData', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+        }
+    };
+    const fetchFilterExerciseDisabled = async (isDisabled) => {
+        try {
+            const payload = {};
+            if (isDisabled !== 'all') {
+                payload.isDisabled = isDisabled === 'true'; // Chuyển chuỗi 'true'/'false' thành boolean
+            }
+            if (filterLevel && filterLevel !== 'all') {
+                payload.levelId = filterLevel; // Thêm levelId vào payload nếu không phải 'all'
+            }
+            const response = await api.post(`/exercise/filterByIsDisabled/${lessonId}`, payload);
+            const data = response.data.data || [];
+            setExercises(data);
+            setVisibleExercises(data.slice(0, exercisesPerPage)); // Cập nhật danh sách hiển thị
+            setNextPageToken(response.data.nextPageToken || null);
+        } catch (error) {
+            console.error('Error fetching exercise details:', error);
+            toast.error(t('errorFetchData', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+        }
+    };
+
+    const loadMore = () => {
+        if (!nextPageToken && visibleExercises.length >= exercises.length) return;
+        const nextBatch = exercises.slice(visibleExercises.length, visibleExercises.length + exercisesPerPage);
+        setVisibleExercises([...visibleExercises, ...nextBatch]);
     };
 
     const getLevelName = (levelId) => {
@@ -103,21 +166,15 @@ const Exercise = () => {
                     formData.append('option', JSON.stringify(validOptions));
                     formData.append('answer', editingExercise.answer);
                 } else {
-                    // Build full option array: image cũ (giữ nguyên URL), image mới (dùng file)
                     const fullOption = [];
-
                     for (let i = 0; i < optionFileList.length; i++) {
                         const fileEntry = optionFileList[i];
                         if (fileEntry[0]?.originFileObj) {
-                            // Ảnh mới => push file
                             formData.append('option', fileEntry[0].originFileObj);
                         } else if (typeof editingExercise.option[i] === 'string') {
-                            // Ảnh cũ => gửi lại URL để BE giữ nguyên
                             fullOption.push(editingExercise.option[i]);
                         }
                     }
-
-                    // Gửi thêm mảng chuỗi URL ảnh cũ để server merge
                     if (fullOption.length > 0) {
                         formData.append('existingOptionUrls', JSON.stringify(fullOption));
                     }
@@ -191,7 +248,6 @@ const Exercise = () => {
 
     const validate = () => {
         const newErrors = {};
-
         if (!editingExercise?.levelId || editingExercise.levelId.trim() === '') {
             newErrors.levelId = t('levelIdRequired');
         }
@@ -343,21 +399,22 @@ const Exercise = () => {
         setFileList([]);
         setImageUrl('');
     };
+
     const addOption = () => {
         if (editingExercise.option.length >= 3) {
-            toast.error(t('maxThreeOptions', { ns: 'common' })); // Notify user of the limit
+            toast.error(t('maxThreeOptions', { ns: 'common' }));
             return;
         }
         setEditingExercise((prev) => ({
             ...prev,
-            option: [...prev.option, ''], // Add a new empty option
+            option: [...prev.option, ''],
         }));
-        setOptionFileList((prev) => [...prev, []]); // Add a new empty file list
+        setOptionFileList((prev) => [...prev, []]);
     };
 
     const removeOption = (index) => {
         if (editingExercise.option.length === 1) {
-            toast.error(t('atLeastOneOption', { ns: 'common' })); // Add this translation to your i18n files
+            toast.error(t('atLeastOneOption', { ns: 'common' }));
             return;
         }
         setEditingExercise((prev) => ({
@@ -366,11 +423,11 @@ const Exercise = () => {
         }));
         setOptionFileList((prev) => prev.filter((_, i) => i !== index));
     };
+
     const handleRemoveOptionImage = (index) => {
         const newOptionFileList = [...optionFileList];
         newOptionFileList[index] = [];
         setOptionFileList(newOptionFileList);
-
         const newOptions = [...editingExercise.option];
         newOptions[index] = '';
         setEditingExercise((prev) => ({
@@ -387,27 +444,6 @@ const Exercise = () => {
         }));
     };
 
-    const parseDate = (dateString) => {
-        const [time, date] = dateString.split(' ');
-        const [hours, minutes, seconds] = time.split(':').map(Number);
-        const [day, month, year] = date.split('/').map(Number);
-        return new Date(year, month - 1, day, hours, minutes, seconds);
-    };
-
-    const filteredExercises = exercises.filter(exercise => {
-        const matchLevel = filterLevel === 'all' ? true : exercise.levelId === filterLevel;
-        const matchStatus =
-            filterStatus === 'all'
-                ? true
-                : filterStatus === 'no'
-                    ? exercise.isDisabled === false
-                    : exercise.isDisabled === true;
-        const searchText = searchQuery.toLowerCase();
-        const exerciseName = exercise.question?.[i18n.language]?.toLowerCase() || '';
-        return matchStatus && matchLevel && exerciseName.includes(searchText);
-    });
-
-    // Ant Design Table columns
     const columns = [
         {
             title: t('.no', { ns: 'common' }),
@@ -503,7 +539,7 @@ const Exercise = () => {
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
-                            setCurrentPage(1); // Reset to first page on search
+
                         }}
                     />
                 </div>
@@ -534,14 +570,14 @@ const Exercise = () => {
                                     value={filterLevel}
                                     onChange={(value) => {
                                         setFilterLevel(value);
-                                        setCurrentPage(1);
+                                        fetchExerciseLevel(value);
                                     }}
                                     placeholder={t('level')}
                                 >
-                                    <Select.Option value="all">{t('level')}</Select.Option>
+                                    <Select.Option value={'all'}>{t('All Level')}</Select.Option>
                                     {levels.map((level) => (
                                         <Select.Option key={level.id} value={level.id}>
-                                            {level.name?.[i18n.language] || level.name || level.id}
+                                            {level.name?.[i18n.language] || level.id}
                                         </Select.Option>
                                     ))}
                                 </Select>
@@ -550,13 +586,13 @@ const Exercise = () => {
                                     value={filterStatus}
                                     onChange={(value) => {
                                         setFilterStatus(value);
-                                        setCurrentPage(1);
+                                        fetchFilterExerciseDisabled(value);
                                     }}
                                     placeholder={t('exerciseStatus')}
                                 >
-                                    <Select.Option value="all">{t('exerciseStatus')}</Select.Option>
-                                    <Select.Option value="yes">{t('yes', { ns: 'common' })}</Select.Option>
-                                    <Select.Option value="no">{t('no', { ns: 'common' })}</Select.Option>
+                                    <Select.Option value="all">{t('status')}</Select.Option>
+                                    <Select.Option value="false">{t('no', { ns: 'common' })}</Select.Option>
+                                    <Select.Option value="true">{t('yes', { ns: 'common' })}</Select.Option>
                                 </Select>
                             </div>
                         </div>
@@ -568,55 +604,20 @@ const Exercise = () => {
                 <div className="table-container-exercise">
                     <Table
                         columns={columns}
-                        dataSource={filteredExercises.slice(
-                            (currentPage - 1) * exercisesPerPage,
-                            currentPage * exercisesPerPage
-                        )}
+                        dataSource={visibleExercises}
                         pagination={false}
                         rowKey="id"
                         className="custom-table"
                     />
+                    <div className="paginations">
+                        {visibleExercises.length < exercises.length || nextPageToken ? (
+                            <Button className="load-more-btn" onClick={loadMore}>
+                                {t('More', { ns: 'common' })}
+                            </Button>
+                        ) : null}
+                    </div>
                 </div>
 
-                <div className="paginations">
-                    <Pagination
-                        current={currentPage}
-                        total={filteredExercises.length}
-                        pageSize={exercisesPerPage}
-                        onChange={(page) => setCurrentPage(page)}
-                        className="pagination"
-                        itemRender={(page, type, originalElement) => {
-                            if (type === 'prev') {
-                                return (
-                                    <button className="around" disabled={currentPage === 1}>
-                                        {'<'}
-                                    </button>
-                                );
-                            }
-                            if (type === 'next') {
-                                return (
-                                    <button
-                                        className="around"
-                                        disabled={
-                                            currentPage === Math.ceil(filteredExercises.length / exercisesPerPage)
-                                        }
-                                    >
-                                        {'>'}
-                                    </button>
-                                );
-                            }
-                            if (type === 'page') {
-                                return (
-                                    <button className={`around ${currentPage === page ? 'active' : ''}`}>
-                                        {page}
-                                    </button>
-                                );
-                            }
-                            return originalElement;
-                        }}
-                    />
-                </div>
-                {/* Detail Modal */}
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px', fontWeight: 'bold', color: '#1a1a1a' }}>
@@ -691,7 +692,6 @@ const Exercise = () => {
                         </div>
                     )}
                 </Modal>
-                {/* Edit/Add Modal */}
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
@@ -966,8 +966,6 @@ const Exercise = () => {
                             </Button>
                             {errors.option && <div className="error-text">{errors.option}</div>}
                         </div>
-
-
                     </div>
                     <div className="button-row">
                         <Button className="cancel-button" onClick={closeModal} block>
