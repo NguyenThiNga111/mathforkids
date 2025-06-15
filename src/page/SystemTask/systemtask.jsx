@@ -9,43 +9,122 @@ import Navbar from '../../component/Navbar';
 import './systemtask.css';
 
 const SystemTask = () => {
-    const { t, i18n } = useTranslation(['systemtask', 'common']);
-    const { Option } = Select;
+
     const [tasks, setTasks] = useState([]);
     const [rewards, setRewards] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
-    const [filterStatus, setFilterStatus] = useState('');
+    const [filterStatus, setFilterStatus] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [countAll, setCountAll] = useState('');
+    const [visibleDailyTask, setVisibleDailyTask] = useState([]);
+    const [nextPageToken, setNextPageToken] = useState(null);
     const [errors, setErrors] = useState({});
-    const tasksPerPage = 16;
+    const tasksPerPage = 10;
+    const { Option } = Select;
+    const { t, i18n } = useTranslation(['systemtask', 'common']);
 
     useEffect(() => {
+        if (searchQuery.trim() === '') {
+            setVisibleDailyTask(tasks); // Reset to all when search is empty
+        } else {
+            const filtered = tasks.filter(
+                (dailytask) =>
+                    dailytask.title?.[i18n.language]?.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setVisibleDailyTask(filtered);
+        }
+    }, [searchQuery, tasks, i18n.language]);
+    useEffect(() => {
+        const fetchTasks = async () => {
+            setVisibleDailyTask([]);
+            setTasks([]);
+            setNextPageToken(null);
+            if (filterStatus !== 'all') {
+                await fetchTasksByDisabled(null, filterStatus);
+            } else {
+                await fetchAllTasks(null);
+            }
+            fetchRewards();
+        };
         fetchTasks();
-        fetchRewards();
-    }, []);
+    }, [filterStatus]);
 
-    const fetchTasks = async () => {
+    const fetchAllTasks = async (token = null) => {
         try {
-            const response = await api.get('/dailytask');
-            const sortedTasks = response.data.sort((a, b) => {
-                const dateA = parseDate(a.createdAt);
-                const dateB = parseDate(b.createdAt);
-                return dateB - dateA; // Latest first
+            let url = `/dailytask?pageSize=${tasksPerPage}`;
+            if (token) {
+                url += `&startAfterId=${token}`; // Use startAfterId as per your backend
+            }
+            const response = await api.get(url);
+            const newDailytask = response.data.data || [];
+            const responses = await api.get(`/dailytask/countAll`);
+            setCountAll(Number(responses.data.count));
+            setTasks((prev) => {
+                const existingIds = new Set(prev.map((dailytask) => dailytask.id));
+                const uniqueNewExercises = newDailytask.filter((dailytask) => !existingIds.has(dailytask.id));
+                return [...prev, ...uniqueNewExercises];
             });
-            setTasks(sortedTasks);
-        } catch {
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            setVisibleDailyTask((prev) => {
+                const existingIds = new Set(prev.map((dailytask) => dailytask.id));
+                const uniqueNewExercises = newDailytask.filter((dailytask) => !existingIds.has(dailytask.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
-
+    const fetchTasksByDisabled = async (token = null, isDisabled) => {
+        try {
+            let url = `/dailytask/filterByDisabledStatus?pageSize=${tasksPerPage}&isDisabled=${isDisabled}`;
+            if (token) {
+                url += `&startAfterId=${token}`; // Use startAfterId as per your backend
+            }
+            const response = await api.get(url);
+            const newDailytask = response.data.data || [];
+            const responses = await api.get(`/dailytask/countByDisabledStatus?isDisabled=${isDisabled}`);
+            setCountAll(Number(responses.data.count));
+            setTasks((prev) => {
+                const existingIds = new Set(prev.map((dailytask) => dailytask.id));
+                const uniqueNewExercises = newDailytask.filter((dailytask) => !existingIds.has(dailytask.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setVisibleDailyTask((prev) => {
+                const existingIds = new Set(prev.map((dailytask) => dailytask.id));
+                const uniqueNewExercises = newDailytask.filter((dailytask) => !existingIds.has(dailytask.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
+    };
     const fetchRewards = async () => {
-        const res = await api.get('/reward');
+        const res = await api.get('/reward/getEnabledRewards');
         setRewards(res.data);
+    };
+    const loadMore = async () => {
+        if (!nextPageToken) return;
+        try {
+            if (filterStatus !== 'all') {
+                await fetchTasksByDisabled(nextPageToken, filterStatus);
+            } else {
+                await fetchAllTasks(nextPageToken);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
     };
 
     const handleSave = async () => {
@@ -59,7 +138,7 @@ const SystemTask = () => {
         try {
             const { id, ...payload } = editingTask;
             if (id) {
-                await api.put(`/dailytask/${id}`, payload);
+                await api.patch(`/dailytask/${id}`, payload);
                 toast.success(t('updateSuccess', { ns: 'common' }), {
                     position: 'top-right',
                     autoClose: 2000,
@@ -71,22 +150,35 @@ const SystemTask = () => {
                     autoClose: 2000,
                 });
             }
-            fetchTasks();
+            setVisibleDailyTask([]);
+            setTasks([]);
+            setNextPageToken(null);
+            if (filterStatus !== 'all') {
+                await fetchTasksByDisabled(null, filterStatus);
+            } else {
+                await fetchAllTasks(null);
+            }
             closeModal();
-        } catch {
-            toast.error(t('errorSavingData', { ns: 'common' }), {
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
 
     const handleToggleDisabled = async (task) => {
         try {
-            const updatedTask = { ...task, isDisabled: !task.isDisabled };
-            await api.put(`/dailytask/${task.id}`, updatedTask);
-            fetchTasks();
-            toast.success(t('updateSuccess', { ns: 'common' }));
+            await api.patch(`/dailytask/${task.id}`, { isDisabled: !task.isDisabled });
+            toast.success(t('updateSuccess', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+            setTasks((prev) =>
+                prev.map((e) =>
+                    e.id === task.id ? { ...e, isDisabled: !task.isDisabled } : e
+                )
+            );
         } catch {
             toast.error(t('errorSavingData', { ns: 'common' }));
         }
@@ -122,24 +214,6 @@ const SystemTask = () => {
         setErrors({});
     };
 
-    const parseDate = (dateString) => {
-        const [time, date] = dateString.split(' ');
-        const [hours, minutes, seconds] = time.split(':').map(Number);
-        const [day, month, year] = date.split('/').map(Number);
-        return new Date(year, month - 1, day, hours, minutes, seconds);
-    };
-
-    const filteredTasks = tasks.filter(task => {
-        const matchStatus = filterStatus === ''
-            ? true
-            : filterStatus === 'no'
-                ? task.isDisabled === true
-                : task.isDisabled === false;
-        const searchText = searchQuery.toLowerCase();
-        const taskName = task.title?.[i18n.language]?.toLowerCase() || '';
-        return matchStatus && taskName.includes(searchText);
-    });
-
 
     // Ant Design Table columns
     const columns = [
@@ -148,7 +222,7 @@ const SystemTask = () => {
             dataIndex: 'index',
             key: 'index',
             width: 80,
-            render: (_, __, index) => (currentPage - 1) * tasksPerPage + index + 1,
+            render: (_, __, index) => index + 1,
         },
         {
             title: t('title'),
@@ -243,15 +317,11 @@ const SystemTask = () => {
                         <Select
                             className="filter-dropdown"
                             value={filterStatus}
-                            onChange={(value) => {
-                                setFilterStatus(value);
-                                setCurrentPage(1);
-                            }}
-                            placeholder={t('systemtaskStatus')}
+                            onChange={(value) => { setFilterStatus(value); }}
                         >
-                            <Select.Option value="">{t('systemtaskStatus')}</Select.Option>
-                            <Select.Option value="yes">{t('yes', { ns: 'common' })}</Select.Option>
-                            <Select.Option value="no">{t('no', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="all">{t('status', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="false">{t('no', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="true">{t('yes', { ns: 'common' })}</Select.Option>
                         </Select>
                     </div>
                     <Button className="rounded-add" onClick={() => openModal('add')}>
@@ -261,49 +331,21 @@ const SystemTask = () => {
                 <div className="table-container-systemtask">
                     <Table
                         columns={columns}
-                        dataSource={filteredTasks.slice((currentPage - 1) * tasksPerPage, currentPage * tasksPerPage)}
+                        dataSource={visibleDailyTask}
                         pagination={false}
                         rowKey="id"
                         className="custom-table"
                     />
+                    <div className="paginations">
+                        {nextPageToken && visibleDailyTask.length < countAll ? (
+                            <Button className="load-more-btn" onClick={loadMore}>
+                                {t('More', { ns: 'common' })}
+                            </Button>
+                        ) : null}
+                    </div>
                 </div>
 
-                <div className="paginations">
-                    <Pagination
-                        current={currentPage}
-                        total={filteredTasks.length}
-                        pageSize={tasksPerPage}
-                        onChange={(page) => setCurrentPage(page)}
-                        className="pagination"
-                        itemRender={(page, type, originalElement) => {
-                            if (type === 'prev') {
-                                return (
-                                    <button className="around" disabled={currentPage === 1}>
-                                        {'<'}
-                                    </button>
-                                );
-                            }
-                            if (type === 'next') {
-                                return (
-                                    <button
-                                        className="around"
-                                        disabled={currentPage === Math.ceil(filteredTasks.length / tasksPerPage)}
-                                    >
-                                        {'>'}
-                                    </button>
-                                );
-                            }
-                            if (type === 'page') {
-                                return (
-                                    <button className={`around ${currentPage === page ? 'active' : ''}`}>
-                                        {page}
-                                    </button>
-                                );
-                            }
-                            return originalElement;
-                        }}
-                    />
-                </div>
+
 
                 <Modal
                     title={

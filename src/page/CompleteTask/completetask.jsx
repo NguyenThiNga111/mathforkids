@@ -57,9 +57,9 @@ const CompleteTask = () => {
 
             setCompleteTasksData(completeTasks);
         } catch (error) {
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
@@ -91,9 +91,9 @@ const CompleteTask = () => {
                 fetchData();
                 closeModal();
             } catch (error) {
-                toast.error(t('errorSavingData', { ns: 'common' }), {
+                toast.error(error.response?.data?.message?.[i18n.language], {
                     position: 'top-right',
-                    autoClose: 2000,
+                    autoClose: 3000,
                 });
             }
         } else {

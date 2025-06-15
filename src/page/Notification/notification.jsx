@@ -1,57 +1,70 @@
 import { useState, useEffect } from 'react';
 import Navbar from '../../component/Navbar';
-import { Input, Button, Select, Modal, Table, Pagination } from 'antd';
+import { Input, Button, Modal, Table } from 'antd';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
-import { Imgs } from '../../assets/theme/images';
 import api from '../../assets/api/Api';
 import './notification.css';
-
-const { Option } = Select;
 
 const Notification = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingNotification, setEditingNotification] = useState(null);
     const [notificationsData, setNotificationsData] = useState([]);
-    const [usersData, setUsersData] = useState([]);
-    const [searchUser, setSearchUser] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
-    const [filterStatus, setFilterStatus] = useState('all'); // all / read / unread
-    const { t, i18n } = useTranslation(['notification', 'common']);
     const [searchQuery, setSearchQuery] = useState('');
-    const notificationsPerPage = 16;
+    const [countAll, setCountAll] = useState('');
+    const [visibleNotification, setVisibleNotification] = useState([]);
+    const [nextPageToken, setNextPageToken] = useState(null);
+    const notificationsPerPage = 10;
     const [errors, setErrors] = useState({});
+    const { t, i18n } = useTranslation(['notification', 'common']);
 
     useEffect(() => {
+        const fetchNotifications = async () => {
+            setVisibleNotification([]);
+            setNotificationsData([]);
+            setNextPageToken(null);
+            await fetchAllNotifications(null);
+        };
         fetchNotifications();
-        fetchUsers();
     }, []);
 
-    const fetchNotifications = async () => {
+    const fetchAllNotifications = async (token = null) => {
         try {
-            const response = await api.get(`/generalnotification`);
-            const sortedNotifications = response.data.sort((a, b) => {
-                const dateA = parseDate(a.createdAt);
-                const dateB = parseDate(b.createdAt);
-                return dateB - dateA; // Latest first
+            let url = `/generalnotification/getAll?pageSize=${notificationsPerPage}`;
+            if (token) {
+                url += `&startAfterId=${token}`;
+            }
+            const response = await api.get(url);
+            const newNotifications = response.data.data || [];
+            const responses = await api.get(`/generalnotification/countAll`);
+            setCountAll(Number(responses.data.count));
+            setNotificationsData((prev) => {
+                const existingIds = new Set(prev.map((n) => n.id));
+                const uniqueNewNotifications = newNotifications.filter((n) => !existingIds.has(n.id));
+                return [...prev, ...uniqueNewNotifications];
             });
-            setNotificationsData(sortedNotifications);
+            setVisibleNotification((prev) => {
+                const existingIds = new Set(prev.map((n) => n.id));
+                const uniqueNewNotifications = newNotifications.filter((n) => !existingIds.has(n.id));
+                return [...prev, ...uniqueNewNotifications];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
         } catch (error) {
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
 
-    const fetchUsers = async () => {
+    const loadMore = async () => {
+        if (!nextPageToken) return;
         try {
-            const response = await api.get(`/user`);
-            setUsersData(response.data);
+            await fetchAllNotifications(nextPageToken);
         } catch (error) {
-            toast.error(t('errorFetchUsers', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
@@ -60,7 +73,6 @@ const Notification = () => {
         if (validateForm()) {
             try {
                 const payload = {
-                    senderId: editingNotification.senderId,
                     title: {
                         vi: editingNotification.title.vi || '',
                         en: editingNotification.title.en || '',
@@ -84,12 +96,15 @@ const Notification = () => {
                         autoClose: 2000,
                     });
                 }
-                fetchNotifications();
+                setVisibleNotification([]);
+                setNotificationsData([]);
+                setNextPageToken(null);
+                await fetchAllNotifications(null);
                 closeModal();
             } catch (error) {
-                toast.error(t('errorSavingData', { ns: 'common' }), {
+                toast.error(error.response?.data?.message?.[i18n.language], {
                     position: 'top-right',
-                    autoClose: 2000,
+                    autoClose: 3000,
                 });
             }
         } else {
@@ -114,9 +129,6 @@ const Notification = () => {
         if (!editingNotification?.content?.en || editingNotification.content.en.trim() === '') {
             newErrors.contentEn = t('contentEnRequired');
         }
-        if (!editingNotification?.senderId) {
-            newErrors.senderId = t('senderRequired');
-        }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -126,7 +138,6 @@ const Notification = () => {
             setEditingNotification({
                 title: { vi: '', en: '' },
                 content: { vi: '', en: '' },
-                senderId: null,
                 isRead: false,
             });
         } else if (mode === 'update') {
@@ -148,50 +159,21 @@ const Notification = () => {
     const closeModal = () => {
         setIsModalOpen(false);
         setErrors({});
-        setSearchUser('');
     };
 
-    const parseDate = (dateString) => {
-        const [time, date] = dateString.split(' ');
-        const [hours, minutes, seconds] = time.split(':').map(Number);
-        const [day, month, year] = date.split('/').map(Number);
-        return new Date(year, month - 1, day, hours, minutes, seconds);
-    };
-
-    const filteredNotifications = notificationsData.filter(notification => {
-        const matchStatus =
-            filterStatus === 'all'
-                ? true
-                : filterStatus === 'read'
-                    ? notification.isRead === true
-                    : notification.isRead === false;
-        const searchText = searchQuery.toLowerCase();
-        const notificationName = notification.title?.[i18n.language]?.toLowerCase() || '';
-        return matchStatus && notificationName.includes(searchText);
-    });
-    const filteredUsers = usersData.filter(user =>
-        user.fullName.toLowerCase().includes(searchUser.toLowerCase())
-    );
-    // Ant Design Table columns
     const columns = [
         {
             title: t('.no', { ns: 'common' }),
             dataIndex: 'index',
             key: 'index',
             width: 80,
-            render: (_, __, index) => (currentPage - 1) * notificationsPerPage + index + 1,
+            render: (_, __, index) => index + 1,
         },
         {
             title: t('title'),
             dataIndex: 'title',
             key: 'title',
             render: (text, record) => record.title?.[i18n.language] || '',
-        },
-        {
-            title: t('sender'),
-            dataIndex: 'senderId',
-            key: 'senderId',
-            render: (text, record) => usersData.find(user => user.id === record.senderId)?.fullName || 'Unknown',
         },
         {
             title: t('content'),
@@ -225,7 +207,6 @@ const Notification = () => {
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
-                            setCurrentPage(1); // Reset to first page on search
                         }}
                     />
                 </div>
@@ -249,19 +230,6 @@ const Notification = () => {
                             </svg>
                             <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
                         </span>
-                        <Select
-                            className="filter-dropdown"
-                            value={filterStatus}
-                            onChange={(value) => {
-                                setFilterStatus(value);
-                                setCurrentPage(1);
-                            }}
-                            placeholder={t('status')}
-                        >
-                            <Select.Option value="all">{t('status')}</Select.Option>
-                            <Select.Option value="read">{t('read')}</Select.Option>
-                            <Select.Option value="unread">{t('unread')}</Select.Option>
-                        </Select>
                     </div>
                     <Button className="rounded-add" onClick={() => openModal('add')}>
                         + {t('addNew', { ns: 'common' })}
@@ -270,54 +238,18 @@ const Notification = () => {
                 <div className="table-container-notification">
                     <Table
                         columns={columns}
-                        dataSource={filteredNotifications.slice(
-                            (currentPage - 1) * notificationsPerPage,
-                            currentPage * notificationsPerPage
-                        )}
+                        dataSource={visibleNotification}
                         pagination={false}
                         rowKey="id"
                         className="custom-table"
                     />
-                </div>
-
-                <div className="paginations">
-                    <Pagination
-                        current={currentPage}
-                        total={filteredNotifications.length}
-                        pageSize={notificationsPerPage}
-                        onChange={(page) => setCurrentPage(page)}
-                        className="pagination"
-                        itemRender={(page, type, originalElement) => {
-                            if (type === 'prev') {
-                                return (
-                                    <button className="around" disabled={currentPage === 1}>
-                                        {'<'}
-                                    </button>
-                                );
-                            }
-                            if (type === 'next') {
-                                return (
-                                    <button
-                                        className="around"
-                                        disabled={
-                                            currentPage ===
-                                            Math.ceil(filteredNotifications.length / notificationsPerPage)
-                                        }
-                                    >
-                                        {'>'}
-                                    </button>
-                                );
-                            }
-                            if (type === 'page') {
-                                return (
-                                    <button className={`around ${currentPage === page ? 'active' : ''}`}>
-                                        {page}
-                                    </button>
-                                );
-                            }
-                            return originalElement;
-                        }}
-                    />
+                    <div className="paginations">
+                        {nextPageToken && visibleNotification.length < countAll ? (
+                            <Button className="load-more-btn" onClick={loadMore}>
+                                {t('More', { ns: 'common' })}
+                            </Button>
+                        ) : null}
+                    </div>
                 </div>
                 <Modal
                     title={
@@ -362,29 +294,6 @@ const Notification = () => {
                                 }
                             />
                             {errors.titleEn && <div className="error-text">{errors.titleEn}</div>}
-                        </div>
-                        <div className="inputtext">
-                            <label className="titleinput">
-                                {t('sender')} <span style={{ color: 'red' }}>*</span>
-                            </label>
-                            <Select
-                                showSearch
-                                placeholder={t('selectSender')}
-                                value={editingNotification?.senderId || undefined}
-                                onChange={(value) =>
-                                    setEditingNotification({ ...editingNotification, senderId: value })
-                                }
-                                onSearch={(value) => setSearchUser(value)}
-                                filterOption={false}
-                                style={{ width: '100%', height: '50px' }}
-                            >
-                                {filteredUsers.map((user) => (
-                                    <Select.Option key={user.id} value={user.id}>
-                                        {user.fullName}
-                                    </Select.Option>
-                                ))}
-                            </Select>
-                            {errors.senderId && <div className="error-text">{errors.senderId}</div>}
                         </div>
                         <div className="inputtext">
                             <label className="titleinput">

@@ -9,7 +9,7 @@ import api from '../../assets/api/Api';
 import './profile.css';
 
 const Profile = () => {
-    const { t } = useTranslation(['profile', 'common']);
+    const { t, i18n } = useTranslation(['profile', 'common']);
     const { id } = useParams();
     const navigate = useNavigate();
     const userID = localStorage.getItem('userID');
@@ -19,6 +19,7 @@ const Profile = () => {
     const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
     const [newEmail, setNewEmail] = useState('');
     const [userData, setUserData] = useState({});
+    const [emailChanged, setEmailChanged] = useState(false);
     const { Option } = Select;
 
     // Fetch user data
@@ -29,7 +30,7 @@ const Profile = () => {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 });
                 if (response.data) {
-                    const { id, fullName, phoneNumber, email, gender, dateOfBirth, address, avatar } = response.data;
+                    const { id, fullName, phoneNumber, email, gender, dateOfBirth, address, image } = response.data;
                     let formattedDOB = '';
                     if (dateOfBirth?.seconds) {
                         formattedDOB = moment(dateOfBirth.seconds * 1000).format('YYYY-MM-DD');
@@ -44,13 +45,19 @@ const Profile = () => {
                         gender: gender || '',
                         dateOfBirth: formattedDOB,
                         address: address || '',
-                        avatar: avatar || 'https://i.pravatar.cc/100',
+                        image: image || 'https://i.pravatar.cc/100',
                     });
                 } else {
-                    toast.error(t('fetchFailed', { ns: 'common' }));
+                    toast.error(t('fetchFailed', { ns: 'common' }), {
+                        position: 'top-right',
+                        autoClose: 3000,
+                    });
                 }
             } catch (error) {
-                toast.error(error.response?.data?.message || t('fetchFailed', { ns: 'common' }));
+                toast.error(error.response?.data?.message?.[i18n.language], {
+                    position: 'top-right',
+                    autoClose: 3000,
+                });
                 if (error.response?.status === 401) navigate('/login');
             }
         };
@@ -107,17 +114,23 @@ const Profile = () => {
                     dateOfBirth: userData.dateOfBirth,
                     address: userData.address,
                 };
-                const response = await api.put(`/user/${userID}`, payload, {
+                const response = await api.patch(`/user/updateProfile/${userID}`, payload, {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 });
                 if (response.status === 200) {
                     toast.success(t('updateSuccess', { ns: 'common' }));
                     setUserData({ ...userData, ...response.data });
                 } else {
-                    toast.error(t('updateFailed', { ns: 'common' }));
+                    toast.error(t('updateFailed', { ns: 'common' }), {
+                        position: 'top-right',
+                        autoClose: 3000,
+                    });
                 }
             } catch (error) {
-                toast.error(error.response?.data?.message || t('updateFailed', { ns: 'common' }));
+                toast.error(error.response?.data?.message?.[i18n.language], {
+                    position: 'top-right',
+                    autoClose: 3000,
+                });
             }
         } else {
             Object.values(errors).forEach((errorMsg) => {
@@ -126,14 +139,14 @@ const Profile = () => {
         }
     };
 
-    // Handle send OTP
+    // Handle send OTP to old email
     const handleSendOTP = async () => {
         if (!newEmail || !/\S+@\S+\.\S+/.test(newEmail)) {
             toast.error(t('emailInvalid'));
             return false;
         }
         try {
-            const res = await api.post(`/auth/sendOTPByEmailChange/${newEmail}`, {}, {
+            const res = await api.post(`/auth/sendOtpByEmail/${userData.email}`, {}, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (res.status === 200) {
@@ -142,42 +155,70 @@ const Profile = () => {
                 setOtpModalVisible(true);
                 return true;
             }
-            toast.error(res.data?.message || t('updateFailed', { ns: 'common' }));
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
             return false;
-        } catch (err) {
-            toast.error(err.response?.data?.message || t('updateFailed', { ns: 'common' }));
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
             return false;
         }
     };
 
-    // Handle OTP verification
     const handleVerifyOTP = async () => {
+        console.log('handleVerifyOTP - userID:', userID);
+        console.log('handleVerifyOTP - otpCode:', otpCode);
+        console.log('handleVerifyOTP - newEmail:', newEmail);
+
         if (!otpCode) {
             toast.error(t('otpRequired'));
             return;
         }
+        if (!userID) {
+            toast.error(t('userIdRequired', { ns: 'common' }));
+            return;
+        }
+        if (!newEmail || !/\S+@\S+\.\S+/.test(newEmail)) {
+            toast.error(t('emailInvalid'));
+            return;
+        }
         try {
             setIsVerifyingOTP(true);
-            const res = await api.post(`/auth/verifyOTP`, { email: newEmail, otp: otpCode }, {
+            const res = await api.post(`/auth/verifyOTP/${userID}`, { otpCode }, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
-            if (res.data.success) {
-                const updateRes = await api.put(`/user/${userID}`, { ...userData, email: newEmail }, {
+            console.log('handleVerifyOTP - response:', res.data);
+            if (res.data.message) {
+                console.log("Sending update email request:", { newEmail, userID });
+                const updateRes = await api.patch(`/user/updateEmail/${userID}`, { newEmail }, {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 });
+                console.log("Update email response:", updateRes.data);
                 if (updateRes.status === 200) {
                     setUserData({ ...userData, email: newEmail });
-                    toast.success(t('updateSuccess', { ns: 'common' }));
+                    setEmailChanged(true);
+                    toast.success(updateRes.data.message[t('ns')] || t('updateSuccess', { ns: 'common' }));
                     setOtpModalVisible(false);
                     setOtpCode('');
                 } else {
-                    toast.error(updateRes.data?.message || t('updateFailed', { ns: 'common' }));
+                    toast.error(updateRes.response?.data?.message?.[i18n.language], {
+                        position: 'top-right',
+                        autoClose: 3000,
+                    });
                 }
             } else {
-                toast.error(res.data?.message || t('otpInvalid'));
+                toast.error(t('otpInvalid'));
             }
         } catch (err) {
-            toast.error(err.response?.data?.message || t('otpInvalid'));
+            console.error('Verify OTP Error:', err.response?.data);
+            toast.error(err.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
         } finally {
             setIsVerifyingOTP(false);
         }
@@ -191,7 +232,7 @@ const Profile = () => {
                 <div className="flex justify-between items-center mb-4">
                     <div className="profile-card">
                         <div className="avatar-section">
-                            <img src={userData.avatar} alt="Avatar" className="avatar-img" />
+                            <img src={userData.image} alt="Avatar" className="avatar-img" />
                             <p className="upload-text">{t('uploadPhoto')}</p>
                         </div>
                         <div className="form-wrapper">
@@ -254,14 +295,13 @@ const Profile = () => {
                                         disabled
                                         suffix={
                                             <Button
-
                                                 type="link"
                                                 size="small"
                                                 onClick={() => {
                                                     setNewEmail(userData.email);
-                                                    setConfirmEmail(userData.email);
                                                     setIsEmailModalVisible(true);
                                                 }}
+                                                disabled={emailChanged}
                                             >
                                                 {t('change')}
                                             </Button>
@@ -289,7 +329,6 @@ const Profile = () => {
                             onCancel={() => {
                                 setIsEmailModalVisible(false);
                                 setNewEmail('');
-                                setConfirmEmail('');
                             }}
                             footer={null}
                             className="modal-content"

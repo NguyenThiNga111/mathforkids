@@ -21,8 +21,8 @@ const Exercise = () => {
     const [optionFileList, setOptionFileList] = useState([]);
     const [answerFileList, setAnswerFileList] = useState([]);
     const [optionType, setOptionType] = useState('text');
-    const [filterLevel, setFilterLevel] = useState(null); // Default to null, will be set to 'easy' after levels load
-    const [filterStatus, setFilterStatus] = useState('false');
+    const [filterLevel, setFilterLevel] = useState('all'); // Default to null, will be set to 'easy' after levels load
+    const [filterStatus, setFilterStatus] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [levels, setLevels] = useState([]);
     const [errors, setErrors] = useState('');
@@ -31,6 +31,7 @@ const Exercise = () => {
     const [selectedExercise, setSelectedExercise] = useState(null);
     const [visibleExercises, setVisibleExercises] = useState([]);
     const [nextPageToken, setNextPageToken] = useState(null);
+    const [countAll, setCountAll] = useState('');
     const exercisesPerPage = 10;
     const { Option } = Select;
     const { lessonId } = useParams();
@@ -38,51 +39,160 @@ const Exercise = () => {
     const { t, i18n } = useTranslation(['exercise', 'common']);
 
     useEffect(() => {
-        const loadInitialData = async () => {
-            await fetchLevels(); // Tải levels và set filterLevel mặc định
-            await fetchLesson(); // Tải thông tin lesson
-            // Sau khi có filterLevel, gọi hàm lọc bài tập
-            if (filterLevel && filterStatus) {
-                await fetchFilterExerciseDisabled(filterStatus);
-            }
-        };
-        loadInitialData();
-    }, [lessonId]); // Chỉ phụ thuộc vào lessonId
+        if (searchQuery.trim() === '') {
+            setVisibleExercises(exercises); // Reset to all when search is empty
+        } else {
+            const filtered = exercises.filter(
+                (exercises) =>
+                    exercises.question?.[i18n.language]?.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setVisibleExercises(filtered);
+        }
+    }, [searchQuery, exercises, i18n.language]);
 
-    const fetchExercises = async () => {
+    useEffect(() => {
+        const fetchExercises = async () => {
+            setExercises([]);
+            setVisibleExercises([]);
+            setNextPageToken(null);
+            try {
+                if (filterStatus !== 'all' && filterLevel !== 'all') {
+                    fetchFilterLevelisDisabled(filterLevel, null, filterStatus);
+                } else if (filterLevel !== 'all' && filterStatus === 'all') {
+                    fetchFilterLevel(filterLevel, null);
+                } else if (filterLevel === 'all' && filterStatus !== 'all') {
+                    fetchAllExercisesisDisabled(null, filterStatus);
+                } else {
+                    fetchAllExercises(null);
+                }
+
+                await fetchLesson();
+                await fetchLevels();
+            } catch (error) {
+                toast.error(error.response?.data?.message?.[i18n.language], {
+                    position: 'top-right',
+                    autoClose: 3000,
+                });
+            };
+        };
+        fetchExercises();
+    }, [lessonId, filterStatus, filterLevel]); // Chỉ phụ thuộc vào lessonId
+
+    const fetchAllExercises = async (token = null) => {
         try {
-            const response = await api.get(`/exercise/getByLesson/${lessonId}?pageSize=${exercisesPerPage}`);
-            console.log('Fetch Exercises Response:', response.data); // Debug response
-            setExercises(response.data.data || []);
-            setVisibleExercises((response.data.data || []).slice(0, exercisesPerPage));
+            let url = `/exercise/getByLesson/${lessonId}?pageSize=${exercisesPerPage}`;
+            if (token) {
+                url += `&startAfterId=${token}`;
+            }
+            const responses = await api.get(`/exercise/countByLesson/${lessonId}`);
+            setCountAll(Number(responses.data.count));
+            const response = await api.get(url);
+            const newExercises = response.data.data || [];
+            setExercises((prev) => {
+                const existingIds = new Set(prev.map((exercise) => exercise.id));
+                const uniqueNewExercises = newExercises.filter((exercise) => !existingIds.has(exercise.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setVisibleExercises((prev) => {
+                const existingIds = new Set(prev.map((exercise) => exercise.id));
+                const uniqueNewExercises = newExercises.filter((exercise) => !existingIds.has(exercise.id));
+                return [...prev, ...uniqueNewExercises];
+            });
             setNextPageToken(response.data.nextPageToken || null);
         } catch (error) {
             console.error('Error fetching exercises:', error);
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
-
-    const fetchLevels = async () => {
+    const fetchAllExercisesisDisabled = async (token = null, isDisabled) => {
         try {
-            const response = await api.get(`/level/getEnabledLevels`);
-            console.log('Levels:', response.data); // Debug API response
-            setLevels(response.data);
-            const defaultLevel = response.data.find(
-                lvl => lvl.name?.[i18n.language]?.toLowerCase().includes('easy')
-            ) || response.data[2]; // Fallback to first level
-            if (defaultLevel) {
-                setFilterLevel(defaultLevel.id);
-            } else {
-                setFilterLevel('all');
+            let url = `/exercise/filterByIsDisabled/${lessonId}?pageSize=${exercisesPerPage}&isDisabled=${isDisabled}`;
+            if (token) {
+                url += `&startAfterId=${token}`;
             }
+            const responses = await api.get(`/exercise/countByLessonAndDisabledStatus/${lessonId}?isDisabled=${isDisabled}`);
+            setCountAll(Number(responses.data.count));
+            const response = await api.get(url);
+            const newExercises = response.data.data || [];
+            setExercises((prev) => {
+                const existingIds = new Set(prev.map((exercise) => exercise.id));
+                const uniqueNewExercises = newExercises.filter((exercise) => !existingIds.has(exercise.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setVisibleExercises((prev) => {
+                const existingIds = new Set(prev.map((exercise) => exercise.id));
+                const uniqueNewExercises = newExercises.filter((exercise) => !existingIds.has(exercise.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
         } catch (error) {
-            console.error('Error fetching levels:', error);
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            console.error('Error fetching exercises:', error);
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
+            });
+        }
+    };
+    const fetchFilterLevel = async (levelId, token = null) => {
+        try {
+            console.log('Fetching exercises for levelId:', levelId);
+            let url = `/exercise/filterByLevel/${lessonId}/${levelId}?pageSize=${exercisesPerPage}`;
+            if (token) {
+                url += `&startAfterId=${token}`;
+            }
+            const responses = await api.get(`/exercise/countByLessonAndLevel/${lessonId}/${levelId}`);
+            setCountAll(Number(responses.data.count));
+            const response = await api.get(url);
+            const newExercises = response.data.data || [];
+            setExercises((prev) => {
+                const existingIds = new Set(prev.map((exercise) => exercise.id));
+                const uniqueNewExercises = newExercises.filter((exercise) => !existingIds.has(exercise.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setVisibleExercises((prev) => {
+                const existingIds = new Set(prev.map((exercise) => exercise.id));
+                const uniqueNewExercises = newExercises.filter((exercise) => !existingIds.has(exercise.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
+        } catch (error) {
+            console.error('Error fetching exercises:', error);
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
+    };
+    const fetchFilterLevelisDisabled = async (levelId, token = null, isDisabled) => {
+        try {
+            console.log('Fetching exercises for levelId:', levelId);
+            let url = `/exercise/filterByLevelAndIsDisabled/${lessonId}/${levelId}?pageSize=${exercisesPerPage}&isDisabled=${isDisabled}`;
+            if (token) {
+                url += `&startAfterId=${token}`;
+            }
+            const responses = await api.get(`/exercise/countByLessonAndLevelAndDisabledStatus/${lessonId}/${levelId}?isDisabled=${isDisabled}`);
+            setCountAll(Number(responses.data.count));
+            const response = await api.get(url);
+            const newExercises = response.data.data || [];
+            setExercises((prev) => {
+                const existingIds = new Set(prev.map((exercise) => exercise.id));
+                const uniqueNewExercises = newExercises.filter((exercise) => !existingIds.has(exercise.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setVisibleExercises((prev) => {
+                const existingIds = new Set(prev.map((exercise) => exercise.id));
+                const uniqueNewExercises = newExercises.filter((exercise) => !existingIds.has(exercise.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
+        } catch (error) {
+            console.error('Error fetching exercises:', error);
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
             });
         }
     };
@@ -92,58 +202,45 @@ const Exercise = () => {
             const response = await api.get(`/lesson/${lessonId}`);
             setLesson(response.data);
         } catch (error) {
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
 
-    const fetchExerciseLevel = async (selectedLevelId = null) => {
+    const fetchLevels = async () => {
         try {
-            if (selectedLevelId === 'all') {
-                await fetchExercises();
+            const response = await api.get(`/level/getEnabledLevels`);
+            console.log('Levels:', response.data); // Debug API response
+            setLevels(response.data || []);
+        } catch (error) {
+            console.error('Error fetching levels:', error);
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
+    };
+
+    const loadMore = async () => {
+        if (!nextPageToken) return;
+        try {
+            if (filterStatus !== 'all' && filterLevel !== 'all') {
+                fetchFilterLevelisDisabled(filterLevel, nextPageToken, filterStatus);
+            } else if (filterLevel !== 'all' && filterStatus === 'all') {
+                fetchFilterLevel(filterLevel, nextPageToken);
+            } else if (filterLevel === 'all' && filterStatus !== 'all') {
+                fetchAllExercisesisDisabled(nextPageToken, filterStatus);
             } else {
-                const response = await api.get(`/exercise/filterByLevel/${lessonId}/${selectedLevelId}?pageSize=${exercisesPerPage}`);
-                setExercises(response.data.data || []);
-                setVisibleExercises((response.data.data || []).slice(0, exercisesPerPage));
-                setNextPageToken(response.data.nextPageToken || null);
+                fetchAllExercises(nextPageToken);
             }
         } catch (error) {
-            console.error('Error fetching exercises by level:', error);
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
-    };
-    const fetchFilterExerciseDisabled = async (isDisabled) => {
-        try {
-            const payload = {};
-            if (isDisabled !== 'all') {
-                payload.isDisabled = isDisabled === 'true'; // Chuyển chuỗi 'true'/'false' thành boolean
-            }
-            if (filterLevel && filterLevel !== 'all') {
-                payload.levelId = filterLevel; // Thêm levelId vào payload nếu không phải 'all'
-            }
-            const response = await api.post(`/exercise/filterByIsDisabled/${lessonId}`, payload);
-            const data = response.data.data || [];
-            setExercises(data);
-            setVisibleExercises(data.slice(0, exercisesPerPage)); // Cập nhật danh sách hiển thị
-            setNextPageToken(response.data.nextPageToken || null);
-        } catch (error) {
-            console.error('Error fetching exercise details:', error);
-            toast.error(t('errorFetchData', { ns: 'common' }), {
-                position: 'top-right',
-                autoClose: 2000,
-            });
-        }
-    };
-
-    const loadMore = () => {
-        if (!nextPageToken && visibleExercises.length >= exercises.length) return;
-        const nextBatch = exercises.slice(visibleExercises.length, visibleExercises.length + exercisesPerPage);
-        setVisibleExercises([...visibleExercises, ...nextBatch]);
     };
 
     const getLevelName = (levelId) => {
@@ -163,21 +260,19 @@ const Exercise = () => {
                 }
                 if (optionType === 'text') {
                     const validOptions = editingExercise.option.filter(opt => opt && opt.trim() !== '');
-                    formData.append('option', JSON.stringify(validOptions));
-                    formData.append('answer', editingExercise.answer);
+                    if (validOptions.length > 0) {
+                        formData.append('option', JSON.stringify(validOptions));
+                    }
+                    if (editingExercise.answer && editingExercise.answer.trim() !== '') {
+                        formData.append('answer', editingExercise.answer);
+                    }
                 } else {
-                    const fullOption = [];
-                    for (let i = 0; i < optionFileList.length; i++) {
-                        const fileEntry = optionFileList[i];
-                        if (fileEntry[0]?.originFileObj) {
-                            formData.append('option', fileEntry[0].originFileObj);
-                        } else if (typeof editingExercise.option[i] === 'string') {
-                            fullOption.push(editingExercise.option[i]);
+                    const validOptionFileList = optionFileList.filter(list => list.length > 0);
+                    validOptionFileList.forEach((fileList, index) => {
+                        if (fileList[0]?.originFileObj) {
+                            formData.append('option', fileList[0].originFileObj);
                         }
-                    }
-                    if (fullOption.length > 0) {
-                        formData.append('existingOptionUrls', JSON.stringify(fullOption));
-                    }
+                    });
                     if (answerFileList[0]?.originFileObj) {
                         formData.append('answer', answerFileList[0].originFileObj);
                     }
@@ -208,12 +303,23 @@ const Exercise = () => {
                         autoClose: 2000,
                     });
                 }
-                fetchExercises();
+                setExercises([]);
+                setVisibleExercises([]);
+                setNextPageToken(null);
+                if (filterStatus !== 'all' && filterLevel !== 'all') {
+                    fetchFilterLevelisDisabled(filterLevel, null, filterStatus);
+                } else if (filterLevel !== 'all' && filterStatus === 'all') {
+                    fetchFilterLevel(filterLevel, null);
+                } else if (filterLevel === 'all' && filterStatus !== 'all') {
+                    fetchAllExercisesisDisabled(null, filterStatus);
+                } else {
+                    fetchAllExercises(null);
+                }
                 closeModal();
             } catch (error) {
-                toast.error(t('validationFailed', { ns: 'common' }), {
+                toast.error(error.response?.data?.message?.[i18n.language], {
                     position: 'top-right',
-                    autoClose: 2000,
+                    autoClose: 3000,
                 });
             }
         } else {
@@ -239,9 +345,9 @@ const Exercise = () => {
                 )
             );
         } catch (error) {
-            toast.error(t('validationFailed', { ns: 'common' }), {
+             toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
@@ -539,7 +645,6 @@ const Exercise = () => {
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
-
                         }}
                     />
                 </div>
@@ -568,13 +673,10 @@ const Exercise = () => {
                                 <Select
                                     className="filter-dropdown"
                                     value={filterLevel}
-                                    onChange={(value) => {
-                                        setFilterLevel(value);
-                                        fetchExerciseLevel(value);
-                                    }}
+                                    onChange={(value) => setFilterLevel(value)}
                                     placeholder={t('level')}
                                 >
-                                    <Select.Option value={'all'}>{t('All Level')}</Select.Option>
+                                    <Select.Option value="all">{t('All Level')}</Select.Option>
                                     {levels.map((level) => (
                                         <Select.Option key={level.id} value={level.id}>
                                             {level.name?.[i18n.language] || level.id}
@@ -584,10 +686,7 @@ const Exercise = () => {
                                 <Select
                                     className="filter-dropdown"
                                     value={filterStatus}
-                                    onChange={(value) => {
-                                        setFilterStatus(value);
-                                        fetchFilterExerciseDisabled(value);
-                                    }}
+                                    onChange={(value) => { setFilterStatus(value) }}
                                     placeholder={t('exerciseStatus')}
                                 >
                                     <Select.Option value="all">{t('status')}</Select.Option>
@@ -610,7 +709,7 @@ const Exercise = () => {
                         className="custom-table"
                     />
                     <div className="paginations">
-                        {visibleExercises.length < exercises.length || nextPageToken ? (
+                        {nextPageToken && visibleExercises.length < countAll ? (
                             <Button className="load-more-btn" onClick={loadMore}>
                                 {t('More', { ns: 'common' })}
                             </Button>
@@ -962,7 +1061,7 @@ const Exercise = () => {
                                 style={{ marginTop: '10px' }}
                                 className="custom-upload-button"
                             >
-                                + {t('addOption', { ns: 'common' })}
+                                + {t('addOption')}
                             </Button>
                             {errors.option && <div className="error-text">{errors.option}</div>}
                         </div>

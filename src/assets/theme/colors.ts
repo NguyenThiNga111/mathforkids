@@ -1,106 +1,138 @@
 export const lightColors = {
+  // Backgrounds
   backgroundSidebar: '#FFFFFF',
   backgroundSidebarhover: '#2563eb',
   backgroundCard: '#FFFFFF',
+  backgroundContent: '#F8F8FF',
+  backgroundNavbar: '#FFFFFF',
+  backgroundWhite: '#FFFFFF',
+  backgroundAround: '#1e293b',
+  backgroundPage: '#e5e7eb',
+  backgroundFilter: '#F9F9FB',
+  backgroundDisabled: '#e5e7eb',
+
+  // Buttons and Hover
+  backgroundButton: '#4880FF',
+  backgroundButtonhover: '#2563eb',
+  backgroundButtonadd: '#FF0066',
+  colorButtonadd: '#fff',
+  buttonAdd: '#1685FB',
+  buttonUpdate: '#1685FB',
+  buttonDetail: '#F4A100', // Thêm cho nhất quán (dựa trên darkColors)
+  buttonLessonDetail: '#60D56C', // Thêm cho nhất quán (dựa trên darkColors)
+  buttonDetailhover: '#D98A4A', // Thêm cho nhất quán
+  buttonLessonDetailhover: '#3DA964', // Thêm cho nhất quán
+  backgroundSave: '#3b82f6',
+  backgroundSavehover: '#2e6bcc',
+  backgroundCancel: '#ff4d4f',
+  backgroundCancelhover: '#e64446',
+
+  // Text
+  colorText: '#202224',
+  colorTextwhite: '#FFFFFF',
+  colorTitle: '#1B2431',
   colorCard: '#6b7280',
   colorCardvalue: '#202224',
+  colorTextsearch: '#D8D8D8',
+  colorSearch: '#202224', // Thêm cho nhất quán (dựa trên darkColors)
+  subTitle: '#6b7280',
+  labelLogin: '#374151',
+  colorPage: '#202224',
+  colorDisabled: '#9ca3af',
+  errorText: '#ff0000',
+  colorFilter: '#202224',
+  tableColor: '#202224',
+
+  // Borders
+  colorBorder: '#D8D8D8',
+  borderSearch: '#CCC',
+  filterBorder: '#d1d5db',
+  borderInput: '#3b82f6',
+  sidebarDivider: '#FFFFFF',
+
+  // Sidebar
   activeBackground: '#FFFFFF',
   colorSidebaractive: '#4880FF',
   colorSidebar: '#081028',
   backgroundSidebarheader: '#3366FF',
-  sidebarItem: "#E6ECFF",
-  buttonAdd: '#1685FB',
-  colorTitle: '#1B2431',
-  buttonUpdate: '#1685FB',
-  backgroundContent: '#F8F8FF',
-  backgroundNavbar: '#FFFFFF',
-  backgroundButton: '#4880FF',
-  backgroundButtonhover: '#2563eb',
-  backgroundButtonadd: '#FF0066',
-  colorButtonadd: '#fff',
-  colorText: '#202224',
-  colorTextwhite: '#FFFFFF',
-  colorTextsearch: '#D8D8D8',
-  colorBorder: '#D8D8D8',
-  borderSearch: '#CCC',
-  sidebarDivider: '#FFFFFF',
-  filterBorder: '#d1d5db',
-  colorFilter: '#202224',
-  tableName: '#e5e7eb',
-  tableColor: '#202224',
-  buttonFilter: '#FFFFFF',
-  backgroundFilter: '#F9F9FB',
-  colorExport: '#F4A100',
-  borderInput: '#3b82f6',
-  errorText: '#ff0000',
-  backgroundWhite: '#FFFFFF',
-  backgroundAround: '#1e293b',
-  backgroundGradient: 'linear-gradient(135deg,#2e6bcc 0%, #1e40af 100%)',
-  subTitle: '#6b7280',
-  labelLogin: '#374151',
-  backgroundPage: '#e5e7eb',
-  colorPage: '#202224',
-  backgroundDisabled: '#e5e7eb',
-  colorDisabled: '#9ca3af',
-  // colorDisabled: '#000000',
+  sidebarItem: '#E6ECFF',
 
-  backgroundSave: '#3b82f6',
-  backgroundSavehover: '#2e6bcc',
-  backgroundCancel: '#ff4d4f',
-  backgroundCancelhover: '#e64446'
+  // Tables and Hover
+  tableName: '#e5e7eb',
+  buttonFilter: '#FFFFFF',
+  tableHover: '#E6ECFF', // Thêm cho nhất quán (dựa trên darkColors hover)
+
+  // Miscellaneous
+  colorExport: '#F4A100',
+  backgroundGradient: 'linear-gradient(135deg,#2e6bcc 0%, #1e40af 100%)',
 };
 export const darkColors = {
-  backgroundSidebar: '#0B1739',
-  backgroundSidebarhover: '#374151',
-  backgroundCard: '#273142',
-  colorCard: '#FFFFFF', // Text color, already white
-  colorCardvalue: '#FFFFFF', // Text color, already white
-  activeBackground: '#4880FF',
-  colorSidebaractive: '#FFFFFF', // Text color, already white
-  colorSidebar: '#FFFFFF', // Changed from #e5e7eb to white for text
-  backgroundSidebarheader: '#1D30B5',
-  sidebarItem: '#1D30B5',
-  buttonAdd: '#1685FB',
-  colorTitle: '#FFFFFF', // Text color, already white
-  buttonUpdate: '#3b82f6',
-  backgroundContent: '#1B2431',
-  backgroundNavbar: '#273142',
-  backgroundButton: '#4880FF',
-  backgroundButtonhover: '#2563eb',
-  backgroundButtonadd: '#FF0066',
-  colorButtonadd: '#fff',
-  colorText: '#FFFFFF', // Changed from #f3f4f6 to white for general text
-  colorTextwhite: '#FFFFFF', // Already white
-  colorBorder: '#D8D8D8',
-  borderSearch: '#CFCFCF',
-  colorSearch: '#000000',
-  colorDisabled: '#fff',
-  sidebarDivider: '#475569',
-  filterBorder: '#64748b',
-  colorFilter: '#FFFFFF', // Text color, already white
-  tableName: '#273142',
-  tableColor: '#FFFFFF', // Text color, already white
-  buttonFilter: '#1e293b',
-  backgroundFilter: '#1e293b',
-  colorExport: '#F4A100',
-  backgroundAround: '#fff',
-  borderInput: '#60a5fa',
-  errorText: '#FF0000', // Changed from #f87171 to white for error text
-  backgroundWhite: '#1e293b',
-  backgroundGradient: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)',
-  subTitle: '#FFFFFF', // Changed from #9ca3af to white for subtitle text
-  labelLogin: '#FFFFFF', // Changed from #d1d5db to white for login labels
-  backgroundPage: '#1B2431', // Changed from #FFFFFF to match backgroundContent for consistency
-  colorPage: '#FFFFFF', // Changed from #202224 to white for page text
-  backgroundDisabled: '#e5e7eb',
-  // Added missing colors from lightColors
-  backgroundSave: '#3b82f6', // Same as light theme
-  backgroundSavehover: '#2e6bcc', // Same as light theme
-  backgroundCancel: '#ff4d4f', // Same as light theme
-  backgroundCancelhover: '#e64446', // Same as light theme
-  // Added for buttondetail and buttonlessondetail
-  buttonDetail: '#F4A100', // Same as original CSS
-  buttonLessonDetail: '#60D56C' // Same as original CSS
+  // Backgrounds
+  backgroundSidebar: '#1A2A44', // Dark navy sidebar
+  backgroundSidebarhover: '#223355', // Hover effect for sidebar
+  backgroundCard: '#1E3556', // Card background
+  backgroundContent: '#15233A', // Main content background, matches DashStack
+  backgroundNavbar: '#1A2A44', // Navbar background
+  backgroundWhite: '#1E3556', // "White" replacement for dark theme
+  backgroundAround: '#15233A', // Secondary areas
+  backgroundPage: '#15233A', // Main page background
+  backgroundFilter: '#1E3556', // Filter dropdown background
+  backgroundDisabled: '#2A4066', // Disabled elements
+
+  // Buttons and Hover
+  backgroundButton: '#3A6EA5', // Primary button color
+  backgroundButtonhover: '#2D5884', // Hover color for buttons
+  backgroundButtonadd: '#FF9800', // Add button, matches DashStack orange
+  colorButtonadd: '#FFFFFF', // White text for add button
+  buttonAdd: '#FF9800', // Matches backgroundButtonadd
+  buttonUpdate: '#3A6EA5', // Update button
+  buttonDetail: '#FF9800', // Detail button, orange from DashStack
+  buttonLessonDetail: '#4CAF50', // Green for lesson details
+  buttonDetailhover: '#F57C00', // Darker orange for hover
+  buttonLessonDetailhover: '#45A049', // Darker green for hover
+  backgroundSave: '#4CAF50', // Save button
+  backgroundSavehover: '#45A049', // Save hover
+  backgroundCancel: '#F44336', // Cancel button
+  backgroundCancelhover: '#DA190B', // Cancel hover
+
+  // Text
+  colorText: '#B0C4DE', // Light text for readability
+  colorTextwhite: '#FFFFFF', // Pure white for emphasis
+  colorTitle: '#D3D8E0', // Titles
+  colorCard: '#A9B7C9', // Card labels
+  colorCardvalue: '#E0E7F0', // Card values
+  colorTextsearch: '#A9B7C9', // Search placeholder
+  colorSearch: '#B0C4DE', // Search text
+  subTitle: '#A9B7C9', // Subtitles
+  labelLogin: '#B0C4DE', // Login labels
+  colorPage: '#B0C4DE', // Pagination text
+  colorDisabled: '#6D829E', // Disabled text
+  errorText: '#F44336', // Error messages
+  colorFilter: '#B0C4DE', // Filter text
+  tableColor: '#B0C4DE', // Table text
+
+  // Borders
+  colorBorder: '#2A4066', // Subtle border
+  borderSearch: '#2A4066', // Search border
+  filterBorder: '#2A4066', // Filter border
+  borderInput: '#3A6EA5', // Focused input border
+  sidebarDivider: '#2A4066', // Sidebar divider
+
+  // Sidebar
+  activeBackground: '#3A6EA5', // Active sidebar item
+  colorSidebaractive: '#FFFFFF', // Active sidebar text
+  colorSidebar: '#A9B7C9', // Inactive sidebar text
+  backgroundSidebarheader: '#1E3556', // Sidebar header
+  sidebarItem: '#223355', // Sidebar item background
+
+  // Tables and Hover
+  tableName: '#223355', // Table header
+  buttonFilter: '#1E3556', // Filter button
+  tableHover: '#2D5884', // New hover color for table rows, matches button hover
+
+  // Miscellaneous
+  colorExport: '#FF9800', // Export button
+  backgroundGradient: 'linear-gradient(135deg, #3A6EA5 0%, #1E3556 100%)', // Gradient
 };
 // Hàm chuyển màu thành biến CSS trong :root
 export function injectColorsToRoot(colors: Record<string, string>) {

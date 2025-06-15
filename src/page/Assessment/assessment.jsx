@@ -54,9 +54,9 @@ const Assessment = () => {
             });
             setAssessments(sortedAssessments);
         } catch (error) {
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
@@ -66,9 +66,9 @@ const Assessment = () => {
             const response = await api.get(`/level`);
             setLevels(response.data);
         } catch (error) {
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
@@ -85,38 +85,41 @@ const Assessment = () => {
         if (validate()) {
             try {
                 const formData = new FormData();
-                formData.append('levelId', editingAssessment.levelId);
-                formData.append('grade', editingAssessment.grade);
-                formData.append('type', JSON.stringify(editingAssessment.type));
-                formData.append('question', JSON.stringify(editingAssessment.question));
-
+                formData.append('levelId', editingExercise.levelId);
+                formData.append('lessonId', lessonId);
+                formData.append('question', JSON.stringify(editingExercise.question));
                 if (fileList[0]?.originFileObj) {
                     formData.append('image', fileList[0].originFileObj);
                 }
-
                 if (optionType === 'text') {
-                    const validOptions = editingAssessment.option.filter(opt => opt.trim() !== '');
-                    formData.append('option', JSON.stringify(validOptions));
-                    formData.append('answer', editingAssessment.answer);
+                    // Chỉ gửi các option hợp lệ (không rỗng)
+                    const validOptions = editingExercise.option.filter(opt => opt && opt.trim() !== '');
+                    if (validOptions.length > 0) {
+                        formData.append('option', JSON.stringify(validOptions));
+                    }
+                    if (editingExercise.answer && editingExercise.answer.trim() !== '') {
+                        formData.append('answer', editingExercise.answer);
+                    }
                 } else {
-                    const fullOption = [];
-                    for (let i = 0; i < optionFileList.length; i++) {
-                        const fileEntry = optionFileList[i];
-                        if (fileEntry[0]?.originFileObj) {
-                            formData.append('option', fileEntry[0].originFileObj);
-                        } else if (typeof editingAssessment.option[i] === 'string') {
-                            fullOption.push(editingAssessment.option[i]);
+                    // Gửi danh sách các option hình ảnh còn lại
+                    const validOptionFileList = optionFileList.filter(list => list.length > 0);
+                    validOptionFileList.forEach((fileList, index) => {
+                        if (fileList[0]?.originFileObj) {
+                            formData.append('option', fileList[0].originFileObj);
                         }
-                    }
-                    if (fullOption.length > 0) {
-                        formData.append('existingOptionUrls', JSON.stringify(fullOption));
-                    }
+                    });
                     if (answerFileList[0]?.originFileObj) {
                         formData.append('answer', answerFileList[0].originFileObj);
                     }
                 }
-                if (editingAssessment.id) {
-                    await api.put(`/assessment/${editingAssessment.id}`, formData, {
+
+                console.log('Form Data to be sent:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(`${key}:`, value instanceof File ? value.name : value);
+                }
+
+                if (editingExercise.id) {
+                    await api.put(`/exercise/${editingExercise.id}`, formData, {
                         headers: {
                             'Content-Type': 'multipart/form-data',
                         },
@@ -126,9 +129,9 @@ const Assessment = () => {
                         autoClose: 2000,
                     });
                 } else {
-                    await api.post(`/assessment`, formData, {
+                    await api.post(`/exercise`, formData, {
                         headers: {
-                            "Content-Type": "multipart/form-data",
+                            'Content-Type': 'multipart/form-data',
                         },
                     });
                     toast.success(t('addSuccess', { ns: 'common' }), {
@@ -136,12 +139,25 @@ const Assessment = () => {
                         autoClose: 2000,
                     });
                 }
-                fetchAssessments();
+
+                // Reset danh sách bài tập và tải lại
+                setExercises([]);
+                setVisibleExercises([]);
+                setNextPageToken(null);
+                if (filterStatus !== 'all' && filterLevel !== 'all') {
+                    fetchFilterLevelisDisabled(filterLevel, null, filterStatus);
+                } else if (filterLevel !== 'all' && filterStatus === 'all') {
+                    fetchFilterLevel(filterLevel, null);
+                } else if (filterLevel === 'all' && filterStatus !== 'all') {
+                    fetchAllExercisesisDisabled(null, filterStatus);
+                } else {
+                    fetchAllExercises(null);
+                }
                 closeModal();
             } catch (error) {
-                toast.error(t('validationFailed', { ns: 'common' }), {
+                toast.error(error.response?.data?.message?.[i18n.language], {
                     position: 'top-right',
-                    autoClose: 2000,
+                    autoClose: 3000,
                 });
             }
         } else {
@@ -167,9 +183,9 @@ const Assessment = () => {
                 )
             );
         } catch (error) {
-            toast.error(t('validationFailed', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
@@ -347,15 +363,20 @@ const Assessment = () => {
     };
 
     const removeOption = (index) => {
-        if (editingAssessment.option.length === 1) {
+        if (editingExercise.option.length === 1) {
             toast.error(t('atLeastOneOption', { ns: 'common' }));
             return;
         }
-        setEditingAssessment((prev) => ({
-            ...prev,
-            option: prev.option.filter((_, i) => i !== index),
-        }));
-        setOptionFileList((prev) => prev.filter((_, i) => i !== index));
+        Modal.confirm({
+            title: t('confirmDeleteOption', { ns: 'common' }),
+            onOk: () => {
+                setEditingExercise((prev) => ({
+                    ...prev,
+                    option: prev.option.filter((_, i) => i !== index),
+                }));
+                setOptionFileList((prev) => prev.filter((_, i) => i !== index));
+            },
+        });
     };
 
     const handleRemoveOptionImage = (index) => {

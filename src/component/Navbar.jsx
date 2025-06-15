@@ -45,7 +45,7 @@ const Navbar = () => {
         setSelectedLanguage(selected);
         if (userId) {
             try {
-                await api.put(`/user/${userId}`, { language: newLang });
+                await api.patch(`/user/updateProfile/${userId}`, { language: newLang });
                 fetchUserData();
             } catch (error) {
                 console.error('Failed to update language:', error);

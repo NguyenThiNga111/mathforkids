@@ -16,17 +16,16 @@ const Lesson = () => {
     const [editingLesson, setEditingLesson] = useState(null);
     const [lessonsData, setLessonsData] = useState([]);
     const [selectedGrade, setSelectedGrade] = useState(1);
-    const [errors, setErrors] = useState({});
-    const [currentPage, setCurrentPage] = useState(1);
-    const [filterStatus, setFilterStatus] = useState('all'); // all / enabled / disabled
-    const [filterType, setFilterType] = useState('addition'); // all / addition / subtraction / multiplication / division
+    const [filterType, setFilterType] = useState('addition'); // addition / subtraction / multiplication / division
+    const [filterStatus, setFilterStatus] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
-
-    const [visibleExercises, setVisibleExercises] = useState([]);
+    const [countAll, setCountAll] = useState('');
+    const [visibleLesson, setVisibleLesson] = useState([]);
     const [nextPageToken, setNextPageToken] = useState(null);
     const { t, i18n } = useTranslation(['lesson', 'common']);
+    const [errors, setErrors] = useState({});
     const navigate = useNavigate();
-    const lessonsPerPage = 6;
+    const lessonsPerPage = 10;
 
     const lessonTypes = [
         { value: 'addition', label: t('addition'), icon: <FaPlus className="icon-type" />, color: '#60D56C' },
@@ -34,38 +33,95 @@ const Lesson = () => {
         { value: 'multiplication', label: t('multiplication'), icon: <FaTimes className="icon-type" />, color: '#F73A7A' },
         { value: 'division', label: t('division'), icon: <FaDivide className="icon-type" />, color: '#FD8550' },
     ];
+    useEffect(() => {
+        if (searchQuery.trim() === '') {
+            setVisibleLesson(lessonsData); // Reset to all when search is empty
+        } else {
+            const filtered = lessonsData.filter(
+                (lesson) =>
+                    lesson.name?.[i18n.language]?.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setVisibleLesson(filtered);
+        }
+    }, [searchQuery, lessonsData, i18n.language]);
 
     useEffect(() => {
-        // Gọi lần đầu với giá trị mặc định
-        fetchGradeType(selectedGrade, filterType);
-    }, [selectedGrade, filterType]);
-    const fetchGradeType = async (grade, type) => {
+        const fetchLessons = async () => {
+            setVisibleLesson([]);
+            setLessonsData([]);
+            setNextPageToken(null);
+            if (filterStatus !== 'all') {
+                await fetchFilterLessonDisabled(selectedGrade, filterType, null, filterStatus);
+            } else {
+                await fetchGradeType(selectedGrade, filterType, null);
+            }
+
+        };
+        fetchLessons();
+    }, [selectedGrade, filterType, filterStatus]);
+
+    const fetchGradeType = async (grade, type, token = null) => {
         try {
-            const payload = {};
-            // Chỉ thêm grade vào payload nếu nó không rỗng và không phải "all"
-            if (grade && grade !== '') {
-                payload.grade = Number(grade);
+            // Build API query string
+            let url = `/lesson/getAll?pageSize=${lessonsPerPage}&type=${type}&grade=${grade}`;
+            if (token) {
+                url += `&startAfterId=${token}`; // Use startAfterId as per your backend
             }
-            // Chỉ thêm type vào payload nếu nó không phải "all"
-            if (type && type !== 'all') {
-                payload.type = type;
-            }
-            const response = await api.post('/lesson/getAll', payload);
-            setLessonsData(response.data.data);
-            setVisibleExercises((response.data.data || []).slice(0, lessonsPerPage));
+
+            const response = await api.get(url);
+            const newLessons = response.data.data || [];
+            const responses = await api.get(`/lesson/countAll?type=${type}&grade=${grade}`);
+            setCountAll(Number(responses.data.count));
+            setLessonsData((prev) => [...prev, ...newLessons]); // Append new lessons
+            setVisibleLesson((prev) => [...prev, ...newLessons]); // Append to visible lessons
             setNextPageToken(response.data.nextPageToken || null);
         } catch (error) {
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
-    const loadMore = () => {
-        if (!nextPageToken && visibleExercises.length >= lessonsData.length) return;
-        const nextBatch = lessonsData.slice(visibleExercises.length, visibleExercises.length + lessonsPerPage);
-        setVisibleExercises([...visibleExercises, ...nextBatch]);
+
+    const loadMore = async () => {
+        if (!nextPageToken) return;
+        try {
+            if (filterStatus !== 'all') {
+                await fetchFilterLessonDisabled(selectedGrade, filterType, nextPageToken, filterStatus);
+            } else {
+                await fetchGradeType(selectedGrade, filterType, nextPageToken);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
     };
+
+    const fetchFilterLessonDisabled = async (grade, type, token = null, isDisabled) => {
+        try {
+            // Add pagination token to the payload or query string
+            let url = `/lesson/filterByDisabled?pageSize=${lessonsPerPage}&type=${type}&grade=${grade}&isDisabled=${isDisabled}`;
+            if (token) {
+                url += `&startAfterId=${token}`; // Use startAfterId as per your backend
+            }
+            const response = await api.get(url);
+            const newLessons = response.data.data || [];
+            const responses = await api.get(`/lesson/countByDisabledStatus?type=${type}&grade=${grade}&isDisabled=${isDisabled}`);
+            setCountAll(Number(responses.data.count));
+            setLessonsData((prev) => [...prev, ...newLessons]); // Append new lessons
+            setVisibleLesson((prev) => [...prev, ...newLessons]); // Append to visible lessons
+            setNextPageToken(response.data.nextPageToken || null);
+        } catch (error) {
+            console.error('Error fetching more filtered lessons:', error);
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
+    };
+
     const handleSave = async () => {
         if (validateForm()) {
             try {
@@ -78,7 +134,7 @@ const Lesson = () => {
                 payload.type = editingLesson.type;
 
                 if (editingLesson?.id) {
-                    await api.put(`/lesson/${editingLesson.id}`, payload);
+                    await api.patch(`/lesson/${editingLesson.id}`, payload);
                     toast.success(t('updateSuccess', { ns: 'common' }), {
                         position: 'top-right',
                         autoClose: 2000,
@@ -90,12 +146,19 @@ const Lesson = () => {
                         autoClose: 2000,
                     });
                 }
-                fetchLessons();
+                setLessonsData([]);
+                setVisibleLesson([]);
+                setNextPageToken(null);
+                if (filterStatus !== 'all') {
+                    await fetchFilterLessonDisabled(selectedGrade, filterType, null, filterStatus);
+                } else {
+                    await fetchGradeType(selectedGrade, filterType, null);
+                }
                 closeModal();
             } catch (error) {
-                toast.error(t('errorSavingData', { ns: 'common' }), {
+                toast.error(error.response?.data?.message?.[i18n.language], {
                     position: 'top-right',
-                    autoClose: 2000,
+                    autoClose: 3000,
                 });
             }
         } else {
@@ -112,7 +175,7 @@ const Lesson = () => {
                 ...lesson,
                 isDisabled: !lesson.isDisabled,
             };
-            await api.put(`/lesson/${lesson.id}`, {
+            await api.patch(`/lesson/${lesson.id}`, {
                 ...updatedLesson,
                 isDisabled: updatedLesson.isDisabled,
             });
@@ -120,11 +183,15 @@ const Lesson = () => {
                 position: 'top-right',
                 autoClose: 2000,
             });
-            fetchLessons();
+            setLessonsData((prev) =>
+                prev.map((e) =>
+                    e.id === lesson.id ? { ...e, isDisabled: !lesson.isDisabled } : e
+                )
+            );
         } catch (error) {
-            toast.error(t('validationFailed', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
@@ -176,30 +243,13 @@ const Lesson = () => {
         setIsModalOpen(false);
         setErrors({});
     };
-    const filteredLessons = lessonsData
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .filter(lesson => {
-            const matchGrade = selectedGrade ? lesson.grade === Number(selectedGrade) : true;
-            const matchStatus =
-                filterStatus === 'all'
-                    ? true
-                    : filterStatus === 'no'
-                        ? lesson.isDisabled === false
-                        : lesson.isDisabled === true;
-            const matchType = filterType === 'all' ? true : lesson.type === filterType;
-            const searchText = searchQuery.toLowerCase();
-            const searchName = lesson.name?.[i18n.language]?.toLowerCase() || '';
-            return matchStatus && matchGrade && matchType && searchName.includes(searchText);
-        });
 
-    // Ant Design Table columns
     const columns = [
         {
             title: t('.no', { ns: 'common' }),
-            dataIndex: 'index',
-            key: 'index',
-            width: 80,
-            render: (_, __, index) => (currentPage - 1) * lessonsPerPage + index + 1,
+            dataIndex: 'order',
+            key: 'order',
+            width: 100,
         },
         {
             title: t('lessonName'),
@@ -285,7 +335,6 @@ const Lesson = () => {
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
-                            setCurrentPage(1); // Reset to first page on search
                         }}
                     />
                 </div>
@@ -314,7 +363,6 @@ const Lesson = () => {
                             value={filterType}
                             onChange={(value) => {
                                 setFilterType(value);
-                                setCurrentPage(1);
                             }}
                             placeholder={t('type')}
                         >
@@ -336,31 +384,30 @@ const Lesson = () => {
                         <Select
                             className="filter-dropdown"
                             value={filterStatus}
-                            onChange={(value) => {
-                                setFilterStatus(value);
-                                setCurrentPage(1);
-                            }}
+                            onChange={(value) => { setFilterStatus(value); }}
                             placeholder={t('lessonStatus')}
                         >
-                            <Select.Option value="all">{t('lessonStatus')}</Select.Option>
-                            <Select.Option value="yes">{t('yes', { ns: 'common' })}</Select.Option>
-                            <Select.Option value="no">{t('no', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="all">{t('status', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="false">{t('no', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="true">{t('yes', { ns: 'common' })}</Select.Option>
                         </Select>
                     </div>
+
                     <Button className="rounded-add" onClick={() => openModal('add')}>
                         + {t('addNew', { ns: 'common' })}
                     </Button>
                 </div>
+
                 <div className="table-container-lesson">
                     <Table
                         columns={columns}
-                        dataSource={visibleExercises}
+                        dataSource={visibleLesson}
                         pagination={false}
                         rowKey="id"
                         className="custom-table"
                     />
                     <div className="paginations">
-                        {visibleExercises.length < lessonsData.length || nextPageToken ? (
+                        {nextPageToken && visibleLesson.length < countAll ? (
                             <Button className="load-more-btn" onClick={loadMore}>
                                 {t('More', { ns: 'common' })}
                             </Button>
@@ -456,8 +503,10 @@ const Lesson = () => {
                         </Button>
                     </div>
                 </Modal>
-            </div>
-        </div>
+            </div >
+        </div >
+
+
     );
 };
 

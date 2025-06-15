@@ -61,10 +61,6 @@ const Dashboard = () => {
                             <FaBook className={getIconClass('/lesson')} />
                             {t('lesson')}
                         </Link>
-                        <Link to="/assessment" className={`sidebar-item ${activeItem === '/assessment' ? 'active' : ''}`}>
-                            <FaQuestionCircle className={getIconClass('/assessment')} />
-                            {t('assessment')}
-                        </Link>
                         <Link to="/systemtask" className={`sidebar-item ${activeItem === '/systemtask' ? 'active' : ''}`}>
                             <FaTasks className={getIconClass('/systemtask')} />
                             {t('systemTasks')}

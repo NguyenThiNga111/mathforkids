@@ -1,7 +1,7 @@
 {
     "managementNotifications": "Quản lý thông báo",
     "title": "Tiêu đề",
-    "sender": "Người gửi",
+    "sender": "Người nhận",
     "content": "Nội dung",
     "createdAt": "Ngày tạo",
     "status": "Trạng thái",
@@ -11,12 +11,12 @@
     "updateNotification": "Cập nhật thông báo",
     "inputTitleVi": "Nhập tiêu đề (Tiếng Việt)",
     "inputTitleEn": "Nhập tiêu đề (Tiếng Anh)",
-    "selectSender": "Chọn người gửi",
+    "selectSender": "Chọn người nhận",
     "inputContentVi": "Nhập nội dung (Tiếng Việt)",
     "inputContentEn": "Nhập nội dung (Tiếng Anh)",
     "titleViRequired": "Tiêu đề (Tiếng Việt) là bắt buộc",
     "titleEnRequired": "Tiêu đề (Tiếng Anh) là bắt buộc",
     "contentViRequired": "Nội dung (Tiếng Việt) là bắt buộc",
     "contentEnRequired": "Nội dung (Tiếng Anh) là bắt buộc",
-    "senderRequired": "Người gửi là bắt buộc"
+    "senderRequired": "Người nhận là bắt buộc"
 }

@@ -30,9 +30,9 @@ const Setting = () => {
                 localStorage.setItem('darkMode', JSON.stringify(isDark));
                 injectColorsToRoot(isDark ? darkColors : lightColors);
             } catch (error) {
-                toast.error(t('fetchFailed', { ns: 'common' }), {
+                toast.error(error.response?.data?.message?.[i18n.language], {
                     position: 'top-right',
-                    autoClose: 2000,
+                    autoClose: 3000,
                 });
             }
         };
@@ -46,13 +46,13 @@ const Setting = () => {
         injectColorsToRoot(newDarkMode ? darkColors : lightColors);
 
         try {
-            await api.put(`/user/${userID}`, {
+            await api.patch(`/user/updateProfile/${userID}`, {
                 mode: newDarkMode ? 'dark' : 'light',
             });
         } catch (error) {
-            toast.error(t('updateFailed', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
@@ -74,9 +74,9 @@ const Setting = () => {
                 autoClose: 2000,
             });
         } catch (error) {
-            toast.error(t('updateFailed', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };

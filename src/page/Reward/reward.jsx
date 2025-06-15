@@ -13,38 +13,118 @@ import Navbar from "../../component/Navbar";
 const Rewards = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingReward, setEditingReward] = useState(null);
-    const [currentPage, setCurrentPage] = useState(1);
     const [imageUrl, setImageUrl] = useState('');
     const [rewards, setRewards] = useState([]);
     const [fileList, setFileList] = useState([]);
-    const [filterAlphabet, setFilterAlphabet] = useState('alphabet');
     const [filterStatus, setFilterStatus] = useState('all');
     const [errors, setErrors] = useState({});
     const [searchQuery, setSearchQuery] = useState('');
+    const [countAll, setCountAll] = useState('');
+    const [visibleReward, setVisibleReward] = useState([]);
+    const [nextPageToken, setNextPageToken] = useState(null);
     const rewardsPerPage = 10;
     const { t, i18n } = useTranslation(['reward', 'common']);
 
     useEffect(() => {
-        fetchRewards();
-    }, []);
+        if (searchQuery.trim() === '') {
+            setVisibleReward(rewards); // Reset to all when search is empty
+        } else {
+            const filtered = rewards.filter(
+                (reward) =>
+                    reward.name?.[i18n.language]?.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setVisibleReward(filtered);
+        }
+    }, [searchQuery, rewards, i18n.language]);
 
-    const fetchRewards = async () => {
+
+    useEffect(() => {
+        const fetchRewards = async () => {
+            setVisibleReward([]);
+            setRewards([]);
+            setNextPageToken(null);
+            if (filterStatus !== 'all') {
+                await fetchRewardsByDisabled(null, filterStatus);
+            } else {
+                await fetchAllRewards(null);
+            }
+
+        };
+        fetchRewards();
+    }, [filterStatus]);
+
+    const fetchAllRewards = async (token = null) => {
         try {
-            const response = await api.get(`/reward`);
-            const sortedRewards = response.data.sort((a, b) => {
-                const dateA = parseDate(a.createdAt);
-                const dateB = parseDate(b.createdAt);
-                return dateB - dateA; // Latest first
+            let url = `/reward?pageSize=${rewardsPerPage}`;
+            if (token) {
+                url += `&startAfterId=${token}`; // Use startAfterId as per your backend
+            }
+            const response = await api.get(url);
+            const newRewards = response.data.data || [];
+            const responses = await api.get(`/reward/countAll`);
+            setCountAll(Number(responses.data.count));
+            setRewards((prev) => {
+                const existingIds = new Set(prev.map((reward) => reward.id));
+                const uniqueNewExercises = newRewards.filter((reward) => !existingIds.has(reward.id));
+                return [...prev, ...uniqueNewExercises];
             });
-            setRewards(sortedRewards);
+            setVisibleReward((prev) => {
+                const existingIds = new Set(prev.map((reward) => reward.id));
+                const uniqueNewExercises = newRewards.filter((reward) => !existingIds.has(reward.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
         } catch (error) {
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
+    const fetchRewardsByDisabled = async (token = null, isDisabled) => {
+        try {
+            let url = `/reward/filterByDisabledStatus?pageSize=${rewardsPerPage}&isDisabled=${isDisabled}`;
+            if (token) {
+                url += `&startAfterId=${token}`; // Use startAfterId as per your backend
+            }
+            const response = await api.get(url);
+            const newRewards = response.data.data || [];
+            const responses = await api.get(`/reward/countByDisabledStatus?isDisabled=${isDisabled}`);
+            setCountAll(Number(responses.data.count));
+            setRewards((prev) => {
+                const existingIds = new Set(prev.map((reward) => reward.id));
+                const uniqueNewExercises = newRewards.filter((reward) => !existingIds.has(reward.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setVisibleReward((prev) => {
+                const existingIds = new Set(prev.map((reward) => reward.id));
+                const uniqueNewExercises = newRewards.filter((reward) => !existingIds.has(reward.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
+    };
+    const loadMore = async () => {
+        if (!nextPageToken) return;
+        try {
+            if (filterStatus !== 'all') {
+                await fetchRewardsByDisabled(nextPageToken, filterStatus);
 
+            } else {
+                await fetchAllRewards(nextPageToken);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
+    };
     const handleSave = async () => {
         if (validate()) {
             try {
@@ -55,7 +135,7 @@ const Rewards = () => {
                     formData.append('image', fileList[0].originFileObj);
                 }
                 if (editingReward.id) {
-                    await api.put(`/reward/${editingReward.id}`, formData, {
+                    await api.patch(`/reward/${editingReward.id}`, formData, {
                         headers: { 'Content-Type': 'multipart/form-data' },
                     });
                     toast.success(t('updateSuccess', { ns: 'common' }), {
@@ -71,12 +151,19 @@ const Rewards = () => {
                         autoClose: 2000,
                     });
                 }
-                fetchRewards();
+                setVisibleReward([]);
+                setRewards([]);
+                setNextPageToken(null);
+                if (filterStatus !== 'all') {
+                    await fetchRewardsByDisabled(null, filterStatus);
+                } else {
+                    await fetchAllRewards(null);
+                }
                 closeModal();
             } catch (error) {
-                toast.error(t('errorSavingData', { ns: 'common' }), {
+                toast.error(error.response?.data?.message?.[i18n.language], {
                     position: 'top-right',
-                    autoClose: 2000,
+                    autoClose: 3000,
                 });
             }
         } else {
@@ -89,16 +176,20 @@ const Rewards = () => {
 
     const handleToggleAvailable = async (reward) => {
         try {
-            await api.put(`/reward/${reward.id}`, { isDisabled: !reward.isDisabled });
+            await api.patch(`/reward/${reward.id}`, { isDisabled: !reward.isDisabled });
             toast.success(t('updateSuccess', { ns: 'common' }), {
                 position: 'top-right',
                 autoClose: 2000,
             });
-            fetchRewards();
+            setRewards((prev) =>
+                prev.map((e) =>
+                    e.id === reward.id ? { ...e, isDisabled: !reward.isDisabled } : e
+                )
+            );
         } catch (error) {
-            toast.error(t('validationFailed', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
@@ -150,16 +241,22 @@ const Rewards = () => {
         const fileObj = info.fileList[info.fileList.length - 1]?.originFileObj;
         if (fileObj) {
             const reader = new FileReader();
-            reader.onload = e => {
+            reader.onload = (e) => {
                 setImageUrl(e.target.result);
+                setEditingReward((prev) => ({ ...prev, image: e.target.result }));
+            };
+            reader.onerror = () => {
+                toast.error(t('errorReadingImage', { ns: 'common' }), {
+                    position: 'top-right',
+                    autoClose: 2000,
+                });
             };
             reader.readAsDataURL(fileObj);
             setFileList([info.fileList[info.fileList.length - 1]]);
-            setEditingReward(prev => ({ ...prev, image: e.target.result }));
         } else {
             setFileList([]);
             setImageUrl('');
-            setEditingReward(prev => ({ ...prev, image: '' }));
+            setEditingReward((prev) => ({ ...prev, image: '' }));
         }
     };
 
@@ -170,35 +267,6 @@ const Rewards = () => {
         message.info('Ảnh đã được xóa.');
     };
 
-    const parseDate = (dateString) => {
-        const [time, date] = dateString.split(' ');
-        const [hours, minutes, seconds] = time.split(':').map(Number);
-        const [day, month, year] = date.split('/').map(Number);
-        return new Date(year, month - 1, day, hours, minutes, seconds);
-    };
-
-    const filteredRewards = rewards.filter(reward => {
-        const matchStatus =
-            filterStatus === 'all'
-                ? true
-                : filterStatus === 'no'
-                    ? reward.isDisabled === false
-                    : reward.isDisabled === true;
-
-        const searchText = searchQuery.toLowerCase();
-        const rewardName = reward.name?.[i18n.language]?.toLowerCase() || '';
-        return matchStatus && rewardName.includes(searchText);
-    });
-
-    if (filterAlphabet === 'A-Z') {
-        filteredRewards.sort((a, b) =>
-            (a.name[i18n.language] || '').localeCompare(b.name[i18n.language] || '')
-        );
-    } else if (filterAlphabet === 'Z-A') {
-        filteredRewards.sort((a, b) =>
-            (b.name[i18n.language] || '').localeCompare(a.name[i18n.language] || '')
-        );
-    }
 
     // Ant Design Table columns
     const columns = [
@@ -207,7 +275,7 @@ const Rewards = () => {
             dataIndex: 'index',
             key: 'index',
             width: 80,
-            render: (_, __, index) => (currentPage - 1) * rewardsPerPage + index + 1,
+            render: (_, __, index) => index + 1,
         },
         {
             title: t('name'),
@@ -278,101 +346,61 @@ const Rewards = () => {
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
-                            setCurrentPage(1); // Reset to first page on search
                         }}
                     />
                 </div>
             </div>
             <div className="containers-content">
-                <div className="flex justify-between items-center mb-2">
-                    <div className="filter-bar">
-                        <div className="filter-container">
-                            <div className="filter-containers">
-                                <span className="filter-icon">
-                                    <svg
-                                        className="iconfilter"
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
-                                    </svg>
-                                    <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
-                                </span>
-                                <Select
-                                    className="filter-dropdown"
-                                    value={filterAlphabet}
-                                    onChange={(value) => {
-                                        setFilterAlphabet(value);
-                                        setCurrentPage(1);
-                                    }}
-                                >
-                                    <Select.Option value="alphabet">{t('alphabet')}</Select.Option>
-                                    <Select.Option value="A-Z">A-Z</Select.Option>
-                                    <Select.Option value="Z-A">Z-A</Select.Option>
-                                </Select>
-                                <Select
-                                    className="filter-dropdown"
-                                    value={filterStatus}
-                                    onChange={(value) => {
-                                        setFilterStatus(value);
-                                        setCurrentPage(1);
-                                    }}
-                                >
-                                    <Select.Option value="all">{t('rewardStatus')}</Select.Option>
-                                    <Select.Option value="yes">{t('yes', { ns: 'common' })}</Select.Option>
-                                    <Select.Option value="no">{t('no', { ns: 'common' })}</Select.Option>
-                                </Select>
-                            </div>
-                        </div>
-                        <Button className="rounded-add" onClick={() => openModal('add')}>
-                            + {t('addNew', { ns: 'common' })}
-                        </Button>
+                <div className="filter-bar mb-2">
+                    <div className="filter-containers">
+                        <span className="filter-icon">
+                            <svg
+                                className="iconfilter"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
+                            </svg>
+                            <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
+                        </span>
+                        <Select
+                            className="filter-dropdown"
+                            value={filterStatus}
+                            onChange={(value) => { setFilterStatus(value); }}
+                        >
+                            <Select.Option value="all">{t('status', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="false">{t('no', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="true">{t('yes', { ns: 'common' })}</Select.Option>
+                        </Select>
                     </div>
+                    <Button className="rounded-add" onClick={() => openModal('add')}>
+                        + {t('addNew', { ns: 'common' })}
+                    </Button>
                 </div>
                 <div className="table-container-reward">
                     <Table
                         columns={columns}
-                        dataSource={filteredRewards.slice((currentPage - 1) * rewardsPerPage, currentPage * rewardsPerPage)}
+                        dataSource={visibleReward}
                         pagination={false}
                         rowKey="id"
                         className="custom-table"
                     />
+
+                    <div className="paginations">
+                        {nextPageToken && visibleReward.length < countAll ? (
+                            <Button className="load-more-btn" onClick={loadMore}>
+                                {t('More', { ns: 'common' })}
+                            </Button>
+                        ) : null}
+                    </div>
                 </div>
 
-                <div className="paginations">
-                    <Pagination
-                        current={currentPage}
-                        total={filteredRewards.length}
-                        pageSize={rewardsPerPage}
-                        onChange={(page) => setCurrentPage(page)}
-                        className="pagination"
-                        itemRender={(page, type, originalElement) => {
-                            if (type === 'prev') {
-                                return <button className="around" disabled={currentPage === 1}>{'<'}</button>;
-                            }
-                            if (type === 'next') {
-                                return (
-                                    <button
-                                        className="around"
-                                        disabled={currentPage === Math.ceil(filteredRewards.length / rewardsPerPage)}
-                                    >
-                                        {'>'}
-                                    </button>
-                                );
-                            }
-                            if (type === 'page') {
-                                return <button className={`around ${currentPage === page ? 'active' : ''}`}>{page}</button>;
-                            }
-                            return originalElement;
-                        }}
-                    />
-                </div>
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
@@ -487,8 +515,8 @@ const Rewards = () => {
                         </Button>
                     </div>
                 </Modal>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 

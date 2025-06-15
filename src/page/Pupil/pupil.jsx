@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Input, Button, Select, Modal, DatePicker, Table, Pagination, Switch } from 'antd';
+import { FaMars, FaVenus, FaCrown, FaGraduationCap, FaUsers, FaUserGraduate, FaEdit } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
-import { FaEdit } from 'react-icons/fa';
 import moment from 'moment';
 import Navbar from '../../component/Navbar';
 import api from '../../assets/api/Api';
@@ -14,56 +14,134 @@ const PupilManagement = () => {
     const [pupilsData, setPupilsData] = useState([]);
     const [usersData, setUsersData] = useState([]);
     const [parentMap, setParentMap] = useState({});
-    const [currentPage, setCurrentPage] = useState(1);
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [errors, setErrors] = useState({});
+    const [countAll, setCountAll] = useState('');
+    const [visiblePupil, setVisiblePupil] = useState([]);
+    const [nextPageToken, setNextPageToken] = useState(null);
     const pupilsPerPage = 16;
 
     const { t } = useTranslation(['pupil', 'common']);
     const { Option } = Select;
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        const fetchPupils = async () => {
+            setVisiblePupil([]);
+            setPupilsData([]);
+            setNextPageToken(null);
+            if (filterStatus !== 'all') {
+                await fetchPupilByisDesabled(null, filterStatus);
+            } else {
+                await fetchAllData(null);
+                await fetchAllParents(null);
+            }
+        };
+        fetchPupils();
+    }, [filterStatus]);
 
-    const fetchData = async () => {
+    const fetchAllData = async (token = null) => {
         try {
-            const [pupilRes, userRes] = await Promise.all([
-                api.get('/pupil'),
-                api.get('/user')
-            ]);
-            const pupils = pupilRes.data;
-            const users = userRes.data;
-
-            const map = {};
-            users.forEach(user => {
-                map[user.id] = user.fullName;
+            let url = `/pupil?pageSize=${pupilsPerPage}`;
+            if (token) {
+                url += `&startAfterId=${token}`; // Use startAfterId as per your backend
+            }
+            const response = await api.get(url);
+            const newPupils = response.data.data || [];
+            const responses = await api.get(`/pupil/countAll`);
+            setCountAll(Number(responses.data.count));
+            setPupilsData((prev) => {
+                const existingIds = new Set(prev.map((pupil) => pupil.id));
+                const uniqueNewExercises = newPupils.filter((pupil) => !existingIds.has(pupil.id));
+                return [...prev, ...uniqueNewExercises];
             });
-
-            const enrichedPupils = pupils.map(p => ({
-                ...p,
-                parentName: map[p.userId] || 'Unknown',
-            }));
-            const sortedPupils = enrichedPupils.sort((a, b) => {
-                const dateA = parseDate(a.createdAt);
-                const dateB = parseDate(b.createdAt);
-
-                if (dateB - dateA !== 0) {
-                    return dateB - dateA; // Latest first
-                }
-
-                return a.userId.localeCompare(b.userId);
+            setVisiblePupil((prev) => {
+                const existingIds = new Set(prev.map((pupil) => pupil.id));
+                const uniqueNewExercises = newPupils.filter((pupil) => !existingIds.has(pupil.id));
+                return [...prev, ...uniqueNewExercises];
             });
-
-            setUsersData(users);
-            setParentMap(map);
-            setPupilsData(sortedPupils);
+            setNextPageToken(response.data.nextPageToken || null);
         } catch (error) {
-            toast.error(t('errorFetchData', { ns: 'common' }));
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
         }
     };
+    const fetchAllParents = async (token = null) => {
+        try {
+            let url = `/user?pageSize=${pupilsPerPage}`;
+            if (token) {
+                url += `&startAfterId=${token}`;
+            }
 
+            const response = await api.get(url);
+            const newParents = response.data.data || [];
+            console.log('Fetched parents:', newParents); // Debug: Log parent data
+            setUsersData((prev) => {
+                const existingIds = new Set(prev.map((parent) => parent.id));
+                const uniqueNewParents = newParents.filter((parent) => !existingIds.has(parent.id));
+                return [...prev, ...uniqueNewParents];
+            });
+            setParentMap((prev) => {
+                const updatedMap = { ...prev };
+                newParents.forEach((parent) => {
+                    updatedMap[parent.id] = parent.fullName || parent.name || 'Unknown';
+                });
+                return updatedMap;
+            });
+            setNextPageToken(response.data.nextPageToken || null);
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
+    };
+    const fetchPupilByisDesabled = async (token = null, isDisabled) => {
+        try {
+            let url = `/pupil/filterByDisabledStatus?pageSize=${pupilsPerPage}&isDisabled=${isDisabled}`;
+            if (token) {
+                url += `&startAfterId=${token}`; // Use startAfterId as per your backend
+            }
+            const response = await api.get(url);
+            const newPupils = response.data.data || [];
+            const responses = await api.get(`/reward/filterByDisabledStatus?&isDisabled=${isDisabled}`);
+            setCountAll(Number(responses.data.count));
+            setPupilsData((prev) => {
+                const existingIds = new Set(prev.map((pupil) => pupil.id));
+                const uniqueNewExercises = newPupils.filter((pupil) => !existingIds.has(pupil.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setVisiblePupil((prev) => {
+                const existingIds = new Set(prev.map((pupil) => pupil.id));
+                const uniqueNewExercises = newPupils.filter((pupil) => !existingIds.has(pupil.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
+    };
+    const loadMore = async () => {
+        if (!nextPageToken) return;
+        try {
+            if (filterStatus !== 'all') {
+                await fetchPupilByisDesabled(nextPageToken, filterStatus);
+            } else {
+                await fetchAllData(nextPageToken);
+                await fetchAllParents(nextPageToken);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
+    };
     const formatFirebaseTimestamp = (timestamp) => {
         if (!timestamp || !timestamp.seconds) return '';
         const date = new Date(timestamp.seconds * 1000);
@@ -131,12 +209,11 @@ const PupilManagement = () => {
                         autoClose: 2000,
                     });
                 }
-                fetchData();
                 closeModal();
-            } catch {
-                toast.error(t('errorSavingData', { ns: 'common' }), {
+            } catch (error) {
+                toast.error(error.response?.data?.message?.[i18n.language], {
                     position: 'top-right',
-                    autoClose: 2000,
+                    autoClose: 3000,
                 });
             }
         } else {
@@ -149,39 +226,26 @@ const PupilManagement = () => {
 
     const handleToggleDisabled = async (pupil) => {
         try {
-            await api.put(`/pupil/${pupil.id}`, { isDisabled: !pupil.isDisabled });
-            fetchData();
+            await api.patch(`/pupil/updateProfile/${pupil.id}`, { isDisabled: !pupil.isDisabled });
             toast.success(t('updateSuccess', { ns: 'common' }), {
                 position: 'top-right',
                 autoClose: 2000,
             });
-        } catch {
-            toast.error(t('errorSavingData', { ns: 'common' }), {
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
-
-    const parseDate = (dateString) => {
-        const [time, date] = dateString.split(' ');
-        const [hours, minutes, seconds] = time.split(':').map(Number);
-        const [day, month, year] = date.split('/').map(Number);
-        return new Date(year, month - 1, day, hours, minutes, seconds);
+    const renderGenderIcon = (gender) => {
+        if (gender.toLowerCase() === 'male') {
+            return <FaMars className="gender-icon" style={{ color: '#35A6FF' }} />;
+        } else if (gender.toLowerCase() === 'female') {
+            return <FaVenus className="gender-icon" style={{ color: '#FF1493' }} />;
+        }
+        return null;
     };
-
-    const filteredPupils = pupilsData.filter(pupil => {
-        const matchStatus =
-            filterStatus === 'all'
-                ? true
-                : filterStatus === 'no'
-                    ? pupil.isDisabled === false
-                    : pupil.isDisabled === true;
-        const searchText = searchQuery.toLowerCase();
-        const pupilName = pupil.fullName?.toLowerCase() || '';
-        return matchStatus && pupilName.includes(searchText);
-    });
-
     // Ant Design Table columns
     const columns = [
         {
@@ -189,7 +253,7 @@ const PupilManagement = () => {
             dataIndex: 'index',
             key: 'index',
             width: 80,
-            render: (_, __, index) => (currentPage - 1) * pupilsPerPage + index + 1,
+            render: (_, __, index) => index + 1,
         },
         {
             title: t('fullName'),
@@ -203,19 +267,17 @@ const PupilManagement = () => {
         },
         {
             title: t('parentName'),
-            dataIndex: 'parentName',
+            dataIndex: 'userId', // Change to the correct field name
             key: 'parentName',
-        },
-        {
-            title: t('grade'),
-            dataIndex: 'grade',
-            key: 'grade',
-            align: 'center',
+            render: (userId) => parentMap[userId] || 'Unknown',
         },
         {
             title: t('gender'),
             dataIndex: 'gender',
             key: 'gender',
+            width: 100,
+            align: 'center',
+            render: (gender) => renderGenderIcon(gender),
         },
         {
             title: t('dateOfBirth'),
@@ -265,7 +327,6 @@ const PupilManagement = () => {
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
-                            setCurrentPage(1);
                         }}
                     />
                 </div>
@@ -292,58 +353,34 @@ const PupilManagement = () => {
                         <Select
                             className="filter-dropdown"
                             value={filterStatus}
-                            onChange={(value) => {
-                                setFilterStatus(value);
-                                setCurrentPage(1);
-                            }}
+                            onChange={(value) => { setFilterStatus(value); }}
                         >
-                            <Select.Option value="all">{t('pupilStatus')}</Select.Option>
-                            <Select.Option value="yes">{t('yes', { ns: 'common' })}</Select.Option>
-                            <Select.Option value="no">{t('no', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="all">{t('status', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="false">{t('no', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="true">{t('yes', { ns: 'common' })}</Select.Option>
                         </Select>
                     </div>
-                    <Button className="rounded-add" onClick={() => openModal('add')}>
+                    {/* <Button className="rounded-add" onClick={() => openModal('add')}>
                         + {t('addNew', { ns: 'common' })}
-                    </Button>
+                    </Button> */}
                 </div>
                 <div className="table-container-pupil">
                     <Table
                         columns={columns}
-                        dataSource={filteredPupils.slice((currentPage - 1) * pupilsPerPage, currentPage * pupilsPerPage)}
+                        dataSource={visiblePupil}
                         pagination={false}
                         rowKey="id"
                         className="custom-table"
                     />
+                    <div className="paginations">
+                        {nextPageToken && visiblePupil.length < countAll ? (
+                            <Button className="load-more-btn" onClick={loadMore}>
+                                {t('More', { ns: 'common' })}
+                            </Button>
+                        ) : null}
+                    </div>
                 </div>
 
-                <div className="paginations">
-                    <Pagination
-                        current={currentPage}
-                        total={filteredPupils.length}
-                        pageSize={pupilsPerPage}
-                        onChange={(page) => setCurrentPage(page)}
-                        className="pagination"
-                        itemRender={(page, type, originalElement) => {
-                            if (type === 'prev') {
-                                return <button className="around" disabled={currentPage === 1}>{'<'}</button>;
-                            }
-                            if (type === 'next') {
-                                return (
-                                    <button
-                                        className="around"
-                                        disabled={currentPage === Math.ceil(filteredPupils.length / pupilsPerPage)}
-                                    >
-                                        {'>'}
-                                    </button>
-                                );
-                            }
-                            if (type === 'page') {
-                                return <button className={`around ${currentPage === page ? 'active' : ''}`}>{page}</button>;
-                            }
-                            return originalElement;
-                        }}
-                    />
-                </div>
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>

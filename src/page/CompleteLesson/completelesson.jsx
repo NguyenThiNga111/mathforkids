@@ -41,9 +41,9 @@ const CompleteLesson = () => {
             setPupils(pupilRes.data);
             setLessons(lessonRes.data);
         } catch (error) {
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+             toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
