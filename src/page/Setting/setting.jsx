@@ -84,27 +84,10 @@ const Setting = () => {
     return (
         <div className="containers">
             <Navbar />
-            <div className="container-content">
-                <h1 className="container-title">{t('managementsetting')}</h1>
+            <h1 className="container-title">{t('managementsetting')}</h1>
+            <div className="profile-container">
                 <div className="flex justify-between items-center mb-4">
                     <div className="settings-card">
-                        {/* Uncomment and update this section if language selection is needed */}
-                        {/* <div className="setting-item">
-                            <div className="setting-icon globe" />
-                            <div className="setting-content">
-                                <label>{t('language')}</label>
-                                <p>{t('sublanguage')}</p>
-                            </div>
-                            <Select
-                                value={language}
-                                onChange={(value) => setLanguage(value)}
-                                className="custom-select"
-                            >
-                                <Select.Option value="Vietnamese">{t('vietnam')}</Select.Option>
-                                <Select.Option value="English">{t('english')}</Select.Option>
-                            </Select>
-                        </div> */}
-
                         <div className="setting-item">
                             <div className="setting-icon moon" />
                             <div className="setting-content">
@@ -117,31 +100,10 @@ const Setting = () => {
                                 className="custom-switch"
                             />
                         </div>
-
-                        <div className="setting-item">
-                            <div className="setting-icon bell" />
-                            <div className="setting-content">
-                                <label>{t('notification')}</label>
-                                <p>{t('subnotification')}</p>
-                            </div>
-                            <Switch
-                                checked={notification}
-                                onChange={() => setNotification(!notification)}
-                                className="custom-switch"
-                            />
-                        </div>
-
-                        <Button
-                            className="restore-button"
-                            onClick={handleRestoreDefaults}
-                            block
-                        >
-                            {t('restoreDefaults')}
-                        </Button>
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

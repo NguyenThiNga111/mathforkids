@@ -117,7 +117,7 @@
 }
 
 .chart-title {
-  color: var(--color-cardvalue);
+  color: var(--color-cardtitle);
   font-size: 1.125rem;
   font-weight: 600;
 }

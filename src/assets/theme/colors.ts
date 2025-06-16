@@ -10,6 +10,7 @@ export const lightColors = {
   backgroundPage: '#e5e7eb',
   backgroundFilter: '#F9F9FB',
   backgroundDisabled: '#e5e7eb',
+  backgroundHover: '#F5F5F5',
 
   // Buttons and Hover
   backgroundButton: '#4880FF',
@@ -32,6 +33,7 @@ export const lightColors = {
   colorTextwhite: '#FFFFFF',
   colorTitle: '#1B2431',
   colorCard: '#6b7280',
+  colordHover: '#696969',
   colorCardvalue: '#202224',
   colorTextsearch: '#D8D8D8',
   colorSearch: '#202224', // Thêm cho nhất quán (dựa trên darkColors)
@@ -78,6 +80,7 @@ export const darkColors = {
   backgroundPage: '#15233A', // Main page background
   backgroundFilter: '#1E3556', // Filter dropdown background
   backgroundDisabled: '#2A4066', // Disabled elements
+  backgroundHover: '#DCDCDC',
 
   // Buttons and Hover
   backgroundButton: '#3A6EA5', // Primary button color
@@ -96,13 +99,16 @@ export const darkColors = {
   backgroundCancelhover: '#DA190B', // Cancel hover
 
   // Text
+  colorBlack: "#000",
   colorText: '#B0C4DE', // Light text for readability
   colorTextwhite: '#FFFFFF', // Pure white for emphasis
   colorTitle: '#D3D8E0', // Titles
-  colorCard: '#A9B7C9', // Card labels
-  colorCardvalue: '#E0E7F0', // Card values
+  colorCard: '#000', // Card labels
+  colorCardvalue: '#000', // Card values
+  colordHover: '#696969',
+  colorCardtitle: '#E0E7F0', // Card values 
   colorTextsearch: '#A9B7C9', // Search placeholder
-  colorSearch: '#B0C4DE', // Search text
+  colorSearch: '#000', // Search text
   subTitle: '#A9B7C9', // Subtitles
   labelLogin: '#B0C4DE', // Login labels
   colorPage: '#B0C4DE', // Pagination text

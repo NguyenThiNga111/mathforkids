@@ -27,6 +27,8 @@
     "optionImageRequired": "Cần ít nhất ba hình ảnh tùy chọn",
     "answerRequired": "Đáp án là bắt buộc",
     "answerImageRequired": "Hình ảnh đáp án là bắt buộc",
-    "addOption":"Thêm lựa chọn"
+    "addOption": "Thêm lựa chọn",
+    "maxThreeOptions": "Lựa chọn tối đa là 3",
+    "atLeastOneOption": "ít nhất một tùy chọn"
 
 }

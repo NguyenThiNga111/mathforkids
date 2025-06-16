@@ -45,7 +45,7 @@ const Dashboard = () => {
   const [usersByGender, setUsersByGender] = useState({ male: 0, female: 0 });
   const [usersByTimePeriod, setUsersByTimePeriod] = useState({ current: 0, previous: 0 });
   const [pupilsByTimePeriod, setPupilsByTimePeriod] = useState({ current: 0, previous: 0 });
-   const [lessonsByTimePeriod, setLessonsByTimePeriod] = useState({ current: 0, previous: 0 });
+  const [lessonsByTimePeriod, setLessonsByTimePeriod] = useState({ current: 0, previous: 0 });
   const [studentsByGradeData, setStudentsByGradeData] = useState([
     { grade: "1", count: 0 },
     { grade: "2", count: 0 },
@@ -394,7 +394,7 @@ const Dashboard = () => {
                 <YAxis
                   domain={[0, 30]}
                   ticks={[0, 10, 20, 30]}
-                  label={{ value: t('gradeuser'), angle: -90, position: 'insideLeft' }}
+                  label={{ value: t('StatisticsUser'), angle: -90, position: 'insideLeft' }}
                 />
 
                 <Tooltip />
@@ -471,7 +471,7 @@ const Dashboard = () => {
                 { name: t('Current'), value: pupilsByTimePeriod.current },
               ]}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <YAxis label={{ value: t('gradestudent'), angle: -90, position: 'insideLeft' }} />
+                <YAxis label={{ value: t('StatisticsStudent'), angle: -90, position: 'insideLeft' }} />
 
                 <Tooltip />
                 <Line type="monotone" dataKey="value" stroke="#8884d8" strokeWidth={2} />

@@ -1,4 +1,4 @@
-    {
+{
     "managementExercise": "Management exercise",
     "updateExercise": "Update Exercise",
     "addExercise": "Add Exercise",
@@ -27,5 +27,7 @@
     "optionImageRequired": "At least three option images are required",
     "answerRequired": "Answer is required",
     "answerImageRequired": "Answer image is required",
-    "addOption":"Add option"
+    "addOption": "Add option",
+    "maxThreeOptions": "Maximum selection is 3",
+    "atLeastOneOption": "at least one option"
 }

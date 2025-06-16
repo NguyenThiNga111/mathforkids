@@ -263,20 +263,27 @@ const Exercise = () => {
                     if (validOptions.length > 0) {
                         formData.append('option', JSON.stringify(validOptions));
                     }
-                    if (editingExercise.answer && editingExercise.answer.trim() !== '') {
-                        formData.append('answer', editingExercise.answer);
-                    }
-                } else {
+                } else if (optionType === 'image') {
                     const validOptionFileList = optionFileList.filter(list => list.length > 0);
-                    validOptionFileList.forEach((fileList, index) => {
-                        if (fileList[0]?.originFileObj) {
-                            formData.append('option', fileList[0].originFileObj);
+                    if (validOptionFileList.length > 0) {
+                        validOptionFileList.forEach((fileList) => {
+                            if (fileList[0]?.originFileObj) {
+                                formData.append('option', fileList[0].originFileObj);
+                            } else if (fileList[0]?.url && fileList[0].url.startsWith('http')) {
+                                formData.append('option', fileList[0].url);
+                            }
+                        });
+                    }
+                    // Thêm answer vào FormData
+                    if (answerFileList.length > 0) {
+                        if (answerFileList[0]?.originFileObj) {
+                            formData.append('answer', answerFileList[0].originFileObj);
+                        } else if (answerFileList[0]?.url && answerFileList[0].url.startsWith('http')) {
+                            formData.append('answer', answerFileList[0].url);
                         }
-                    });
-                    if (answerFileList[0]?.originFileObj) {
-                        formData.append('answer', answerFileList[0].originFileObj);
                     }
                 }
+
                 console.log('Form Data to be sent:');
                 for (let [key, value] of formData.entries()) {
                     console.log(`${key}:`, value instanceof File ? value.name : value);
@@ -317,7 +324,9 @@ const Exercise = () => {
                 }
                 closeModal();
             } catch (error) {
-                toast.error(error.response?.data?.message?.[i18n.language], {
+                console.error('Error saving exercise:', error);
+                console.log('Server response:', error.response?.data); // Log chi tiết lỗi từ server
+                toast.error(error.response?.data?.message?.[i18n.language] || t('saveFailed', { ns: 'common' }), {
                     position: 'top-right',
                     autoClose: 3000,
                 });
@@ -345,7 +354,7 @@ const Exercise = () => {
                 )
             );
         } catch (error) {
-             toast.error(error.response?.data?.message?.[i18n.language], {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
                 autoClose: 3000,
             });
@@ -369,14 +378,15 @@ const Exercise = () => {
                 newErrors.option = t('optionRequired');
             }
         } else if (optionType === 'image') {
-            if (optionFileList.filter(list => list.length > 0).length === 0) {
+            const validOptionFileList = optionFileList.filter(list => list.length > 0 && (list[0]?.originFileObj || (list[0]?.url && list[0].url.startsWith('http'))));
+            if (validOptionFileList.length === 0) {
                 newErrors.option = t('optionImageRequired');
             }
         }
         if (optionType === 'text' && (!editingExercise?.answer || editingExercise.answer.trim() === '')) {
             newErrors.answer = t('answerRequired');
         }
-        if (optionType === 'image' && answerFileList.length === 0) {
+        if (optionType === 'image' && (!answerFileList.length || (!answerFileList[0]?.originFileObj && !(answerFileList[0]?.url && answerFileList[0].url.startsWith('http'))))) {
             newErrors.answer = t('answerImageRequired');
         }
         setErrors(newErrors);
@@ -463,7 +473,7 @@ const Exercise = () => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const newOptions = [...editingExercise.option];
-                newOptions[index] = e.target.result;
+                newOptions[index] = e.target.result; // Store base64 for preview
                 setEditingExercise((prev) => ({
                     ...prev,
                     option: newOptions,
@@ -508,7 +518,7 @@ const Exercise = () => {
 
     const addOption = () => {
         if (editingExercise.option.length >= 3) {
-            toast.error(t('maxThreeOptions', { ns: 'common' }));
+            toast.error(t('maxThreeOptions'));
             return;
         }
         setEditingExercise((prev) => ({
@@ -520,7 +530,7 @@ const Exercise = () => {
 
     const removeOption = (index) => {
         if (editingExercise.option.length === 1) {
-            toast.error(t('atLeastOneOption', { ns: 'common' }));
+            toast.error(t('atLeastOneOption'));
             return;
         }
         setEditingExercise((prev) => ({

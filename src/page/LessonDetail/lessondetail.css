@@ -4,6 +4,10 @@
     scrollbar-width: none;
 }
 
+.table-container-lessondetail tbody tr:hover>td {
+    background-color: var(--background-hover) !important;
+    color: var(--color-hover);
+}
 
 .button-margin-left {
     margin-left: 15px;
@@ -14,21 +18,13 @@
     font-size: 16px;
 }
 
-.ant-breadcrumb a {
-    color: #1890ff;
-}
-
-.ant-breadcrumb a:hover {
-    color: #40a9ff;
-}
-
 .ant-breadcrumb span:last-child {
-    color: #595959;
+    color: var(--color-text);
     /* Gray color for the active item */
 }
 
 .ant-breadcrumb .ant-breadcrumb-separator {
-    color: #595959;
+    color: var(--color-text);
 }
 
 /* Optional: Specific column widths */

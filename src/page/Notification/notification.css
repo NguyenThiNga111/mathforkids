@@ -14,7 +14,10 @@
     scrollbar-width: thin;
     scrollbar-color: #a0a0a0 transparent;
 }
-
+.table-container-notification tbody tr:hover>td {
+    background-color: var(--background-hover) !important;
+    color: var(--color-hover);
+}
 .table-container-notification table {
     width: 100%;
     border-collapse: collapse;

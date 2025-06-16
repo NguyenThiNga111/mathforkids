@@ -7,6 +7,8 @@ import api from '../assets/api/Api';
 const Navbar = () => {
     const { t, i18n } = useTranslation();
     const [userName, setUserName] = useState('');
+    const [image, setImage] = useState('');
+
     const [userId, setUserID] = useState(null);
     const [selectedLanguage, setSelectedLanguage] = useState(
         i18n.language === 'en' ? 'English' : 'Tiếng Việt'
@@ -28,6 +30,7 @@ const Navbar = () => {
         try {
             const response = await api.get(`/user/${id}`);
             if (response.data) {
+                setImage(response.data.image || "https://i.pravatar.cc/100")
                 setUserName(response.data.fullName || 'Admin');
                 const langCode = response.data.language || 'vi';
                 i18n.changeLanguage(langCode);
@@ -70,7 +73,7 @@ const Navbar = () => {
                 </div>
                 <div className="navbar-user">
                     <img
-                        src="https://i.pravatar.cc/100" // Ảnh mặc định
+                        src={image}
                         alt="Avatar"
                         className="user-avatar"
                     />

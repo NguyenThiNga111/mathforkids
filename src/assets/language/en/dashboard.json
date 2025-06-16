@@ -1,11 +1,11 @@
 {
     "Dashboard": "Dashboard",
     "TotalUser": "Total User",
-    "TotalStudent": "Total Student",
-    "StudentsByGrade": "Students by Grade",
+    "TotalStudent": "Total Pupil",
+    "StudentsByGrade": "Statistics pupils by Grade",
     "TotalLessons": "Total Lessons",
     "StatisticsUser": "Statistics User",
-    "StatisticsStudent": "Statistics Student",
+    "StatisticsStudent": "Statistics Pupil",
     "Month": "Month",
     "Week": "Week",
     "Year": "Year",
@@ -30,5 +30,7 @@
     "September": "September",
     "October": "October",
     "November": "November",
-    "December": "December"
+    "December": "December",
+    "UsersByGender":"Total pupil gender",
+    "NumberOfStudents":"Statistics grade"
 }
