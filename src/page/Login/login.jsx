@@ -4,17 +4,19 @@ import { Input, Button } from 'antd';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 import api from '../../assets/api/Api';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const navigate = useNavigate();
+    const { t, i18n } = useTranslation(['assessment', 'common']);
 
     const handleLogin = async (e) => {
         e.preventDefault();
 
         try {
-            const response = await api.post(`/auth/sendOTPByEmail/${email}`);
+            const response = await api.post(`/auth/sendOtpByEmail/${email}`);
             toast.success('Login successful. OTP sent!', {
                 position: 'top-right',
                 autoClose: 2000,
@@ -28,7 +30,7 @@ const Login = () => {
 
         } catch (error) {
             console.error(error);
-            toast.error(error.response?.data?.message||'Login Fail - Server error', {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
                 autoClose: 3000,
             });

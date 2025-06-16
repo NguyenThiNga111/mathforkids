@@ -7,13 +7,15 @@ import api from '../assets/api/Api';
 const Navbar = () => {
     const { t, i18n } = useTranslation();
     const [userName, setUserName] = useState('');
+    const [image, setImage] = useState('');
+
     const [userId, setUserID] = useState(null);
     const [selectedLanguage, setSelectedLanguage] = useState(
-        i18n.language === 'en' ? 'English' : 'Việt Nam'
+        i18n.language === 'en' ? 'English' : 'Tiếng Việt'
     );
     const flagLanguage = {
         English: Imgs.English,
-        'Việt Nam': Imgs.VietNam
+        'Tiếng Việt': Imgs.VietNam
     };
 
     useEffect(() => {
@@ -28,10 +30,11 @@ const Navbar = () => {
         try {
             const response = await api.get(`/user/${id}`);
             if (response.data) {
+                setImage(response.data.image || "https://i.pravatar.cc/100")
                 setUserName(response.data.fullName || 'Admin');
                 const langCode = response.data.language || 'vi';
                 i18n.changeLanguage(langCode);
-                setSelectedLanguage(langCode === 'en' ? 'English' : 'Việt Nam');
+                setSelectedLanguage(langCode === 'en' ? 'English' : 'Tiếng Việt');
             }
         } catch (error) {
             console.error('Failed to fetch user data:', error);
@@ -45,7 +48,7 @@ const Navbar = () => {
         setSelectedLanguage(selected);
         if (userId) {
             try {
-                await api.put(`/user/${userId}`, { language: newLang });
+                await api.patch(`/user/updateProfile/${userId}`, { language: newLang });
                 fetchUserData();
             } catch (error) {
                 console.error('Failed to update language:', error);
@@ -55,7 +58,7 @@ const Navbar = () => {
 
     return (
         <div className="navbar">
-          
+
             <div className="navbar-right">
                 <div className="navbar-icon language">
                     <img
@@ -65,12 +68,12 @@ const Navbar = () => {
                     />
                     <select onChange={handleLanguage} value={selectedLanguage}>
                         <option>English</option>
-                        <option>Việt Nam</option>
+                        <option>Tiếng Việt</option>
                     </select>
                 </div>
                 <div className="navbar-user">
                     <img
-                        src="https://i.pravatar.cc/100" // Ảnh mặc định
+                        src={image}
                         alt="Avatar"
                         className="user-avatar"
                     />

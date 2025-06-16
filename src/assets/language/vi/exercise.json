@@ -16,7 +16,7 @@
     "answer": "Đáp án",
     "inputAnswer": "Nhập đáp án",
     "uploadAnswer": "Tải lên đáp án",
-    "image": "Hình ảnh",
+    "image": "Câu hỏi hình ảnh",
     "inputImage": "Tải lên hình ảnh",
     "exerciseStatus": "Trạng thái bài tập",
     "levelIdRequired": "Cấp độ là bắt buộc",
@@ -26,5 +26,9 @@
     "optionRequired": "Cần ít nhất ba tùy chọn",
     "optionImageRequired": "Cần ít nhất ba hình ảnh tùy chọn",
     "answerRequired": "Đáp án là bắt buộc",
-    "answerImageRequired": "Hình ảnh đáp án là bắt buộc"
+    "answerImageRequired": "Hình ảnh đáp án là bắt buộc",
+    "addOption": "Thêm lựa chọn",
+    "maxThreeOptions": "Lựa chọn tối đa là 3",
+    "atLeastOneOption": "ít nhất một tùy chọn"
+
 }

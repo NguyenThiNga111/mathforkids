@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../../component/Navbar';
-import { Input, Button, Select, Modal, DatePicker } from 'antd';
+import { Input, Button, Select, Modal, DatePicker, Upload } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
@@ -9,54 +10,96 @@ import api from '../../assets/api/Api';
 import './profile.css';
 
 const Profile = () => {
-    const { t } = useTranslation(['profile', 'common']);
+    const { t, i18n } = useTranslation(['profile', 'common']);
     const { id } = useParams();
     const navigate = useNavigate();
     const userID = localStorage.getItem('userID');
     const [isEmailModalVisible, setIsEmailModalVisible] = useState(false);
+    const [isPhoneModalVisible, setIsPhoneModalVisible] = useState(false);
     const [otpModalVisible, setOtpModalVisible] = useState(false);
     const [otpCode, setOtpCode] = useState('');
     const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
     const [newEmail, setNewEmail] = useState('');
-    const [confirmEmail, setConfirmEmail] = useState('');
+    const [newPhoneNumber, setNewPhoneNumber] = useState('');
     const [userData, setUserData] = useState({});
+    const [emailChanged, setEmailChanged] = useState(false);
+    const [phoneChanged, setPhoneChanged] = useState(false);
+    const [otpPurpose, setOtpPurpose] = useState(''); // 'email' or 'phone'
     const { Option } = Select;
 
     // Fetch user data
     useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                const response = await api.get(`/user/${userID}`, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-                });
-                if (response.data) {
-                    const { id, fullName, phoneNumber, email, gender, dateOfBirth, address, avatar } = response.data;
-                    let formattedDOB = '';
-                    if (dateOfBirth?.seconds) {
-                        formattedDOB = moment(dateOfBirth.seconds * 1000).format('YYYY-MM-DD');
-                    } else if (typeof dateOfBirth === 'string') {
-                        formattedDOB = moment(dateOfBirth).isValid() ? moment(dateOfBirth).format('YYYY-MM-DD') : '';
-                    }
-                    setUserData({
-                        id: id || '',
-                        fullName: fullName || '',
-                        phoneNumber: phoneNumber || '',
-                        email: email || '',
-                        gender: gender || '',
-                        dateOfBirth: formattedDOB,
-                        address: address || '',
-                        avatar: avatar || 'https://i.pravatar.cc/100',
-                    });
-                } else {
-                    toast.error(t('fetchFailed', { ns: 'common' }));
-                }
-            } catch (error) {
-                toast.error(error.response?.data?.message || t('fetchFailed', { ns: 'common' }));
-                if (error.response?.status === 401) navigate('/login');
-            }
-        };
         fetchUserData();
     }, [userID, id, navigate, t]);
+
+    const fetchUserData = async () => {
+        try {
+            const response = await api.get(`/user/${userID}`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+            });
+            if (response.data) {
+                const { id, fullName, phoneNumber, email, gender, dateOfBirth, address, image } = response.data;
+                let formattedDOB = '';
+                if (dateOfBirth?.seconds) {
+                    formattedDOB = moment(dateOfBirth.seconds * 1000).format('YYYY-MM-DD');
+                } else if (typeof dateOfBirth === 'string') {
+                    formattedDOB = moment(dateOfBirth).isValid() ? moment(dateOfBirth).format('YYYY-MM-DD') : '';
+                }
+                setUserData({
+                    id: id || '',
+                    fullName: fullName || '',
+                    phoneNumber: phoneNumber || '',
+                    email: email || '',
+                    gender: gender || '',
+                    dateOfBirth: formattedDOB,
+                    address: address || '',
+                    image: image || 'https://i.pravatar.cc/100',
+                });
+            } else {
+                toast.error(t('fetchFailed', { ns: 'common' }), {
+                    position: 'top-right',
+                    autoClose: 3000,
+                });
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+            if (error.response?.status === 401) navigate('/login');
+        }
+    };
+
+    // Handle image upload
+    const handleImageUpload = async (options) => {
+        const { file } = options;
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+            const response = await api.patch(`/user/updateImageProfile/${userID}`, formData, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            if (response.status === 200) {
+                setUserData({ ...userData, image: response.data.image });
+                toast.success(t('imageUploadSuccess', { ns: 'common' }));
+            } else {
+                toast.error(t('imageUploadFailed', { ns: 'common' }), {
+                    position: 'top-right',
+                    autoClose: 3000,
+                });
+            }
+            fetchUserData();
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language] || t('imageUploadFailed', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
+    };
 
     // Validate form fields
     const validateForm = () => {
@@ -108,17 +151,23 @@ const Profile = () => {
                     dateOfBirth: userData.dateOfBirth,
                     address: userData.address,
                 };
-                const response = await api.put(`/user/${userID}`, payload, {
+                const response = await api.patch(`/user/updateProfile/${userID}`, payload, {
                     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
                 });
                 if (response.status === 200) {
                     toast.success(t('updateSuccess', { ns: 'common' }));
                     setUserData({ ...userData, ...response.data });
                 } else {
-                    toast.error(t('updateFailed', { ns: 'common' }));
+                    toast.error(t('updateFailed', { ns: 'common' }), {
+                        position: 'top-right',
+                        autoClose: 3000,
+                    });
                 }
             } catch (error) {
-                toast.error(error.response?.data?.message || t('updateFailed', { ns: 'common' }));
+                toast.error(error.response?.data?.message?.[i18n.language], {
+                    position: 'top-right',
+                    autoClose: 3000,
+                });
             }
         } else {
             Object.values(errors).forEach((errorMsg) => {
@@ -128,61 +177,104 @@ const Profile = () => {
     };
 
     // Handle send OTP
-    const handleSendOTP = async () => {
-        if (!newEmail || !/\S+@\S+\.\S+/.test(newEmail)) {
-            toast.error(t('emailInvalid'));
-            return false;
+    const handleSendOTP = async (purpose) => {
+        let isValid = true;
+        if (purpose === 'email') {
+            if (!newEmail || !/\S+@\S+\.\S+/.test(newEmail)) {
+                toast.error(t('emailInvalid'));
+                isValid = false;
+            }
+        } else if (purpose === 'phoneNumber') {
+            if (!newPhoneNumber || !/^\d{10}$/.test(newPhoneNumber)) {
+                toast.error(t('phoneInvalid'));
+                isValid = false;
+            }
         }
-        if (newEmail !== confirmEmail) {
-            toast.error(t('emailsDoNotMatch'));
-            return false;
-        }
+        if (!isValid) return false;
+
         try {
-            const res = await api.post(`/auth/sendOTPByEmailChange/${newEmail}`, {}, {
+            const res = await api.post(`/auth/sendOtpByEmail/${userData.email}`, {}, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
             if (res.status === 200) {
                 toast.success(t('otpSent'));
                 setIsEmailModalVisible(false);
+                setIsPhoneModalVisible(false);
                 setOtpModalVisible(true);
+                setOtpPurpose(purpose);
                 return true;
             }
-            toast.error(res.data?.message || t('updateFailed', { ns: 'common' }));
+            toast.error(t('otpSendFailed', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 3000,
+            });
             return false;
-        } catch (err) {
-            toast.error(err.response?.data?.message || t('updateFailed', { ns: 'common' }));
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language] || t('otpSendFailed', { ns: 'common' }), {
+                position: 'top-right',
+                autoClose: 3000,
+            });
             return false;
         }
     };
 
-    // Handle OTP verification
+    // Handle verify OTP
     const handleVerifyOTP = async () => {
         if (!otpCode) {
             toast.error(t('otpRequired'));
             return;
         }
+        if (!userID) {
+            toast.error(t('userIdRequired', { ns: 'common' }));
+            return;
+        }
         try {
             setIsVerifyingOTP(true);
-            const res = await api.post(`/auth/verifyOTP`, { email: newEmail, otp: otpCode }, {
+            const res = await api.post(`/auth/verifyOTP/${userID}`, { otpCode }, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
             });
-            if (res.data.success) {
-                const updateRes = await api.put(`/user/${userID}`, { ...userData, email: newEmail }, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-                });
-                if (updateRes.status === 200) {
-                    setUserData({ ...userData, email: newEmail });
-                    toast.success(t('updateSuccess', { ns: 'common' }));
-                    setOtpModalVisible(false);
-                    setOtpCode('');
-                } else {
-                    toast.error(updateRes.data?.message || t('updateFailed', { ns: 'common' }));
+            if (res.data.message) {
+                if (otpPurpose === 'email') {
+                    const updateRes = await api.patch(`/user/updateEmail/${userID}`, { newEmail }, {
+                        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                    });
+                    if (updateRes.status === 200) {
+                        setUserData({ ...userData, email: newEmail });
+                        setEmailChanged(false);
+                        toast.success(updateRes.data.message[t('ns')] || t('updateSuccess', { ns: 'common' }));
+                    } else {
+                        toast.error(updateRes.response?.data?.message?.[i18n.language], {
+                            position: 'top-right',
+                            autoClose: 3000,
+                        });
+                    }
+                } else if (otpPurpose === 'phoneNumber') {
+                    const updateRes = await api.patch(`/user/updatePhone/${userID}`, { newPhoneNumber }, {
+                        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                    });
+                    if (updateRes.status === 200) {
+                        setUserData({ ...userData, phoneNumber: newPhoneNumber });
+                        setPhoneChanged(false);
+                        fetchUserData();
+                        toast.success(updateRes.data.message[t('ns')] || t('updateSuccess', { ns: 'common' }));
+                    } else {
+                        toast.error(updateRes.response?.data?.message?.[i18n.language], {
+                            position: 'top-right',
+                            autoClose: 3000,
+                        });
+                    }
                 }
+                setOtpModalVisible(false);
+                setOtpCode('');
+                setOtpPurpose('');
             } else {
-                toast.error(res.data?.message || t('otpInvalid'));
+                toast.error(t('otpInvalid'));
             }
         } catch (err) {
-            toast.error(err.response?.data?.message || t('otpInvalid'));
+            toast.error(err.response?.data?.message?.[i18n.language] || t('otpInvalid'), {
+                position: 'top-right',
+                autoClose: 3000,
+            });
         } finally {
             setIsVerifyingOTP(false);
         }
@@ -196,8 +288,16 @@ const Profile = () => {
                 <div className="flex justify-between items-center mb-4">
                     <div className="profile-card">
                         <div className="avatar-section">
-                            <img src={userData.avatar} alt="Avatar" className="avatar-img" />
-                            <p className="upload-text">{t('uploadPhoto')}</p>
+                            <img src={userData.image} alt="Profile Image" className="avatar-img" />
+                            <div className="upload-text">
+                                <Upload
+                                    customRequest={handleImageUpload}
+                                    showUploadList={false}
+                                    accept="image/*"
+                                >
+                                    <Button icon={<UploadOutlined />}>{t('uploadPhoto')}</Button>
+                                </Upload>
+                            </div>
                         </div>
                         <div className="form-wrapper">
                             <div className="form-grid">
@@ -251,22 +351,19 @@ const Profile = () => {
                                     <label>{t('email')}</label>
                                     <Input
                                         className="inputprofile"
-                                        style={{
-                                            height: '50px',
-                                        }}
+                                        style={{ height: '50px' }}
                                         placeholder={t('enterEmail')}
                                         value={userData.email}
                                         disabled
                                         suffix={
                                             <Button
-
                                                 type="link"
                                                 size="small"
                                                 onClick={() => {
                                                     setNewEmail(userData.email);
-                                                    setConfirmEmail(userData.email);
                                                     setIsEmailModalVisible(true);
                                                 }}
+                                                disabled={emailChanged}
                                             >
                                                 {t('change')}
                                             </Button>
@@ -277,24 +374,33 @@ const Profile = () => {
                                     <label>{t('phoneNumber')}</label>
                                     <Input
                                         className="inputprofile"
+                                        style={{ height: '50px' }}
                                         placeholder={t('enterPhoneNumber')}
                                         value={userData.phoneNumber}
                                         disabled
+                                        suffix={
+                                            <Button
+                                                type="link"
+                                                size="small"
+                                                onClick={() => {
+                                                    setNewPhoneNumber(userData.phoneNumber);
+                                                    setIsPhoneModalVisible(true);
+                                                }}
+                                                disabled={phoneChanged}
+                                            >
+                                                {t('change')}
+                                            </Button>
+                                        }
                                     />
                                 </div>
                             </div>
                         </div>
                         <Modal
-                            title={
-                                <div style={{ textAlign: 'center', fontSize: '24px' }}>
-                                    {t('changeEmail')}
-                                </div>
-                            }
+                            title={<div style={{ textAlign: 'center', fontSize: '24px' }}>{t('changeEmail')}</div>}
                             open={isEmailModalVisible}
                             onCancel={() => {
                                 setIsEmailModalVisible(false);
                                 setNewEmail('');
-                                setConfirmEmail('');
                             }}
                             footer={null}
                             className="modal-content"
@@ -305,23 +411,36 @@ const Profile = () => {
                                 onChange={(e) => setNewEmail(e.target.value)}
                                 style={{ marginBottom: '10px' }}
                             />
-                            <Input
-                                placeholder={t('confirmNewEmail')}
-                                value={confirmEmail}
-                                onChange={(e) => setConfirmEmail(e.target.value)}
-                            />
                             <div className="button-row">
-                                <Button className="save-button" onClick={handleSendOTP} block>
+                                <Button className="save-button" onClick={() => handleSendOTP('email')} block>
                                     {t('change')}
                                 </Button>
                             </div>
                         </Modal>
                         <Modal
-                            title={
-                                <div style={{ textAlign: 'center', fontSize: '24px' }}>
-                                    {t('verifyOTP')}
-                                </div>
-                            }
+                            title={<div style={{ textAlign: 'center', fontSize: '24px' }}>{t('changePhoneNumber')}</div>}
+                            open={isPhoneModalVisible}
+                            onCancel={() => {
+                                setIsPhoneModalVisible(false);
+                                setNewPhoneNumber('');
+                            }}
+                            footer={null}
+                            className="modal-content"
+                        >
+                            <Input
+                                placeholder={t('enterNewPhone')}
+                                value={newPhoneNumber}
+                                onChange={(e) => setNewPhoneNumber(e.target.value)}
+                                style={{ marginBottom: '10px' }}
+                            />
+                            <div className="button-row">
+                                <Button className="save-button" onClick={() => handleSendOTP('phoneNumber')} block>
+                                    {t('change')}
+                                </Button>
+                            </div>
+                        </Modal>
+                        <Modal
+                            title={<div style={{ textAlign: 'center', fontSize: '24px' }}>{t('verifyOTP')}</div>}
                             open={otpModalVisible}
                             footer={null}
                             onCancel={() => {
@@ -336,7 +455,7 @@ const Profile = () => {
                                 onChange={(e) => setOtpCode(e.target.value)}
                             />
                             <div className="button-row">
-                                <Button className="save-button" onClick={handleSendOTP} block>
+                                <Button className="save-button" onClick={() => handleSendOTP(otpPurpose)} block>
                                     {t('resendOTP')}
                                 </Button>
                                 <Button

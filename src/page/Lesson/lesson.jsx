@@ -15,15 +15,17 @@ const Lesson = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingLesson, setEditingLesson] = useState(null);
     const [lessonsData, setLessonsData] = useState([]);
-    const [selectedGrade, setSelectedGrade] = useState('');
-    const [errors, setErrors] = useState({});
-    const [currentPage, setCurrentPage] = useState(1);
-    const [filterStatus, setFilterStatus] = useState('all'); // all / enabled / disabled
+    const [selectedGrade, setSelectedGrade] = useState(1);
+    const [filterType, setFilterType] = useState('addition'); // addition / subtraction / multiplication / division
+    const [filterStatus, setFilterStatus] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
-
+    const [countAll, setCountAll] = useState('');
+    const [visibleLesson, setVisibleLesson] = useState([]);
+    const [nextPageToken, setNextPageToken] = useState(null);
     const { t, i18n } = useTranslation(['lesson', 'common']);
+    const [errors, setErrors] = useState({});
     const navigate = useNavigate();
-    const lessonsPerPage = 16;
+    const lessonsPerPage = 10;
 
     const lessonTypes = [
         { value: 'addition', label: t('addition'), icon: <FaPlus className="icon-type" />, color: '#60D56C' },
@@ -31,24 +33,91 @@ const Lesson = () => {
         { value: 'multiplication', label: t('multiplication'), icon: <FaTimes className="icon-type" />, color: '#F73A7A' },
         { value: 'division', label: t('division'), icon: <FaDivide className="icon-type" />, color: '#FD8550' },
     ];
+    useEffect(() => {
+        if (searchQuery.trim() === '') {
+            setVisibleLesson(lessonsData); // Reset to all when search is empty
+        } else {
+            const filtered = lessonsData.filter(
+                (lesson) =>
+                    lesson.name?.[i18n.language]?.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setVisibleLesson(filtered);
+        }
+    }, [searchQuery, lessonsData, i18n.language]);
 
     useEffect(() => {
-        fetchLessons();
-    }, []);
+        const fetchLessons = async () => {
+            setVisibleLesson([]);
+            setLessonsData([]);
+            setNextPageToken(null);
+            if (filterStatus !== 'all') {
+                await fetchFilterLessonDisabled(selectedGrade, filterType, null, filterStatus);
+            } else {
+                await fetchGradeType(selectedGrade, filterType, null);
+            }
 
-    const fetchLessons = async () => {
+        };
+        fetchLessons();
+    }, [selectedGrade, filterType, filterStatus]);
+
+    const fetchGradeType = async (grade, type, token = null) => {
         try {
-            const response = await api.get(`/lesson`);
-            const sortedLessons = response.data.sort((a, b) => {
-                const dateA = parseDate(a.createdAt);
-                const dateB = parseDate(b.createdAt);
-                return dateB - dateA; // Latest first
-            });
-            setLessonsData(sortedLessons);
+            // Build API query string
+            let url = `/lesson/getAll?pageSize=${lessonsPerPage}&type=${type}&grade=${grade}`;
+            if (token) {
+                url += `&startAfterId=${token}`; // Use startAfterId as per your backend
+            }
+
+            const response = await api.get(url);
+            const newLessons = response.data.data || [];
+            const responses = await api.get(`/lesson/countAll?type=${type}&grade=${grade}`);
+            setCountAll(Number(responses.data.count));
+            setLessonsData((prev) => [...prev, ...newLessons]); // Append new lessons
+            setVisibleLesson((prev) => [...prev, ...newLessons]); // Append to visible lessons
+            setNextPageToken(response.data.nextPageToken || null);
         } catch (error) {
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
+            });
+        }
+    };
+
+    const loadMore = async () => {
+        if (!nextPageToken) return;
+        try {
+            if (filterStatus !== 'all') {
+                await fetchFilterLessonDisabled(selectedGrade, filterType, nextPageToken, filterStatus);
+            } else {
+                await fetchGradeType(selectedGrade, filterType, nextPageToken);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
+    };
+
+    const fetchFilterLessonDisabled = async (grade, type, token = null, isDisabled) => {
+        try {
+            // Add pagination token to the payload or query string
+            let url = `/lesson/filterByDisabled?pageSize=${lessonsPerPage}&type=${type}&grade=${grade}&isDisabled=${isDisabled}`;
+            if (token) {
+                url += `&startAfterId=${token}`; // Use startAfterId as per your backend
+            }
+            const response = await api.get(url);
+            const newLessons = response.data.data || [];
+            const responses = await api.get(`/lesson/countByDisabledStatus?type=${type}&grade=${grade}&isDisabled=${isDisabled}`);
+            setCountAll(Number(responses.data.count));
+            setLessonsData((prev) => [...prev, ...newLessons]); // Append new lessons
+            setVisibleLesson((prev) => [...prev, ...newLessons]); // Append to visible lessons
+            setNextPageToken(response.data.nextPageToken || null);
+        } catch (error) {
+            console.error('Error fetching more filtered lessons:', error);
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
             });
         }
     };
@@ -65,7 +134,7 @@ const Lesson = () => {
                 payload.type = editingLesson.type;
 
                 if (editingLesson?.id) {
-                    await api.put(`/lesson/${editingLesson.id}`, payload);
+                    await api.patch(`/lesson/${editingLesson.id}`, payload);
                     toast.success(t('updateSuccess', { ns: 'common' }), {
                         position: 'top-right',
                         autoClose: 2000,
@@ -77,12 +146,19 @@ const Lesson = () => {
                         autoClose: 2000,
                     });
                 }
-                fetchLessons();
+                setLessonsData([]);
+                setVisibleLesson([]);
+                setNextPageToken(null);
+                if (filterStatus !== 'all') {
+                    await fetchFilterLessonDisabled(selectedGrade, filterType, null, filterStatus);
+                } else {
+                    await fetchGradeType(selectedGrade, filterType, null);
+                }
                 closeModal();
             } catch (error) {
-                toast.error(t('errorSavingData', { ns: 'common' }), {
+                toast.error(error.response?.data?.message?.[i18n.language], {
                     position: 'top-right',
-                    autoClose: 2000,
+                    autoClose: 3000,
                 });
             }
         } else {
@@ -99,7 +175,7 @@ const Lesson = () => {
                 ...lesson,
                 isDisabled: !lesson.isDisabled,
             };
-            await api.put(`/lesson/${lesson.id}`, {
+            await api.patch(`/lesson/${lesson.id}`, {
                 ...updatedLesson,
                 isDisabled: updatedLesson.isDisabled,
             });
@@ -107,11 +183,15 @@ const Lesson = () => {
                 position: 'top-right',
                 autoClose: 2000,
             });
-            fetchLessons();
+            setLessonsData((prev) =>
+                prev.map((e) =>
+                    e.id === lesson.id ? { ...e, isDisabled: !lesson.isDisabled } : e
+                )
+            );
         } catch (error) {
-            toast.error(t('validationFailed', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
@@ -122,15 +202,11 @@ const Lesson = () => {
             newErrors.nameVi = t('nameViRequired');
         } else if (editingLesson.name.vi.trim().length < 3) {
             newErrors.nameVi = t('nameViMinLength');
-        } else if (!/^[a-zA-Z0-9\s\u00C0-\u1EF9]*$/.test(editingLesson.name.vi.trim())) {
-            newErrors.nameVi = t('nameViInvalid');
         }
         if (!editingLesson?.name?.en || editingLesson.name.en.trim() === '') {
             newErrors.nameEn = t('nameEnRequired');
         } else if (editingLesson.name.en.trim().length < 3) {
             newErrors.nameEn = t('nameEnMinLength');
-        } else if (!/^[a-zA-Z0-9\s]*$/.test(editingLesson.name.en.trim())) {
-            newErrors.nameEn = t('nameEnInvalid');
         }
         if (!editingLesson?.grade || editingLesson.grade === '') {
             newErrors.grade = t('gradeRequired');
@@ -155,7 +231,7 @@ const Lesson = () => {
 
     const handleViewExercises = (lessonId) => {
         console.log('Navigating with lessonId:', lessonId);
-        navigate(`/exercise/lessonId/${lessonId}`);
+        navigate(`/exercise/getByLesson/${lessonId}`);
     };
 
     const handleLessonDetail = (lessonId) => {
@@ -168,36 +244,12 @@ const Lesson = () => {
         setErrors({});
     };
 
-    const parseDate = (dateString) => {
-        const [time, date] = dateString.split(' ');
-        const [hours, minutes, seconds] = time.split(':').map(Number);
-        const [day, month, year] = date.split('/').map(Number);
-        return new Date(year, month - 1, day, hours, minutes, seconds);
-    };
-
-    const filteredLessons = lessonsData
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .filter(lesson => {
-            const matchGrade = selectedGrade ? lesson.grade === Number(selectedGrade) : true;
-            const matchStatus =
-                filterStatus === 'all'
-                    ? true
-                    : filterStatus === 'no'
-                        ? lesson.isDisabled === false
-                        : lesson.isDisabled === true;
-            const searchText = searchQuery.toLowerCase();
-            const searchName = lesson.name?.[i18n.language]?.toLowerCase() || '';
-            return matchStatus && matchGrade && searchName.includes(searchText);
-        });
-
-    // Ant Design Table columns
     const columns = [
         {
-            title: t('no', { ns: 'common' }),
-            dataIndex: 'index',
-            key: 'index',
-            width: 80,
-            render: (_, __, index) => (currentPage - 1) * lessonsPerPage + index + 1,
+            title: t('.no', { ns: 'common' }),
+            dataIndex: 'order',
+            key: 'order',
+            width: 100,
         },
         {
             title: t('lessonName'),
@@ -283,7 +335,6 @@ const Lesson = () => {
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
-                            setCurrentPage(1); // Reset to first page on search
                         }}
                     />
                 </div>
@@ -309,11 +360,23 @@ const Lesson = () => {
                         </span>
                         <Select
                             className="filter-dropdown"
+                            value={filterType}
+                            onChange={(value) => {
+                                setFilterType(value);
+                            }}
+                            placeholder={t('type')}
+                        >
+                            <Select.Option value="addition">{t('addition')}</Select.Option>
+                            <Select.Option value="subtraction">{t('subtraction')}</Select.Option>
+                            <Select.Option value="multiplication">{t('multiplication')}</Select.Option>
+                            <Select.Option value="division">{t('division')}</Select.Option>
+                        </Select>
+                        <Select
+                            className="filter-dropdown"
                             value={selectedGrade}
                             onChange={(value) => setSelectedGrade(value)}
                             placeholder={t('grade')}
                         >
-                            <Select.Option value="">{t('grade')}</Select.Option>
                             <Select.Option value="1">{t('grade')} 1</Select.Option>
                             <Select.Option value="2">{t('grade')} 2</Select.Option>
                             <Select.Option value="3">{t('grade')} 3</Select.Option>
@@ -321,71 +384,37 @@ const Lesson = () => {
                         <Select
                             className="filter-dropdown"
                             value={filterStatus}
-                            onChange={(value) => {
-                                setFilterStatus(value);
-                                setCurrentPage(1);
-                            }}
+                            onChange={(value) => { setFilterStatus(value); }}
                             placeholder={t('lessonStatus')}
                         >
-                            <Select.Option value="all">{t('lessonStatus')}</Select.Option>
-                            <Select.Option value="yes">{t('yes', { ns: 'common' })}</Select.Option>
-                            <Select.Option value="no">{t('no', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="all">{t('status', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="false">{t('no', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="true">{t('yes', { ns: 'common' })}</Select.Option>
                         </Select>
                     </div>
+
                     <Button className="rounded-add" onClick={() => openModal('add')}>
                         + {t('addNew', { ns: 'common' })}
                     </Button>
                 </div>
+
                 <div className="table-container-lesson">
                     <Table
                         columns={columns}
-                        dataSource={filteredLessons.slice(
-                            (currentPage - 1) * lessonsPerPage,
-                            currentPage * lessonsPerPage
-                        )}
+                        dataSource={visibleLesson}
                         pagination={false}
                         rowKey="id"
                         className="custom-table"
                     />
                     <div className="paginations">
-                        <Pagination
-                            current={currentPage}
-                            total={filteredLessons.length}
-                            pageSize={lessonsPerPage}
-                            onChange={(page) => setCurrentPage(page)}
-                            className="pagination"
-                            itemRender={(page, type, originalElement) => {
-                                if (type === 'prev') {
-                                    return (
-                                        <button className="around" disabled={currentPage === 1}>
-                                            {'<'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'next') {
-                                    return (
-                                        <button
-                                            className="around"
-                                            disabled={
-                                                currentPage === Math.ceil(filteredLessons.length / lessonsPerPage)
-                                            }
-                                        >
-                                            {'>'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'page') {
-                                    return (
-                                        <button className={`around ${currentPage === page ? 'active' : ''}`}>
-                                            {page}
-                                        </button>
-                                    );
-                                }
-                                return originalElement;
-                            }}
-                        />
+                        {nextPageToken && visibleLesson.length < countAll ? (
+                            <Button className="load-more-btn" onClick={loadMore}>
+                                {t('More', { ns: 'common' })}
+                            </Button>
+                        ) : null}
                     </div>
                 </div>
+
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
@@ -474,8 +503,10 @@ const Lesson = () => {
                         </Button>
                     </div>
                 </Modal>
-            </div>
-        </div>
+            </div >
+        </div >
+
+
     );
 };
 

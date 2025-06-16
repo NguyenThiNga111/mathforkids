@@ -11,9 +11,13 @@
 }
 
 .table-container-user {
-    max-height: 520px;
+    max-height: calc(100vh - 260px);
+    min-height: 300px;
     overflow-y: auto;
-    scrollbar-width: none;
+    width: 100%;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-textsearch) transparent;
 }
 
 /* Phần content có nền trắng (trừ h1 ra) */
@@ -64,7 +68,7 @@
     font-size: 14px;
     background-color: var(--background-white);
     min-width: 120px;
-    color: var(--color-text);
+    color: var(--color-black);
 }
 
 .rounded-add {
@@ -95,6 +99,11 @@ tbody tr:nth-child(odd) {
 
 tbody tr:nth-child(even) {
     background-color: var(--background-content);
+}
+
+.table-container-user tbody tr:hover>td {
+    background-color: var(--background-hover) !important;
+    color: var(--color-hover);
 }
 
 th,
@@ -167,7 +176,6 @@ td {
     padding: 8px 16px;
     border: none;
     background-color: var(--color-export);
-    /* Using color-export as a close match for #F4A100 */
     color: var(--color-textwhite);
     border-radius: 8px;
     cursor: pointer;
@@ -178,7 +186,6 @@ td {
     padding: 8px 16px;
     border: none;
     background-color: var(--background-save);
-    /* Using background-save as a close match for #60D56C */
     color: var(--color-textwhite);
     border-radius: 8px;
     cursor: pointer;
@@ -286,7 +293,6 @@ input:checked+.slider::before {
 .modal-content select {
     width: 100%;
     padding: 10px 14px;
-    border: 1px solid var(--border-search);
     border-radius: 8px;
     outline: none;
     font-size: 15px;
@@ -322,9 +328,11 @@ input:checked+.slider::before {
 .form-content {
     height: 400px;
     overflow-x: auto;
-    scrollbar-width: none;
     flex-wrap: wrap;
     gap: 20px;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-textsearch) transparent;
 }
 
 .inputtext {
@@ -414,7 +422,7 @@ input:checked+.slider::before {
 
 .table-container-user th:nth-child(2),
 .table-container-user td:nth-child(2) {
-    max-width: 150px;
+    max-width: 200px;
 }
 
 .table-container-user th:nth-child(3),
@@ -424,7 +432,7 @@ input:checked+.slider::before {
 
 .table-container-user th:nth-child(4),
 .table-container-user td:nth-child(4) {
-    max-width: 150px;
+    max-width: 200px;
 }
 
 .table-container-user th:nth-child(5),
@@ -439,7 +447,7 @@ input:checked+.slider::before {
 
 .table-container-user th:nth-child(7),
 .table-container-user td:nth-child(7) {
-    max-width: 250px;
+    max-width: 100px;
 }
 
 .table-container-user th:nth-child(8),
@@ -451,7 +459,9 @@ input:checked+.slider::before {
 .pupil-detail-content {
     height: 400px;
     overflow-x: auto;
-    scrollbar-width: none;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-textsearch) transparent;
 }
 
 .user-detail-section {
@@ -485,11 +495,12 @@ input:checked+.slider::before {
     font-size: 20px;
     vertical-align: middle;
 }
+
 /* ảnh */
 .image-preview-box {
     position: relative;
     display: inline-block;
-    border: 1px solid #ccc;
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     padding: 6px;
     width: 200px;
@@ -497,7 +508,7 @@ input:checked+.slider::before {
     display: flex;
     margin-left: auto;
     justify-content: center;
-    background-color: #fff;
+    background-color: var(--background-white);
 }
 
 .preview-image {

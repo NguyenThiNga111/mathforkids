@@ -12,90 +12,120 @@ const { Option } = Select;
 
 const TestSystem = () => {
   const { t, i18n } = useTranslation(['testsystem', 'common']);
-  const [testSystems, setTestSystems] = useState([]);
+  const [countAll, setCountAll] = useState(0);
+  const [visibleTest, setVisibleTest] = useState([]);
+  const [nextPageToken, setNextPageToken] = useState(null);
+  const [testData, setTestData] = useState([]);
   const [lessons, setLessons] = useState([]);
   const [pupils, setPupils] = useState([]);
-  const [levels, setLevels] = useState([]);
-  const [levelactive, setLevelActive] = useState([]);
-  const [selectedLevel, setSelectedLevel] = useState('');
-  const [selectedPoint, setSelectedPoint] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
-  const userPerPage = 10;
+  const testPage = 10;
 
   useEffect(() => {
-    fetchAllData();
+    fetchAllTests(null);
   }, []);
 
-  const fetchAllData = async () => {
+  useEffect(() => {
+    if (testData.length > 0) {
+      fetchLessonsAndPupils();
+    }
+  }, [testData]);
+
+  const fetchAllTests = async (token = null) => {
     try {
-      const [tests, lessons, pupils, levels, levelactive] = await Promise.all([
-        api.get('/test'),
-        api.get('/lesson'),
-        api.get('/pupil'),
-        api.get('/level'),
-        api.get('/level/enabled')
-      ]);
-      const sortedTests = tests.data.sort((a, b) => {
-        const dateA = parseDate(a.createdAt);
-        const dateB = parseDate(b.createdAt);
-        return dateB - dateA; // Mới nhất lên đầu
+      let url = `/test/getAll?pageSize=${testPage}`;
+      if (token) {
+        url += `&startAfterId=${token}`;
+      }
+      const response = await api.get(url);
+      const newTests = response.data.data || [];
+      const countResponse = await api.get(`/test/countAll`);
+      setCountAll(Number(countResponse.data.count));
+      setTestData((prev) => {
+        const existingIds = new Set(prev.map((test) => test.id));
+        const uniqueNewTests = newTests.filter((test) => !existingIds.has(test.id));
+        return [...prev, ...uniqueNewTests];
       });
-      setTestSystems(sortedTests);
-      setLessons(lessons.data);
-      setPupils(pupils.data);
-      setLevels(levels.data);
-      setLevelActive(levelactive.data);
-      console.log("adu", levels);
+      setVisibleTest((prev) => {
+        const existingIds = new Set(prev.map((test) => test.id));
+        const uniqueNewTests = newTests.filter((test) => !existingIds.has(test.id));
+        return [...prev, ...uniqueNewTests];
+      });
+      setNextPageToken(response.data.nextPageToken || null);
     } catch (error) {
-      toast.error('Error loading data');
-      console.log("sjaue", error);
+      toast.error(error.response?.data?.message?.[i18n.language], {
+        position: 'top-right',
+        autoClose: 3000,
+      });
     }
   };
 
-  const parseDate = (dateString) => {
-    const [time, date] = dateString.split(' ');
-    const [hours, minutes, seconds] = time.split(':').map(Number);
-    const [day, month, year] = date.split('/').map(Number);
-    return new Date(year, month - 1, day, hours, minutes, seconds);
-  };
+  const fetchLessonsAndPupils = async () => {
+    try {
+      const lessonIds = [...new Set(testData.map(test => test.lessonId))];
+      const pupilIds = [...new Set(testData.map(test => test.pupilId))];
 
-  const filteredTests = testSystems.filter(test => {
-    const levelMatch = selectedLevel === '' || String(test.levelId) === selectedLevel;
-    const pointMatch = selectedPoint === '' || test.point === Number(selectedPoint);
-    return levelMatch && pointMatch;
-  });
+      const lessonPromises = lessonIds.map(id =>
+        api.get(`/lesson/${id}`).then(res => res.data).catch(() => null)
+      );
+      const lessonResults = await Promise.all(lessonPromises);
+      const lessonData = lessonResults.filter(Boolean);
+      setLessons(lessonData);
+      const pupilPromises = pupilIds.map(id =>
+        api.get(`/pupil/${id}`).then(res => res.data).catch(() => null)
+      );
+      const pupilResults = await Promise.all(pupilPromises);
+      const pupilData = pupilResults.filter(Boolean);
+      setPupils(pupilData);
+    } catch (error) {
+      console.error('Error fetching lessons or pupils:', error);
+      toast.error(error.response?.data?.message?.[i18n.language], {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    }
+  };
+  const loadMore = async () => {
+    if (!nextPageToken) return;
+    try {
+      await fetchAllTests(nextPageToken);
+    } catch (error) {
+      toast.error(error.response?.data?.message?.[i18n.language], {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    }
+  };
 
   const handleDetailClick = (testId) => {
     navigate(`/questiontest/${testId}`);
   };
 
-  // Ant Design Table columns
   const columns = [
     {
       title: t('.no', { ns: 'common' }),
       dataIndex: 'index',
       key: 'index',
       width: 80,
-      render: (_, __, index) => (currentPage - 1) * userPerPage + index + 1,
+      render: (_, __, index) => index + 1,
     },
     {
       title: t('lessonName'),
       dataIndex: 'lessonName',
       key: 'lessonName',
-      render: (text, record) => lessons.find(l => l.id === record.lessonId)?.name?.[i18n.language] || '',
+      render: (text, record) => {
+        const lesson = lessons.find(l => l.id === record.lessonId);
+        return lesson?.name?.[i18n.language] || lesson?.name || 'N/A';
+      },
     },
     {
       title: t('pupilld'),
       dataIndex: 'pupilId',
       key: 'pupilId',
-      render: (text, record) => pupils.find(p => p.id === record.pupilId)?.fullName || '',
-    },
-    {
-      title: t('level'),
-      dataIndex: 'level',
-      key: 'level',
-      render: (text, record) => levels.find(l => l.id === record.levelId)?.name?.[i18n.language] || '',
+      render: (text, record) => {
+        const pupil = pupils.find(p => p.id === record.pupilId);
+        return pupil?.fullName || 'N/A';
+      },
     },
     {
       title: t('point'),
@@ -146,75 +176,22 @@ const TestSystem = () => {
               </svg>
               <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
             </span>
-            <Select
-              className="filter-dropdown"
-              value={selectedLevel}
-              onChange={(value) => setSelectedLevel(value)}
-              placeholder={t('level')}
-            >
-              <Select.Option value="">{t('level')}</Select.Option>
-              {levelactive.map((level) => (
-                <Select.Option key={level.id} value={level.id}>
-                  {level.name?.[i18n.language]}
-                </Select.Option>
-              ))}
-            </Select>
-            <Select
-              className="filter-dropdown"
-              value={selectedPoint}
-              onChange={(value) => setSelectedPoint(value)}
-              placeholder={t('point')}
-            >
-              <Select.Option value="">{t('point')}</Select.Option>
-              <Select.Option value="85">85</Select.Option>
-              <Select.Option value="90">90</Select.Option>
-              <Select.Option value="100">100</Select.Option>
-            </Select>
           </div>
         </div>
         <div className="table-container-test">
           <Table
             columns={columns}
-            dataSource={filteredTests.slice((currentPage - 1) * userPerPage, currentPage * userPerPage)}
+            dataSource={visibleTest}
             pagination={false}
             rowKey="id"
             className="custom-table"
           />
           <div className="paginations">
-            <Pagination
-              current={currentPage}
-              total={filteredTests.length}
-              pageSize={userPerPage}
-              onChange={(page) => setCurrentPage(page)}
-              className="pagination"
-              itemRender={(page, type, originalElement) => {
-                if (type === 'prev') {
-                  return (
-                    <button className="around" disabled={currentPage === 1}>
-                      {'<'}
-                    </button>
-                  );
-                }
-                if (type === 'next') {
-                  return (
-                    <button
-                      className="around"
-                      disabled={currentPage === Math.ceil(filteredTests.length / userPerPage)}
-                    >
-                      {'>'}
-                    </button>
-                  );
-                }
-                if (type === 'page') {
-                  return (
-                    <button className={`around ${currentPage === page ? 'active' : ''}`}>
-                      {page}
-                    </button>
-                  );
-                }
-                return originalElement;
-              }}
-            />
+            {nextPageToken && visibleTest.length < countAll ? (
+              <Button className="load-more-btn" onClick={loadMore}>
+                {t('More', { ns: 'common' })}
+              </Button>
+            ) : null}
           </div>
         </div>
       </div>

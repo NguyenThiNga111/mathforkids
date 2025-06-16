@@ -21,29 +21,122 @@ const LessonDetail = () => {
     const [errors, setErrors] = useState({});
     const [creationMode, setCreationMode] = useState('single'); // 'single' or 'full'
     const [searchQuery, setSearchQuery] = useState('');
-
+    const [visibleLessonDetail, setVisibleLessonDetail] = useState([]);
+    const [nextPageToken, setNextPageToken] = useState(null);
+    const [countAll, setCountAll] = useState('');
+    const pageSize = 3;
     const { t, i18n } = useTranslation(['lessondetail', 'common']);
     const navigate = useNavigate();
     const { lessonId } = useParams();
+    console.log("phuc", lessonId);
+
+    // Add search filtering
+    useEffect(() => {
+        if (searchQuery.trim() === '') {
+            setVisibleLessonDetail(lessonDetails); // Reset to all when search is empty
+        } else {
+            const filtered = lessonDetails.filter(
+                (lesson) =>
+                    lesson.title?.[i18n.language]?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    lesson.content?.[i18n.language]?.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setVisibleLessonDetail(filtered);
+        }
+    }, [searchQuery, lessonDetails, i18n.language]);
 
     useEffect(() => {
-        fetchLessonDetails();
-        fetchLesson();
-    }, [lessonId]);
+        const fetchLessonDetails = async () => {
+            setLessonDetails([]);
+            setVisibleLessonDetail([]);
+            setNextPageToken(null);
+            try {
+                if (filterStatus !== 'all') {
+                    await fetchFilterLessonDetailDisabled(null, filterStatus);
+                } else {
+                    await fetchAllLessonDetails(null);
+                }
+                await fetchLesson();
+            } catch (error) {
+                toast.error(error.response?.data?.message?.[i18n.language], {
+                    position: 'top-right',
+                    autoClose: 3000,
+                });
+            }
+        };
 
-    const fetchLessonDetails = async () => {
+        fetchLessonDetails();
+    }, [lessonId, filterStatus]); // Dependencies are fine
+
+    const fetchAllLessonDetails = async (token = null) => {
         try {
-            const response = await api.get(`/lessondetail/lesson/${lessonId}`);
-            const sortedLessonDetails = response.data.sort((a, b) => {
-                const dateA = parseDate(a.createdAt);
-                const dateB = parseDate(b.createdAt);
-                return dateB - dateA; // Latest first
+            let url = `/lessondetail/getByLesson/${lessonId}?pageSize=${pageSize}`;
+            if (token) {
+                url += `&startAfterId=${token}`;
+            }
+            const responses = await api.get(`/lessondetail/countByLesson/${lessonId}`);
+            setCountAll(Number(responses.data.count));
+            const response = await api.get(url);
+            const newLessons = response.data.data || [];
+            setLessonDetails((prev) => {
+                const existingIds = new Set(prev.map((lesson) => lesson.id));
+                const uniqueNewLessons = newLessons.filter((lesson) => !existingIds.has(lesson.id));
+                return [...prev, ...uniqueNewLessons];
             });
-            setLessonDetails(sortedLessonDetails);
+            setVisibleLessonDetail((prev) => {
+                const existingIds = new Set(prev.map((lesson) => lesson.id));
+                const uniqueNewLessons = newLessons.filter((lesson) => !existingIds.has(lesson.id));
+                return [...prev, ...uniqueNewLessons];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
         } catch (error) {
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
+            });
+        }
+    };
+
+    const fetchFilterLessonDetailDisabled = async (token = null, isDisabled) => {
+        try {
+            let url = `/lessondetail/filtergetByLesson/${lessonId}?pageSize=${pageSize}&isDisabled=${isDisabled}`;
+            if (token) {
+                url += `&startAfterId=${token}`;
+            }
+            const responses = await api.get(`/lessondetail/countByLessonAndDisabledState/${lessonId}?isDisabled=${isDisabled}`);
+            setCountAll(Number(responses.data.count));
+            const response = await api.get(url);
+            const newLessons = response.data.data || [];
+            setLessonDetails((prev) => {
+                const existingIds = new Set(prev.map((lesson) => lesson.id));
+                const uniqueNewLessons = newLessons.filter((lesson) => !existingIds.has(lesson.id));
+                return [...prev, ...uniqueNewLessons];
+            });
+            setVisibleLessonDetail((prev) => {
+                const existingIds = new Set(prev.map((lesson) => lesson.id));
+                const uniqueNewLessons = newLessons.filter((lesson) => !existingIds.has(lesson.id));
+                return [...prev, ...uniqueNewLessons];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
+    };
+
+    const loadMore = async () => {
+        if (!nextPageToken) return;
+        try {
+            if (filterStatus !== 'all') {
+                await fetchFilterLessonDetailDisabled(null, filterStatus);
+            } else {
+                await fetchAllLessonDetails(null);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
             });
         }
     };
@@ -53,9 +146,9 @@ const LessonDetail = () => {
             const response = await api.get(`/lesson/${lessonId}`);
             setLesson(response.data);
         } catch (error) {
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
@@ -126,13 +219,26 @@ const LessonDetail = () => {
                         });
                         toast.success(t('addSuccess', { ns: 'common' }));
                     }
-                    fetchLessonDetails();
+                    setLessonDetails([]);
+                    setVisibleLessonDetail([]);
+                    setNextPageToken(null);
+                    if (filterStatus !== 'all') {
+                        await fetchFilterLessonDetailDisabled(null, filterStatus);
+                    } else {
+                        await fetchAllLessonDetails(null);
+                    }
                     closeModal();
                 } catch (error) {
-                    toast.error(t('errorSavingData', { ns: 'common' }));
+                    toast.error(error.response?.data?.message?.[i18n.language], {
+                        position: 'top-right',
+                        autoClose: 3000,
+                    });
                 }
             } else {
-                toast.error(t('validationFailed', { ns: 'common' }));
+                toast.error(t('validationFailed', { ns: 'common' }), {
+                    position: 'top-right',
+                    autoClose: 3000,
+                });
             }
         } else if (creationMode === 'full') {
             if (ValidationFullLesson(editingLessonDetail)) {
@@ -156,13 +262,18 @@ const LessonDetail = () => {
                         headers: { 'Content-Type': 'multipart/form-data' },
                     });
                     toast.success(t('addFullLessonSuccess', { ns: 'common' }));
-                    fetchLessonDetails();
                     closeModal();
                 } catch (error) {
-                    toast.error(t('errorSavingData', { ns: 'common' }));
+                    toast.error(error.response?.data?.message?.[i18n.language], {
+                        position: 'top-right',
+                        autoClose: 3000,
+                    });
                 }
             } else {
-                toast.error(t('validationFailed', { ns: 'common' }));
+                toast.error(t('validationFailed', { ns: 'common' }), {
+                    position: 'top-right',
+                    autoClose: 3000,
+                });
             }
         }
     };
@@ -254,9 +365,9 @@ const LessonDetail = () => {
                 )
             );
         } catch (error) {
-            toast.error(t('validationFailed', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
@@ -268,26 +379,6 @@ const LessonDetail = () => {
             URL.revokeObjectURL(imageUrl); // Free memory
         }
     };
-
-    const parseDate = (dateString) => {
-        const [time, date] = dateString.split(' ');
-        const [hours, minutes, seconds] = time.split(':').map(Number);
-        const [day, month, year] = date.split('/').map(Number);
-        return new Date(year, month - 1, day, hours, minutes, seconds);
-    };
-
-    const filteredLessonDetails = lessonDetails.filter((lessonDetail) => {
-        const matchStatus =
-            filterStatus === 'all'
-                ? true
-                : filterStatus === 'no'
-                    ? lessonDetail.isDisabled === false
-                    : lessonDetail.isDisabled === true;
-        const searchText = searchQuery.toLowerCase();
-        const lessonDetailName = lessonDetail.title?.[i18n.language]?.toLowerCase() || '';
-        return matchStatus && lessonDetailName.includes(searchText);
-    });
-
     const breadcrumbItems = [
         {
             title: t('lesson'),
@@ -406,12 +497,12 @@ const LessonDetail = () => {
                         <Select
                             className="filter-dropdown"
                             value={filterStatus}
-                            onChange={(value) => setFilterStatus(value)}
-                            placeholder={t('status')}
+                            onChange={(value) => { setFilterStatus(value); }}
+                            placeholder={t('lessonStatus')}
                         >
                             <Select.Option value="all">{t('status')}</Select.Option>
-                            <Select.Option value="no">{t('no', { ns: 'common' })}</Select.Option>
-                            <Select.Option value="yes">{t('yes', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="false">{t('no', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="true">{t('yes', { ns: 'common' })}</Select.Option>
                         </Select>
                     </div>
                     <div>
@@ -432,11 +523,18 @@ const LessonDetail = () => {
                 <div className="table-container-lessondetail">
                     <Table
                         columns={columns}
-                        dataSource={filteredLessonDetails}
+                        dataSource={visibleLessonDetail}
                         pagination={false}
                         rowKey="id"
                         className="custom-table"
                     />
+                    <div className="paginations">
+                        {nextPageToken && visibleLessonDetail.length < countAll ? (
+                            <Button className="load-more-btn" onClick={loadMore}>
+                                {t('More', { ns: 'common' })}
+                            </Button>
+                        ) : null}
+                    </div>
                 </div>
                 <Modal
                     title={

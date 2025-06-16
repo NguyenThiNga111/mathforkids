@@ -13,38 +13,171 @@ const AccountUser = () => {
     const [detailModalOpen, setDetailModalOpen] = useState(false);
     const [edittingUser, setEditingUser] = useState(null);
     const [selectedUserDetail, setSelectedUserDetail] = useState(null);
-    const [selectedRole, setSelectedRole] = useState('');
+    const [selectedRole, setSelectedRole] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all'); // all / enabled / disabled
     const [userData, setUserData] = useState([]);
     const [pupilData, setPupilData] = useState([]);
     const [errors, setErrors] = useState({});
-    const [currentPage, setCurrentPage] = useState(1);
+    const [countAll, setCountAll] = useState('');
+    const [visibleUser, setVisibleUser] = useState([]);
+    const [nextPageToken, setNextPageToken] = useState(null);
+    const [visiblePupil, setVisiblePupil] = useState([]); // Add this state for visible pupils if needed
     const [searchQuery, setSearchQuery] = useState('');
-
-    const { t } = useTranslation(['account', 'common']);
+    const { t, i18n } = useTranslation(['account', 'common']);
     const { Option } = Select;
     const userPerPage = 10;
 
     useEffect(() => {
+        if (searchQuery.trim() === '') {
+            setVisibleUser(userData); // Reset to all when search is empty
+        } else {
+            const filtered = userData.filter(
+                (user) =>
+                    user.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setVisibleUser(filtered);
+        }
+    }, [searchQuery, userData]);
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            setUserData([]);
+            setVisibleUser([]);
+            setNextPageToken(null);
+            if (filterStatus !== 'all') {
+                await fetchUsersByDisabled(null, filterStatus);
+            } else if (selectedRole !== 'all') {
+                await fetchUsersByRole(null, selectedRole);
+            }
+            else {
+                await fetchAllUsers(null);
+            }
+        };
         fetchUsers();
-    }, []);
+    }, [filterStatus, selectedRole]);
 
-    const fetchUsers = async () => {
+    const fetchAllUsers = async (token = null) => {
         try {
-            const response = await api.get('/user');
-            const responsepupil = await api.get('/pupil');
-            const sortedUsers = response.data.sort((a, b) => {
-                const dateA = new Date(a.createdAt.seconds * 1000 + a.createdAt.nanoseconds / 1e6);
-                const dateB = new Date(b.createdAt.seconds * 1000 + b.createdAt.nanoseconds / 1e6);
-                return dateB - dateA;
-            });
+            let url = `/user?pageSize=${userPerPage}`;
+            if (token) {
+                url += `&startAfterId=${token}`;
+            }
 
-            setUserData(sortedUsers);
-            setPupilData(responsepupil.data);
+            const response = await api.get(url);
+            const newParents = response.data.data || [];
+            const responses = await api.get(`/user/countAll`);
+            setCountAll(Number(responses.data.count));
+            setUserData((prev) => {
+                const existingIds = new Set(prev.map((parent) => parent.id));
+                const uniqueNewParents = newParents.filter((parent) => !existingIds.has(parent.id));
+                return [...prev, ...uniqueNewParents];
+            });
+            setVisibleUser((prev) => {
+                const existingIds = new Set(prev.map((parent) => parent.id));
+                const uniqueNewParents = newParents.filter((parent) => !existingIds.has(parent.id));
+                return [...prev, ...uniqueNewParents];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
         } catch (error) {
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
+            });
+        }
+    };
+    const fetchUsersByDisabled = async (token = null, isDisabled) => {
+        try {
+            let url = `/user/filterByDisabledStatus?pageSize=${userPerPage}&isDisabled=${isDisabled}`;
+            if (token) {
+                url += `&startAfterId=${token}`;
+            }
+
+            const response = await api.get(url);
+            const newParents = response.data.data || [];
+            const responses = await api.get(`/user/countByDisabledStatus?isDisabled=${isDisabled}`);
+            setCountAll(Number(responses.data.count));
+            setUserData((prev) => {
+                const existingIds = new Set(prev.map((parent) => parent.id));
+                const uniqueNewParents = newParents.filter((parent) => !existingIds.has(parent.id));
+                return [...prev, ...uniqueNewParents];
+            });
+            setVisibleUser((prev) => {
+                const existingIds = new Set(prev.map((parent) => parent.id));
+                const uniqueNewParents = newParents.filter((parent) => !existingIds.has(parent.id));
+                return [...prev, ...uniqueNewParents];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
+    };
+    const fetchUsersByRole = async (token = null, role) => {
+        try {
+            let url = `/user/filterByRole?pageSize=${userPerPage}&role=${role}`;
+            if (token) {
+                url += `&startAfterId=${token}`;
+            }
+
+            const response = await api.get(url);
+            const newParents = response.data.data || [];
+            const responses = await api.get(`/user/countByRole?role=${role}`);
+            setCountAll(Number(responses.data.count));
+            setUserData((prev) => {
+                const existingIds = new Set(prev.map((parent) => parent.id));
+                const uniqueNewParents = newParents.filter((parent) => !existingIds.has(parent.id));
+                return [...prev, ...uniqueNewParents];
+            });
+            setVisibleUser((prev) => {
+                const existingIds = new Set(prev.map((parent) => parent.id));
+                const uniqueNewParents = newParents.filter((parent) => !existingIds.has(parent.id));
+                return [...prev, ...uniqueNewParents];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
+    };
+    const fetchAllPupils = async (userId, token = null, isDisabled = false) => {
+        try {
+            let url = `/pupil/getEnabledPupil/${userId}?pageSize=${userPerPage}&isDisabled=${isDisabled}`;
+            if (token) {
+                url += `&startAfterId=${token}`;
+            }
+            const response = await api.get(url);
+            const newPupils = response.data || [];
+            const responses = await api.get(`/pupil/countAll`);
+            setCountAll(Number(responses.data.count));
+            setPupilData(newPupils); // Replace pupilData with new data
+            setVisiblePupil(newPupils); // Replace visiblePupil with new data
+            setNextPageToken(response.data.nextPageToken || null);
+            return newPupils; // Return pupils for immediate use
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+            return [];
+        }
+    };
+
+    const loadMore = async () => {
+        if (!nextPageToken) return;
+        try {
+            if (filterStatus !== 'all') {
+                await fetchUsersByDisabled(nextPageToken, filterStatus);
+            } else {
+                await fetchAllUsers(nextPageToken);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
             });
         }
     };
@@ -52,31 +185,22 @@ const AccountUser = () => {
     const handleSave = async () => {
         if (validateForm()) {
             try {
-                if (edittingUser?.id) {
-                    await api.put(`/user/${edittingUser.id}`, edittingUser);
-                    toast.success(t('updateSuccess', { ns: 'common' }), {
-                        position: 'top-right',
-                        autoClose: 2000,
-                    });
-                } else {
-                    const response = await api.post(`/user`, edittingUser);
-                    const newuser = response.data.id;
-                    await api.put(`/user/${newuser}`, { isVerify: true });
-                    toast.success(t('addSuccess', { ns: 'common' }), {
-                        position: 'top-right',
-                        autoClose: 2000,
-                    });
-                }
-                fetchUsers();
+                const response = await api.post(`/user`, edittingUser);
+                const newuser = response.data.id;
+                await api.put(`/user/${newuser}`, { isVerify: true });
+                toast.success(t('addSuccess', { ns: 'common' }), {
+                    position: 'top-right',
+                    autoClose: 2000,
+                });
                 closeModal();
             } catch (error) {
-                toast.error(t('errorSavingData', { ns: 'common' }), {
+                toast.success(t('updateSuccess', { ns: 'common' }), {
                     position: 'top-right',
                     autoClose: 2000,
                 });
             }
         } else {
-            toast.error(t('validationFailed', { ns: 'common' }), {
+            toast.error(t('errorSavingData', { ns: 'common' }), {
                 position: 'top-right',
                 autoClose: 2000,
             });
@@ -85,16 +209,20 @@ const AccountUser = () => {
 
     const handleToggleDisabled = async (user) => {
         try {
-            await api.put(`/user/${user.id}`, { isDisabled: !user.isDisabled });
+            await api.patch(`/user/updateProfile/${user.id}`, { isDisabled: !user.isDisabled });
+            setUserData((prev) =>
+                prev.map((e) =>
+                    e.id === user.id ? { ...e, isDisabled: !user.isDisabled } : e
+                )
+            );
             toast.success(t('updateSuccess', { ns: 'common' }), {
                 position: 'top-right',
                 autoClose: 2000,
             });
-            fetchUsers();
-        } catch {
-            toast.error(t('errorSavingData', { ns: 'common' }), {
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
@@ -166,25 +294,26 @@ const AccountUser = () => {
         return `${day}/${month}/${year}`;
     };
 
-    const openModal = (mode, user = null) => {
-        if (mode === 'add') {
-            setEditingUser(null);
-        } else if (mode === 'update' && user) {
-            let formattedDOB = '';
-            if (user.dateOfBirth?.seconds) {
-                formattedDOB = moment(user.dateOfBirth.seconds * 1000).format('YYYY/MM/DD');
-            } else if (typeof user.dateOfBirth === 'string') {
-                formattedDOB = moment(user.dateOfBirth).isValid() ? moment(user.dateOfBirth).format('YYYY/MM/DD') : '';
-            }
-            setEditingUser({ ...user, dateOfBirth: formattedDOB });
-        }
+    const openModal = () => {
+        setEditingUser({ role: 'admin' });
         setIsModalOpen(true);
     };
 
-    const openDetailModal = (user) => {
-        const userPupils = pupilData.filter((pupil) => pupil.userId === user.id);
-        setSelectedUserDetail({ ...user, children: userPupils });
-        setDetailModalOpen(true);
+    const openDetailModal = async (user) => {
+        try {
+            setSelectedUserDetail({ ...user, children: [] });
+            // Fetch pupil data
+            const pupils = await fetchAllPupils(user.id, null, false);
+            // Update selectedUserDetail with pupils
+            setSelectedUserDetail({ ...user, children: pupils });
+            // Open the modal
+            setDetailModalOpen(true);
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
     };
 
     const closeDetailModal = () => {
@@ -197,18 +326,6 @@ const AccountUser = () => {
         setErrors({});
     };
 
-    const filteredUsers = userData.filter((user) => {
-        const matchRole = selectedRole ? user.role === selectedRole : true;
-        const matchStatus =
-            filterStatus === 'all'
-                ? true
-                : filterStatus === 'no'
-                    ? user.isDisabled === false
-                    : user.isDisabled === true;
-        const searchText = searchQuery.toLowerCase();
-        const userName = user.fullName?.toLowerCase() || '';
-        return matchStatus && matchRole && userName.includes(searchText);
-    });
 
     const renderGenderIcon = (gender) => {
         if (gender.toLowerCase() === 'male') {
@@ -234,12 +351,11 @@ const AccountUser = () => {
     // Ant Design Table columns
     const columns = [
         {
-            title: t('no', { ns: 'common' }),
+            title: t('.no', { ns: 'common' }),
             dataIndex: 'index',
             key: 'index',
             width: 80,
-            // render: (_, __, index) => indexOfFirstUser + index + 1,
-            render: (_, __, index) => (currentPage - 1) * userPerPage + index + 1,
+            render: (_, __, index) => index + 1,
         },
         {
             title: t('fullName'),
@@ -278,16 +394,10 @@ const AccountUser = () => {
         {
             title: t('action', { ns: 'common' }),
             key: 'action',
+            align: 'center',
             width: 250,
             render: (_, user) => (
                 <div className="buttonaction">
-                    <button
-                        className="text-white px-3 py-1 buttonupdate"
-                        onClick={() => openModal('update', user)}
-                    >
-                        <FaEdit className="iconupdate" />
-                        {t('update', { ns: 'common' })}
-                    </button>
                     <button
                         className="text-white px-3 py-1 buttondetail"
                         onClick={() => openDetailModal(user)}
@@ -316,7 +426,7 @@ const AccountUser = () => {
     // Pupil Table columns for detail modal
     const pupilColumns = [
         {
-            title: t('no', { ns: 'common' }),
+            title: t('.no', { ns: 'common' }),
             dataIndex: 'index',
             key: 'index',
             width: 80,
@@ -362,12 +472,12 @@ const AccountUser = () => {
                 <h1 className="container-title">{t('managementAccountUser')}</h1>
                 <div className="search">
                     <Input
+                        type="text"
                         className="inputsearch"
                         placeholder={t('searchPlaceholder', { ns: 'common' })}
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
-                            setCurrentPage(1);
                         }}
                     />
                 </div>
@@ -397,78 +507,38 @@ const AccountUser = () => {
                             onChange={(value) => setSelectedRole(value)}
                             placeholder={t('role')}
                         >
-                            <Select.Option value="">{t('role')}</Select.Option>
+                            <Select.Option value="all">{t('rolefilter')}</Select.Option>
                             <Select.Option value="user">{t('roleUser')}</Select.Option>
                             <Select.Option value="admin">{t('roleAdmin')}</Select.Option>
                         </Select>
                         <Select
                             className="filter-dropdown"
                             value={filterStatus}
-                            onChange={(value) => {
-                                setFilterStatus(value);
-                                setCurrentPage(1);
-                            }}
+                            onChange={(value) => { setFilterStatus(value); }}
                         >
-                            <Select.Option value="all">{t('accountStatus')}</Select.Option>
-                            <Select.Option value="yes">{t('yes', { ns: 'common' })}</Select.Option>
-                            <Select.Option value="no">{t('no', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="all">{t('status', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="false">{t('no', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="true">{t('yes', { ns: 'common' })}</Select.Option>
                         </Select>
                     </div>
-                    <Button className="rounded-add" onClick={() => openModal('add')}>
+                    {/* <Button className="rounded-add" onClick={() => openModal('add')}>
                         + {t('addNew', { ns: 'common' })}
-                    </Button>
+                    </Button> */}
                 </div>
                 <div className="table-container-user">
                     <Table
                         columns={columns}
-                        dataSource={filteredUsers.slice(
-                            (currentPage - 1) * userPerPage,
-                            currentPage * userPerPage
-                        )}
+                        dataSource={visibleUser}
                         pagination={false}
                         rowKey="id"
                         className="custom-table"
                     />
                     <div className="paginations">
-                        <Pagination
-                            current={currentPage}
-                            total={filteredUsers.length}
-                            pageSize={userPerPage}
-                            onChange={(page) => setCurrentPage(page)}
-                            className="pagination"
-                            itemRender={(page, type, originalElement) => {
-                                if (type === 'prev') {
-                                    return (
-                                        <button
-                                            className="around"
-                                            disabled={currentPage === 1}
-                                        >
-                                            {'<'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'next') {
-                                    return (
-                                        <button
-                                            className="around"
-                                            disabled={currentPage === Math.ceil(filteredUsers.length / userPerPage)}
-                                        >
-                                            {'>'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'page') {
-                                    return (
-                                        <button
-                                            className={`around ${currentPage === page ? 'active' : ''}`}
-                                        >
-                                            {page}
-                                        </button>
-                                    );
-                                }
-                                return originalElement;
-                            }}
-                        />
+                        {nextPageToken && visibleUser.length < countAll ? (
+                            <Button className="load-more-btn" onClick={loadMore}>
+                                {t('More', { ns: 'common' })}
+                            </Button>
+                        ) : null}
                     </div>
                 </div>
 
@@ -521,7 +591,6 @@ const AccountUser = () => {
                                     columns={pupilColumns}
                                     dataSource={selectedUserDetail.children}
                                     pagination={false}
-                                    rowKey={(record, index) => index}
                                     className="custom-table"
                                 />
                             ) : (
@@ -536,7 +605,7 @@ const AccountUser = () => {
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
-                            {edittingUser?.id ? t('updateAccountUser') : t('addAccountUser')}
+                            {t('addAccountUser')}
                         </div>
                     }
                     open={isModalOpen}
@@ -620,21 +689,7 @@ const AccountUser = () => {
                             </Select>
                             {errors.gender && <div className="error-text">{errors.gender}</div>}
                         </div>
-                        <div className="inputtext">
-                            <label className="titleinput">
-                                {t('role')} <span style={{ color: 'red' }}>*</span>
-                            </label>
-                            <Select
-                                style={{ width: '100%', height: '50px' }}
-                                placeholder={t('selectionRole')}
-                                value={edittingUser?.role || undefined}
-                                onChange={(value) => setEditingUser({ ...edittingUser, role: value })}
-                            >
-                                <Select.Option value="user">{t('roleUser')}</Select.Option>
-                                <Select.Option value="admin">{t('roleAdmin')}</Select.Option>
-                            </Select>
-                            {errors.role && <div className="error-text">{errors.role}</div>}
-                        </div>
+
                     </div>
                     <div className="button-row">
                         <Button className="cancel-button" onClick={closeModal} block>

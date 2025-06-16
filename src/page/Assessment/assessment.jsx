@@ -25,7 +25,7 @@ const Assessment = () => {
     const [imageUrl, setImageUrl] = useState('');
     const [assessments, setAssessments] = useState([]);
     const [fileList, setFileList] = useState([]);
-    const [optionFileList, setOptionFileList] = useState([[], [], []]);
+    const [optionFileList, setOptionFileList] = useState([]);
     const [answerFileList, setAnswerFileList] = useState([]);
     const [optionType, setOptionType] = useState('text');
     const [filterLevel, setFilterLevel] = useState('all');
@@ -54,9 +54,9 @@ const Assessment = () => {
             });
             setAssessments(sortedAssessments);
         } catch (error) {
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
@@ -66,9 +66,9 @@ const Assessment = () => {
             const response = await api.get(`/level`);
             setLevels(response.data);
         } catch (error) {
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
@@ -85,21 +85,25 @@ const Assessment = () => {
         if (validate()) {
             try {
                 const formData = new FormData();
-                formData.append('levelId', editingAssessment.levelId);
-                formData.append('grade', editingAssessment.grade);
-                formData.append('type', JSON.stringify(editingAssessment.type));
-                formData.append('question', JSON.stringify(editingAssessment.question));
-
+                formData.append('levelId', editingExercise.levelId);
+                formData.append('lessonId', lessonId);
+                formData.append('question', JSON.stringify(editingExercise.question));
                 if (fileList[0]?.originFileObj) {
                     formData.append('image', fileList[0].originFileObj);
                 }
-
                 if (optionType === 'text') {
-                    const validOptions = editingAssessment.option.filter(opt => opt.trim() !== '');
-                    formData.append('option', JSON.stringify(validOptions));
-                    formData.append('answer', editingAssessment.answer);
+                    // Chỉ gửi các option hợp lệ (không rỗng)
+                    const validOptions = editingExercise.option.filter(opt => opt && opt.trim() !== '');
+                    if (validOptions.length > 0) {
+                        formData.append('option', JSON.stringify(validOptions));
+                    }
+                    if (editingExercise.answer && editingExercise.answer.trim() !== '') {
+                        formData.append('answer', editingExercise.answer);
+                    }
                 } else {
-                    optionFileList.forEach((fileList, index) => {
+                    // Gửi danh sách các option hình ảnh còn lại
+                    const validOptionFileList = optionFileList.filter(list => list.length > 0);
+                    validOptionFileList.forEach((fileList, index) => {
                         if (fileList[0]?.originFileObj) {
                             formData.append('option', fileList[0].originFileObj);
                         }
@@ -108,8 +112,14 @@ const Assessment = () => {
                         formData.append('answer', answerFileList[0].originFileObj);
                     }
                 }
-                if (editingAssessment.id) {
-                    await api.put(`/assessment/${editingAssessment.id}`, formData, {
+
+                console.log('Form Data to be sent:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(`${key}:`, value instanceof File ? value.name : value);
+                }
+
+                if (editingExercise.id) {
+                    await api.put(`/exercise/${editingExercise.id}`, formData, {
                         headers: {
                             'Content-Type': 'multipart/form-data',
                         },
@@ -119,9 +129,9 @@ const Assessment = () => {
                         autoClose: 2000,
                     });
                 } else {
-                    await api.post(`/assessment`, formData, {
+                    await api.post(`/exercise`, formData, {
                         headers: {
-                            "Content-Type": "multipart/form-data",
+                            'Content-Type': 'multipart/form-data',
                         },
                     });
                     toast.success(t('addSuccess', { ns: 'common' }), {
@@ -129,12 +139,25 @@ const Assessment = () => {
                         autoClose: 2000,
                     });
                 }
-                fetchAssessments();
+
+                // Reset danh sách bài tập và tải lại
+                setExercises([]);
+                setVisibleExercises([]);
+                setNextPageToken(null);
+                if (filterStatus !== 'all' && filterLevel !== 'all') {
+                    fetchFilterLevelisDisabled(filterLevel, null, filterStatus);
+                } else if (filterLevel !== 'all' && filterStatus === 'all') {
+                    fetchFilterLevel(filterLevel, null);
+                } else if (filterLevel === 'all' && filterStatus !== 'all') {
+                    fetchAllExercisesisDisabled(null, filterStatus);
+                } else {
+                    fetchAllExercises(null);
+                }
                 closeModal();
             } catch (error) {
-                toast.error(t('validationFailed', { ns: 'common' }), {
+                toast.error(error.response?.data?.message?.[i18n.language], {
                     position: 'top-right',
-                    autoClose: 2000,
+                    autoClose: 3000,
                 });
             }
         } else {
@@ -160,9 +183,9 @@ const Assessment = () => {
                 )
             );
         } catch (error) {
-            toast.error(t('validationFailed', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
@@ -186,11 +209,11 @@ const Assessment = () => {
         }
         if (optionType === 'text') {
             const validOptions = editingAssessment?.option?.filter(opt => opt && opt.trim() !== '');
-            if (!validOptions || validOptions.length < 3) {
+            if (!validOptions || validOptions.length === 0) {
                 newErrors.option = t('optionRequired');
             }
         } else if (optionType === 'image') {
-            if (optionFileList.filter(list => list.length > 0).length < 3) {
+            if (optionFileList.filter(list => list.length > 0).length === 0) {
                 newErrors.option = t('optionImageRequired');
             }
         }
@@ -211,20 +234,20 @@ const Assessment = () => {
                 grade: '',
                 type: { map: '', en: '', vi: '' },
                 question: { en: '', vi: '' },
-                option: ['', '', ''],
+                option: [''],
                 answer: '',
                 image: '',
             });
             setOptionType('text');
             setImageUrl('');
             setFileList([]);
-            setOptionFileList([[], [], []]);
+            setOptionFileList([[]]);
             setAnswerFileList([]);
         } else if (mode === 'update') {
             const isImageOption = assessment.option?.some(opt => opt.startsWith('http'));
             setEditingAssessment({
                 ...assessment,
-                option: assessment.option || ['', '', ''],
+                option: assessment.option || [''],
                 answer: assessment.answer || '',
                 image: assessment.image || '',
             });
@@ -234,7 +257,7 @@ const Assessment = () => {
             setOptionFileList(
                 isImageOption && assessment.option
                     ? assessment.option.map(url => (url ? [{ url }] : []))
-                    : [[], [], []]
+                    : [[]]
             );
             setAnswerFileList(
                 isImageOption && assessment.answer ? [{ url: assessment.answer }] : []
@@ -259,7 +282,7 @@ const Assessment = () => {
         setOptionType('text');
         setImageUrl('');
         setFileList([]);
-        setOptionFileList([[], [], []]);
+        setOptionFileList([[]]);
         setAnswerFileList([]);
         setErrors({});
     };
@@ -326,7 +349,34 @@ const Assessment = () => {
     const handleRemoveImage = () => {
         setFileList([]);
         setImageUrl('');
-        message.info('Ảnh đã được xóa.');
+    };
+    const addOption = () => {
+        if (editingAssessment.option.length >= 3) {
+            toast.error(t('maxThreeOptions', { ns: 'common' }));
+            return;
+        }
+        setEditingAssessment((prev) => ({
+            ...prev,
+            option: [...prev.option, ''],
+        }));
+        setOptionFileList((prev) => [...prev, []]);
+    };
+
+    const removeOption = (index) => {
+        if (editingExercise.option.length === 1) {
+            toast.error(t('atLeastOneOption', { ns: 'common' }));
+            return;
+        }
+        Modal.confirm({
+            title: t('confirmDeleteOption', { ns: 'common' }),
+            onOk: () => {
+                setEditingExercise((prev) => ({
+                    ...prev,
+                    option: prev.option.filter((_, i) => i !== index),
+                }));
+                setOptionFileList((prev) => prev.filter((_, i) => i !== index));
+            },
+        });
     };
 
     const handleRemoveOptionImage = (index) => {
@@ -340,7 +390,6 @@ const Assessment = () => {
             ...prev,
             option: newOptions,
         }));
-        message.info(`Ảnh option ${index + 1} đã được xóa.`);
     };
 
     const handleRemoveAnswerImage = () => {
@@ -349,7 +398,6 @@ const Assessment = () => {
             ...prev,
             answer: '',
         }));
-        message.info('Ảnh đáp án đã được xóa.');
     };
 
     const parseDate = (dateString) => {
@@ -377,7 +425,7 @@ const Assessment = () => {
     // Ant Design Table columns
     const columns = [
         {
-            title: t('no', { ns: 'common' }),
+            title: t('.no', { ns: 'common' }),
             dataIndex: 'index',
             key: 'index',
             width: 80,
@@ -575,44 +623,45 @@ const Assessment = () => {
                         rowKey="id"
                         className="custom-table"
                     />
-                    <div className="paginations">
-                        <Pagination
-                            current={currentPage}
-                            total={filteredAssessments.length}
-                            pageSize={assessmentsPerPage}
-                            onChange={(page) => setCurrentPage(page)}
-                            className="pagination"
-                            itemRender={(page, type, originalElement) => {
-                                if (type === 'prev') {
-                                    return (
-                                        <button className="around" disabled={currentPage === 1}>
-                                            {'<'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'next') {
-                                    return (
-                                        <button
-                                            className="around"
-                                            disabled={
-                                                currentPage === Math.ceil(filteredAssessments.length / assessmentsPerPage)
-                                            }
-                                        >
-                                            {'>'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'page') {
-                                    return (
-                                        <button className={`around ${currentPage === page ? 'active' : ''}`}>
-                                            {page}
-                                        </button>
-                                    );
-                                }
-                                return originalElement;
-                            }}
-                        />
-                    </div>
+                </div>
+
+                <div className="paginations">
+                    <Pagination
+                        current={currentPage}
+                        total={filteredAssessments.length}
+                        pageSize={assessmentsPerPage}
+                        onChange={(page) => setCurrentPage(page)}
+                        className="pagination"
+                        itemRender={(page, type, originalElement) => {
+                            if (type === 'prev') {
+                                return (
+                                    <button className="around" disabled={currentPage === 1}>
+                                        {'<'}
+                                    </button>
+                                );
+                            }
+                            if (type === 'next') {
+                                return (
+                                    <button
+                                        className="around"
+                                        disabled={
+                                            currentPage === Math.ceil(filteredAssessments.length / assessmentsPerPage)
+                                        }
+                                    >
+                                        {'>'}
+                                    </button>
+                                );
+                            }
+                            if (type === 'page') {
+                                return (
+                                    <button className={`around ${currentPage === page ? 'active' : ''}`}>
+                                        {page}
+                                    </button>
+                                );
+                            }
+                            return originalElement;
+                        }}
+                    />
                 </div>
                 {/* Detail Modal */}
                 <Modal
@@ -739,6 +788,39 @@ const Assessment = () => {
                             {errors.questionEn && <div className="error-text">{errors.questionEn}</div>}
                         </div>
                         <div className="inputtext">
+                            <label className="titleinput">{t('image')}</label>
+                            <Upload
+                                accept="image/*"
+                                showUploadList={false}
+                                beforeUpload={() => false}
+                                onChange={handleImageChange}
+                                fileList={fileList}
+                            >
+                                <Button icon={<UploadOutlined />} className="custom-upload-button">
+                                    {t('inputImage')}
+                                </Button>
+                            </Upload>
+                            {imageUrl && (
+                                <div className="image-preview-box">
+                                    <Image src={imageUrl} alt="Preview" className="preview-image" />
+                                    <DeleteOutlined
+                                        onClick={handleRemoveImage}
+                                        style={{
+                                            position: 'absolute',
+                                            top: 8,
+                                            right: 8,
+                                            fontSize: 20,
+                                            color: '#ff4d4f',
+                                            cursor: 'pointer',
+                                            background: '#fff',
+                                            borderRadius: '50%',
+                                            padding: 4,
+                                        }}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <div className="inputtext">
                             <label className="titleinput">{t('level')} <span style={{ color: 'red' }}>*</span></label>
                             <Select
                                 style={{ width: '100%', height: '50px' }}
@@ -816,10 +898,10 @@ const Assessment = () => {
                                             setOptionType('text');
                                             setEditingAssessment((prev) => ({
                                                 ...prev,
-                                                option: ['', '', ''],
+                                                option: [''],
                                                 answer: '',
                                             }));
-                                            setOptionFileList([[], [], []]);
+                                            setOptionFileList([[]]);
                                             setAnswerFileList([]);
                                         }
                                     }}
@@ -832,76 +914,15 @@ const Assessment = () => {
                                             setOptionType('image');
                                             setEditingAssessment((prev) => ({
                                                 ...prev,
-                                                option: ['', '', ''],
+                                                option: [''],
                                                 answer: '',
                                             }));
-                                            setOptionFileList([[], [], []]);
+                                            setOptionFileList([[]]);
                                             setAnswerFileList([]);
                                         }
                                     }}
                                 />
                             </div>
-                        </div>
-                        <div className="inputtext">
-                            <label className="titleinput">{t('option')} <span style={{ color: 'red' }}>*</span></label>
-                            {optionType === 'text' ? (
-                                editingAssessment?.option?.map((opt, index) => (
-                                    <Input
-                                        key={index}
-                                        placeholder={`${t('option')} ${index + 1}`}
-                                        value={opt}
-                                        onChange={(e) => {
-                                            const newOptions = [...editingAssessment.option];
-                                            newOptions[index] = e.target.value;
-                                            setEditingAssessment({
-                                                ...editingAssessment,
-                                                option: newOptions,
-                                            });
-                                        }}
-                                        style={{ marginBottom: '10px' }}
-                                    />
-                                ))
-                            ) : (
-                                editingAssessment?.option?.map((opt, index) => (
-                                    <div key={index} style={{ marginBottom: '20px' }}>
-                                        <Upload
-                                            accept="image/*"
-                                            showUploadList={false}
-                                            beforeUpload={() => false}
-                                            onChange={(info) => handleOptionImageChange(index, info)}
-                                            fileList={optionFileList[index]}
-                                        >
-                                            <Button icon={<UploadOutlined />} className="custom-upload-button">
-                                                {t('uploadOption', { number: index + 1 })}
-                                            </Button>
-                                        </Upload>
-                                        {optionFileList[index].length > 0 && (
-                                            <div className="image-preview-box-option">
-                                                <Image
-                                                    src={opt}
-                                                    alt={`Option ${index + 1}`}
-                                                    className="preview-image-option"
-                                                />
-                                                <DeleteOutlined
-                                                    onClick={() => handleRemoveOptionImage(index)}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: 8,
-                                                        right: 8,
-                                                        fontSize: 20,
-                                                        color: '#ff4d4f',
-                                                        cursor: 'pointer',
-                                                        background: '#fff',
-                                                        borderRadius: '50%',
-                                                        padding: 4,
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                ))
-                            )}
-                            {errors.option && <div className="error-text">{errors.option}</div>}
                         </div>
                         <div className="inputtext">
                             <label className="titleinput">{t('answer')} <span style={{ color: 'red' }}>*</span></label>
@@ -956,39 +977,101 @@ const Assessment = () => {
                             )}
                             {errors.answer && <div className="error-text">{errors.answer}</div>}
                         </div>
+
                         <div className="inputtext">
-                            <label className="titleinput">{t('image')}</label>
-                            <Upload
-                                accept="image/*"
-                                showUploadList={false}
-                                beforeUpload={() => false}
-                                onChange={handleImageChange}
-                                fileList={fileList}
-                            >
-                                <Button icon={<UploadOutlined />} className="custom-upload-button">
-                                    {t('inputImage')}
-                                </Button>
-                            </Upload>
-                            {imageUrl && (
-                                <div className="image-preview-box">
-                                    <Image src={imageUrl} alt="Preview" className="preview-image" />
-                                    <DeleteOutlined
-                                        onClick={handleRemoveImage}
-                                        style={{
-                                            position: 'absolute',
-                                            top: 8,
-                                            right: 8,
-                                            fontSize: 20,
-                                            color: '#ff4d4f',
-                                            cursor: 'pointer',
-                                            background: '#fff',
-                                            borderRadius: '50%',
-                                            padding: 4,
-                                        }}
-                                    />
-                                </div>
+                            <label className="titleinput">{t('option')} <span style={{ color: 'red' }}>*</span></label>
+                            {optionType === 'text' ? (
+                                editingAssessment?.option?.map((opt, index) => (
+                                    <div key={index} className='option-text'>
+                                        <Input
+                                            key={index}
+                                            placeholder={`${t('option')} ${index + 1}`}
+                                            value={opt}
+                                            onChange={(e) => {
+                                                const newOptions = [...editingAssessment.option];
+                                                newOptions[index] = e.target.value;
+                                                setEditingAssessment({
+                                                    ...editingAssessment,
+                                                    option: newOptions,
+                                                });
+                                            }}
+                                            style={{ flex: 1 }}
+                                        />
+                                        <Button
+                                            onClick={() => removeOption(index)}
+                                            icon={<DeleteOutlined />}
+                                            style={{
+                                                position: 'absolute',
+                                                top: 3,
+                                                right: 8,
+                                                fontSize: 20,
+                                                color: '#ff4d4f',
+                                                cursor: 'pointer',
+                                                background: '#fff',
+                                                borderRadius: '50%',
+                                                padding: 4,
+                                            }}
+                                        />
+                                    </div>
+                                ))
+                            ) : (
+                                editingAssessment?.option?.map((opt, index) => (
+                                    <div key={index} style={{ marginBottom: '20px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            <Upload
+                                                accept="image/*"
+                                                showUploadList={false}
+                                                beforeUpload={() => false}
+                                                onChange={(info) => handleOptionImageChange(index, info)}
+                                                fileList={optionFileList[index]}
+                                            >
+                                                <Button icon={<UploadOutlined />} className="custom-upload-button">
+                                                    {t('uploadOption', { number: index + 1 })}
+                                                </Button>
+                                            </Upload>
+                                            <Button
+                                                onClick={() => removeOption(index)}
+                                                style={{ marginLeft: '250px', color: '#ff4d4f', backgroundColor: '#ccc' }}
+                                                icon={<DeleteOutlined />}
+                                            />
+                                        </div>
+                                        {optionFileList[index].length > 0 && (
+                                            <div className="image-preview-box-option">
+                                                <Image
+                                                    src={opt}
+                                                    alt={`Option ${index + 1}`}
+                                                    className="preview-image-option"
+                                                />
+                                                <DeleteOutlined
+                                                    onClick={() => handleRemoveOptionImage(index)}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: 8,
+                                                        right: 8,
+                                                        fontSize: 20,
+                                                        color: '#ff4d4f',
+                                                        cursor: 'pointer',
+                                                        background: '#fff',
+                                                        borderRadius: '50%',
+                                                        padding: 4,
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
                             )}
+                            <Button
+                                onClick={addOption}
+                                style={{ marginTop: '10px' }}
+                                className="custom-upload-button"
+                            >
+                                + {t('addOption', { ns: 'common' })}
+                            </Button>
+                            {errors.option && <div className="error-text">{errors.option}</div>}
                         </div>
+
+
                     </div>
                     <div className="button-row">
                         <Button className="cancel-button" onClick={closeModal} block>

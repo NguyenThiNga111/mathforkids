@@ -36,10 +36,6 @@ const Verify = () => {
         }
     };
 
-    const handleBack = () => {
-        navigate(-1);
-    };
-
     const handleVerify = async () => {
         const enteredOTP = otp.join('');
         if (enteredOTP.length !== 4) {
@@ -48,11 +44,11 @@ const Verify = () => {
         }
 
         try {
-            const response = await api.post(`/auth/verify/${userID}`, {
+            const response = await api.post(`/auth/verifyAndAuthentication/${userID}`, {
                 otpCode: enteredOTP
             });
 
-            if (response.data.success) {
+            if (response.data) {
                 const { role, token } = response.data;
 
                 if (role === 'admin') {

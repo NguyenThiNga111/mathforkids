@@ -63,6 +63,8 @@
   font-size: 0.875rem;
   display: flex;
   align-items: center;
+  color: #10b981;
+
 }
 
 .card-trend.up {
@@ -115,7 +117,7 @@
 }
 
 .chart-title {
-  color: var(--color-cardvalue);
+  color: var(--color-cardtitle);
   font-size: 1.125rem;
   font-weight: 600;
 }
@@ -192,6 +194,7 @@
   background-color: #F4A100;
   color: white;
 }
+
 .chart-controls {
   display: flex;
   gap: 10px;

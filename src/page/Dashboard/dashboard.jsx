@@ -2,8 +2,13 @@ import Navbar from "../../component/Navbar";
 import { useState, useEffect } from "react";
 import api from '../../assets/api/Api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { FaMars, FaVenus, FaCrown, FaGraduationCap, FaUsers, FaUserGraduate, FaEdit } from 'react-icons/fa';
+
 import { useTranslation } from 'react-i18next';
+import { Select } from 'antd'; // Import Ant Design Select
 import "./dashboard.css";
+
+const { Option } = Select; // Destructure Option from Select
 
 const months = [
   { label: "January", value: "01" },
@@ -26,7 +31,6 @@ const Dashboard = () => {
   // State for time period selections
   const [userTimePeriod, setUserTimePeriod] = useState("month");
   const [pupilTimePeriod, setPupilTimePeriod] = useState("month");
-
   // State for time period values (month, week, year)
   const [selectedUserMonth, setSelectedUserMonth] = useState("05");
   const [selectedUserWeek, setSelectedUserWeek] = useState("1");
@@ -34,35 +38,47 @@ const Dashboard = () => {
   const [selectedPupilMonth, setSelectedPupilMonth] = useState("05");
   const [selectedPupilWeek, setSelectedPupilWeek] = useState("1");
   const [selectedPupilYear, setSelectedPupilYear] = useState("2025");
-
   // State for data
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalStudents, setTotalStudents] = useState(0);
   const [totalLessons, setTotalLessons] = useState(0);
-  const [studentsByGrade, setStudentsByGrade] = useState(0);
+  const [usersByGender, setUsersByGender] = useState({ male: 0, female: 0 });
   const [usersByTimePeriod, setUsersByTimePeriod] = useState({ current: 0, previous: 0 });
   const [pupilsByTimePeriod, setPupilsByTimePeriod] = useState({ current: 0, previous: 0 });
+  const [lessonsByTimePeriod, setLessonsByTimePeriod] = useState({ current: 0, previous: 0 });
+  const [studentsByGradeData, setStudentsByGradeData] = useState([
+    { grade: "1", count: 0 },
+    { grade: "2", count: 0 },
+    { grade: "3", count: 0 },
+  ]);
 
   // Fetch data based on selected time period
   useEffect(() => {
     const fetchData = async () => {
       try {
         // Fetch total users
-        const userResponse = await api.get("/user/countuser");
+        const userResponse = await api.get("/user/countAll");
         setTotalUsers(userResponse.data.count || 0);
-
         // Fetch total students
-        const studentResponse = await api.get("/pupil/countpupil");
+        const studentResponse = await api.get("/pupil/countAll");
         setTotalStudents(studentResponse.data.count || 0);
-
         // Fetch total lessons
-        const lessonResponse = await api.get("/lesson/countlesson");
+        const lessonResponse = await api.get("/lesson/countAllLesson");
         setTotalLessons(lessonResponse.data.count || 0);
-
         // Fetch students by grade
-        const gradeResponse = await api.get("/pupil/countbygrade");
-        setStudentsByGrade(gradeResponse.data.count || 0);
-
+        const grades = [1, 2, 3];
+        const gradeData = await Promise.all(
+          grades.map(async (grade) => {
+            try {
+              const response = await api.get(`/pupil/countByGrade?grade=${grade}`);
+              return { grade, count: response.data.count || 0 };
+            } catch (error) {
+              console.warn(`Failed to fetch data for grade ${grade}:`, error.message);
+              return { grade, count: 0 };
+            }
+          })
+        );
+        setStudentsByGradeData(gradeData);
         // Fetch users by selected time period
         let usersByTimePeriodData = { current: 0, previous: 0 };
         try {
@@ -87,7 +103,17 @@ const Dashboard = () => {
           console.warn(`User data fetch failed for ${userTimePeriod}:`, userError.message);
         }
         setUsersByTimePeriod(usersByTimePeriodData);
-
+        // Fetch users by gender
+        try {
+          const maleResponse = await api.get("/user/countByGender?gender=Male");
+          const femaleResponse = await api.get("/user/countByGender?gender=Female");
+          setUsersByGender({
+            male: maleResponse.data.count || 0,
+            female: femaleResponse.data.count || 0,
+          });
+        } catch (genderError) {
+          console.warn("Failed to fetch users by gender:", genderError.message);
+        }
         // Fetch pupils by selected time period
         let pupilsByTimePeriodData = { current: 0, previous: 0 };
         try {
@@ -111,8 +137,7 @@ const Dashboard = () => {
         } catch (pupilError) {
           console.warn(`Pupil data fetch failed for ${pupilTimePeriod}:`, pupilError.message);
         }
-        setPupilsByTimePeriod(pupilsByTimePeriodData);
-
+        setPupilsByTimePeriod(pupilsByTimePeriodData); // Corrected line
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -124,19 +149,41 @@ const Dashboard = () => {
     pupilTimePeriod, selectedPupilMonth, selectedPupilWeek, selectedPupilYear
   ]);
 
-  // Calculate trend for Total Users
-  const userTrend = usersByTimePeriod.previous > 0
+  // Calculate trends
+  const userTrend = (usersByTimePeriod.previous > 0 && usersByTimePeriod.current >= 0 && usersByTimePeriod.previous >= 0)
     ? ((usersByTimePeriod.current - usersByTimePeriod.previous) / usersByTimePeriod.previous * 100).toFixed(1)
     : 0;
   const userTrendDirection = userTrend >= 0 ? "up" : "down";
+  const userTrendText = (usersByTimePeriod.current === 0 && usersByTimePeriod.previous === 0)
+    ? t('noChange')
+    : `${Math.abs(userTrend)}% ${t(userTrendDirection)} ${t('fromPrevious')} ${t(userTimePeriod)}`;
 
-  // Placeholder trends for other cards
-  const studentTrend = "1.3";
-  const studentTrendDirection = "up";
-  const gradeTrend = "-4.3";
-  const gradeTrendDirection = "down";
-  const lessonTrend = "1.8";
-  const lessonTrendDirection = "up";
+  const studentTrend = (pupilsByTimePeriod.previous > 0 && pupilsByTimePeriod.current >= 0 && pupilsByTimePeriod.previous >= 0)
+    ? ((pupilsByTimePeriod.current - pupilsByTimePeriod.previous) / pupilsByTimePeriod.previous * 100).toFixed(1)
+    : 0;
+  const studentTrendDirection = studentTrend >= 0 ? "up" : "down";
+  const studentTrendText = (pupilsByTimePeriod.current === 0 && pupilsByTimePeriod.previous === 0)
+    ? t('noChange')
+    : `${Math.abs(studentTrend)}% ${t(studentTrendDirection)} ${t('fromPrevious')} ${t(pupilTimePeriod)}`;
+
+  const lessonTrend = (lessonsByTimePeriod.previous > 0 && lessonsByTimePeriod.current >= 0 && lessonsByTimePeriod.previous >= 0)
+    ? ((lessonsByTimePeriod.current - lessonsByTimePeriod.previous) / lessonsByTimePeriod.previous * 100).toFixed(1)
+    : 0;
+  const lessonTrendDirection = lessonTrend >= 0 ? "up" : "down";
+  const lessonTrendText = (lessonsByTimePeriod.current === 0 && lessonsByTimePeriod.previous === 0)
+    ? t('noChange')
+    : `${Math.abs(lessonTrend)}% ${t(lessonTrendDirection)} ${t('fromPrevious')} ${t(userTimePeriod)}`;
+
+  const dominantGender = usersByGender.male >= usersByGender.female ? 'Male' : 'Female';
+  const dominantGenderCount = usersByGender.male >= usersByGender.female ? usersByGender.male : usersByGender.female;
+  const genderDifference = usersByGender.male + usersByGender.female > 0
+    ? Math.abs(usersByGender.male - usersByGender.female) / (usersByGender.male + usersByGender.female) * 100
+    : 0;
+  const genderPercentage = genderDifference.toFixed(1);
+  const genderText = usersByGender.male + usersByGender.female === 0
+    ? t('noData')
+    : `${t(dominantGender)}: ${genderPercentage}% ${t('ofTotalUsers')}`;
+
 
   // Generate week options (1 to 52)
   const weeks = Array.from({ length: 52 }, (_, i) => ({
@@ -165,8 +212,14 @@ const Dashboard = () => {
                   <h3 className="card-title">{t('TotalUser')}</h3>
                   <p className="card-value">{totalUsers.toLocaleString()}</p>
                   <p className={`card-trend ${userTrendDirection}`}>
-                    <span className="trend-icon">{userTrendDirection === "up" ? "↑" : "↓"}</span>
-                    {Math.abs(userTrend)}% {t(userTrendDirection)} {t('fromPrevious')} {t(userTimePeriod)}
+                    {usersByTimePeriod.current === 0 && usersByTimePeriod.previous === 0 ? (
+                      userTrendText
+                    ) : (
+                      <>
+                        <span className="trend-icon">{userTrendDirection === "up" ? "↑" : "↓"}</span>
+                        {userTrendText}
+                      </>
+                    )}
                   </p>
                 </div>
                 <div className="card-icon" style={{ backgroundColor: "#dbeafe" }}>
@@ -189,8 +242,14 @@ const Dashboard = () => {
                   <h3 className="card-title">{t('TotalStudent')}</h3>
                   <p className="card-value">{totalStudents.toLocaleString()}</p>
                   <p className={`card-trend ${studentTrendDirection}`}>
-                    <span className="trend-icon">{studentTrendDirection === "up" ? "↑" : "↓"}</span>
-                    {studentTrend}% {t('upFromPastWeek')}
+                    {pupilsByTimePeriod.current === 0 && pupilsByTimePeriod.previous === 0 ? (
+                      studentTrendText
+                    ) : (
+                      <>
+                        <span className="trend-icon">{studentTrendDirection === "up" ? "↑" : "↓"}</span>
+                        {studentTrendText}
+                      </>
+                    )}
                   </p>
                 </div>
                 <div className="card-icon" style={{ backgroundColor: "#fef3c7" }}>
@@ -205,27 +264,28 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Card 3: Students by Grade */}
+          {/* Card 3: Users by Gender */}
           <div className="card-container">
             <div className="card-main">
               <div className="card-inner">
                 <div className="card-content">
-                  <h3 className="card-title">{t('StudentsByGrade')}</h3>
-                  <p className="card-value">{studentsByGrade.toLocaleString()}</p>
-                  <p className={`card-trend ${gradeTrendDirection}`}>
-                    <span className="trend-icon">{gradeTrendDirection === "up" ? "↑" : "↓"}</span>
-                    {Math.abs(gradeTrend)}% {t('downFromPastWeek')}
+                  <h3 className="card-title">{t('UsersByGender')}</h3>
+                  <p className="card-value">{dominantGenderCount.toLocaleString()}</p>
+                  <p className={`card-trend ${dominantGender.toLowerCase()}`}>
+                    {genderText}
                   </p>
                 </div>
                 <div className="card-icon" style={{ backgroundColor: "#d1fae5" }}>
-                  <svg className="w-6 h-6" fill="#34d399" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                  </svg>
+                  {dominantGender === 'Male' ? (
+                    <FaMars style={{ color: "#34d399", width: "24px", height: "24px" }} />
+                  ) : (
+                    <FaVenus style={{ color: "#34d399", width: "24px", height: "24px" }} />
+                  )}
                 </div>
               </div>
             </div>
             <div className="card-footer footer-blue">
-              <p>{t('StudentsByGrade')}</p>
+              <p>{t('UsersByGender')}</p>
             </div>
           </div>
 
@@ -237,8 +297,14 @@ const Dashboard = () => {
                   <h3 className="card-title">{t('TotalLessons')}</h3>
                   <p className="card-value">{totalLessons.toLocaleString()}</p>
                   <p className={`card-trend ${lessonTrendDirection}`}>
-                    <span className="trend-icon">{lessonTrendDirection === "up" ? "↑" : "↓"}</span>
-                    {lessonTrend}% {t('upFromPastWeek')}
+                    {lessonsByTimePeriod.current === 0 && lessonsByTimePeriod.previous === 0 ? (
+                      lessonTrendText
+                    ) : (
+                      <>
+                        <span className="trend-icon">{lessonTrendDirection === "up" ? "↑" : "↓"}</span>
+                        {lessonTrendText}
+                      </>
+                    )}
                   </p>
                 </div>
                 <div className="card-icon" style={{ backgroundColor: "#fed7aa" }}>
@@ -261,56 +327,60 @@ const Dashboard = () => {
             <div className="chart-header">
               <h3 className="chart-title">{t('StatisticsUser')}</h3>
               <div className="chart-controls">
-                <select
+                <Select
                   value={userTimePeriod}
-                  onChange={(e) => setUserTimePeriod(e.target.value)}
-                  className="period-select"
+                  onChange={setUserTimePeriod}
+                  className="filter-dropdown"
+                  style={{ width: 120 }}
                 >
-                  <option value="month">{t('Month')}</option>
-                  <option value="week">{t('Week')}</option>
-                  <option value="year">{t('Year')}</option>
-                </select>
+                  <Option value="month">{t('Month')}</Option>
+                  <Option value="week">{t('Week')}</Option>
+                  <Option value="year">{t('Year')}</Option>
+                </Select>
                 {userTimePeriod === "month" && (
-                  <select
+                  <Select
                     value={selectedUserMonth}
-                    onChange={(e) => setSelectedUserMonth(e.target.value)}
-                    className="month-select"
+                    onChange={setSelectedUserMonth}
+                    className="filter-dropdown"
+                    style={{ width: 120 }}
+                    placeholder={t('SelectMonth')}
                   >
-                    <option value="">{t('SelectMonth')}</option>
                     {months.map((month) => (
-                      <option key={month.value} value={month.value}>
+                      <Option key={month.value} value={month.value}>
                         {t(month.label)}
-                      </option>
+                      </Option>
                     ))}
-                  </select>
+                  </Select>
                 )}
                 {userTimePeriod === "week" && (
-                  <select
+                  <Select
                     value={selectedUserWeek}
-                    onChange={(e) => setSelectedUserWeek(e.target.value)}
-                    className="week-select"
+                    onChange={setSelectedUserWeek}
+                    className="filter-dropdown"
+                    style={{ width: 120 }}
+                    placeholder={t('SelectWeek')}
                   >
-                    <option value="">{t('SelectWeek')}</option>
                     {weeks.map((week) => (
-                      <option key={week.value} value={week.value}>
+                      <Option key={week.value} value={week.value}>
                         {week.label}
-                      </option>
+                      </Option>
                     ))}
-                  </select>
+                  </Select>
                 )}
                 {(userTimePeriod === "month" || userTimePeriod === "week" || userTimePeriod === "year") && (
-                  <select
+                  <Select
                     value={selectedUserYear}
-                    onChange={(e) => setSelectedUserYear(e.target.value)}
-                    className="year-select"
+                    onChange={setSelectedUserYear}
+                    className="filter-dropdown"
+                    style={{ width: 120 }}
+                    placeholder={t('SelectYear')}
                   >
-                    <option value="">{t('SelectYear')}</option>
                     {years.map((year) => (
-                      <option key={year.value} value={year.value}>
+                      <Option key={year.value} value={year.value}>
                         {year.label}
-                      </option>
+                      </Option>
                     ))}
-                  </select>
+                  </Select>
                 )}
               </div>
             </div>
@@ -321,7 +391,12 @@ const Dashboard = () => {
               ]}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
-                <YAxis domain={[0, 30]} ticks={[0, 10, 20, 30]} />
+                <YAxis
+                  domain={[0, 30]}
+                  ticks={[0, 10, 20, 30]}
+                  label={{ value: t('StatisticsUser'), angle: -90, position: 'insideLeft' }}
+                />
+
                 <Tooltip />
                 <Bar dataKey="value" fill="#8884d8" />
               </BarChart>
@@ -333,56 +408,60 @@ const Dashboard = () => {
             <div className="chart-header">
               <h3 className="chart-title">{t('StatisticsStudent')}</h3>
               <div className="chart-controls">
-                <select
+                <Select
                   value={pupilTimePeriod}
-                  onChange={(e) => setPupilTimePeriod(e.target.value)}
-                  className="period-select"
+                  onChange={setPupilTimePeriod}
+                  className="filter-dropdown"
+                  style={{ width: 120 }}
                 >
-                  <option value="month">{t('Month')}</option>
-                  <option value="week">{t('Week')}</option>
-                  <option value="year">{t('Year')}</option>
-                </select>
+                  <Option value="month">{t('Month')}</Option>
+                  <Option value="week">{t('Week')}</Option>
+                  <Option value="year">{t('Year')}</Option>
+                </Select>
                 {pupilTimePeriod === "month" && (
-                  <select
+                  <Select
                     value={selectedPupilMonth}
-                    onChange={(e) => setSelectedPupilMonth(e.target.value)}
-                    className="month-select"
+                    onChange={setSelectedPupilMonth}
+                    className="filter-dropdown"
+                    style={{ width: 120 }}
+                    placeholder={t('SelectMonth')}
                   >
-                    <option value="">{t('SelectMonth')}</option>
                     {months.map((month) => (
-                      <option key={month.value} value={month.value}>
+                      <Option key={month.value} value={month.value}>
                         {t(month.label)}
-                      </option>
+                      </Option>
                     ))}
-                  </select>
+                  </Select>
                 )}
                 {pupilTimePeriod === "week" && (
-                  <select
+                  <Select
                     value={selectedPupilWeek}
-                    onChange={(e) => setSelectedPupilWeek(e.target.value)}
-                    className="week-select"
+                    onChange={setSelectedPupilWeek}
+                    className="filter-dropdown"
+                    style={{ width: 120 }}
+                    placeholder={t('SelectWeek')}
                   >
-                    <option value="">{t('SelectWeek')}</option>
                     {weeks.map((week) => (
-                      <option key={week.value} value={week.value}>
+                      <Option key={week.value} value={week.value}>
                         {week.label}
-                      </option>
+                      </Option>
                     ))}
-                  </select>
+                  </Select>
                 )}
                 {(pupilTimePeriod === "month" || pupilTimePeriod === "week" || pupilTimePeriod === "year") && (
-                  <select
+                  <Select
                     value={selectedPupilYear}
-                    onChange={(e) => setSelectedPupilYear(e.target.value)}
-                    className="year-select"
+                    onChange={setSelectedPupilYear}
+                    className="filter-dropdown"
+                    style={{ width: 120 }}
+                    placeholder={t('SelectYear')}
                   >
-                    <option value="">{t('SelectYear')}</option>
                     {years.map((year) => (
-                      <option key={year.value} value={year.value}>
+                      <Option key={year.value} value={year.value}>
                         {year.label}
-                      </option>
+                      </Option>
                     ))}
-                  </select>
+                  </Select>
                 )}
               </div>
             </div>
@@ -392,11 +471,25 @@ const Dashboard = () => {
                 { name: t('Current'), value: pupilsByTimePeriod.current },
               ]}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
+                <YAxis label={{ value: t('StatisticsStudent'), angle: -90, position: 'insideLeft' }} />
+
                 <Tooltip />
                 <Line type="monotone" dataKey="value" stroke="#8884d8" strokeWidth={2} />
               </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="chart-card">
+            <div className="chart-header">
+              <h3 className="chart-title">{t('StudentsByGrade')}</h3>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={studentsByGradeData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="grade" label={{ value: t('Grade'), position: 'insideBottom', offset: -5 }} />
+                <YAxis label={{ value: t('NumberOfStudents'), angle: -90, position: 'insideLeft' }} />
+                <Tooltip />
+                <Bar dataKey="count" fill="#34d399" />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>

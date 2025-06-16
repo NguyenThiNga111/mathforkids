@@ -18,10 +18,10 @@ const Exercise = () => {
     const [imageUrl, setImageUrl] = useState('');
     const [exercises, setExercises] = useState([]);
     const [fileList, setFileList] = useState([]);
-    const [optionFileList, setOptionFileList] = useState([[], [], []]);
+    const [optionFileList, setOptionFileList] = useState([]);
     const [answerFileList, setAnswerFileList] = useState([]);
     const [optionType, setOptionType] = useState('text');
-    const [filterLevel, setFilterLevel] = useState('all');
+    const [filterLevel, setFilterLevel] = useState('all'); // Default to null, will be set to 'easy' after levels load
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [levels, setLevels] = useState([]);
@@ -29,43 +29,170 @@ const Exercise = () => {
     const [lesson, setLesson] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [selectedExercise, setSelectedExercise] = useState(null);
-    const exercisesPerPage = 16;
+    const [visibleExercises, setVisibleExercises] = useState([]);
+    const [nextPageToken, setNextPageToken] = useState(null);
+    const [countAll, setCountAll] = useState('');
+    const exercisesPerPage = 10;
     const { Option } = Select;
     const { lessonId } = useParams();
     const navigate = useNavigate();
     const { t, i18n } = useTranslation(['exercise', 'common']);
 
     useEffect(() => {
-        fetchExercises();
-        fetchLevels();
-        fetchLesson();
-    }, [lessonId]);
+        if (searchQuery.trim() === '') {
+            setVisibleExercises(exercises); // Reset to all when search is empty
+        } else {
+            const filtered = exercises.filter(
+                (exercises) =>
+                    exercises.question?.[i18n.language]?.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setVisibleExercises(filtered);
+        }
+    }, [searchQuery, exercises, i18n.language]);
 
-    const fetchExercises = async () => {
+    useEffect(() => {
+        const fetchExercises = async () => {
+            setExercises([]);
+            setVisibleExercises([]);
+            setNextPageToken(null);
+            try {
+                if (filterStatus !== 'all' && filterLevel !== 'all') {
+                    fetchFilterLevelisDisabled(filterLevel, null, filterStatus);
+                } else if (filterLevel !== 'all' && filterStatus === 'all') {
+                    fetchFilterLevel(filterLevel, null);
+                } else if (filterLevel === 'all' && filterStatus !== 'all') {
+                    fetchAllExercisesisDisabled(null, filterStatus);
+                } else {
+                    fetchAllExercises(null);
+                }
+
+                await fetchLesson();
+                await fetchLevels();
+            } catch (error) {
+                toast.error(error.response?.data?.message?.[i18n.language], {
+                    position: 'top-right',
+                    autoClose: 3000,
+                });
+            };
+        };
+        fetchExercises();
+    }, [lessonId, filterStatus, filterLevel]); // Chỉ phụ thuộc vào lessonId
+
+    const fetchAllExercises = async (token = null) => {
         try {
-            const response = await api.get(`/exercise/lessonId/${lessonId}`);
-            const sortedExercises = response.data.sort((a, b) => {
-                const dateA = parseDate(a.createdAt);
-                const dateB = parseDate(b.createdAt);
-                return dateB - dateA; // Latest first
+            let url = `/exercise/getByLesson/${lessonId}?pageSize=${exercisesPerPage}`;
+            if (token) {
+                url += `&startAfterId=${token}`;
+            }
+            const responses = await api.get(`/exercise/countByLesson/${lessonId}`);
+            setCountAll(Number(responses.data.count));
+            const response = await api.get(url);
+            const newExercises = response.data.data || [];
+            setExercises((prev) => {
+                const existingIds = new Set(prev.map((exercise) => exercise.id));
+                const uniqueNewExercises = newExercises.filter((exercise) => !existingIds.has(exercise.id));
+                return [...prev, ...uniqueNewExercises];
             });
-            setExercises(sortedExercises);
+            setVisibleExercises((prev) => {
+                const existingIds = new Set(prev.map((exercise) => exercise.id));
+                const uniqueNewExercises = newExercises.filter((exercise) => !existingIds.has(exercise.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
         } catch (error) {
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            console.error('Error fetching exercises:', error);
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
-
-    const fetchLevels = async () => {
+    const fetchAllExercisesisDisabled = async (token = null, isDisabled) => {
         try {
-            const response = await api.get(`/level/enabled`);
-            setLevels(response.data);
+            let url = `/exercise/filterByIsDisabled/${lessonId}?pageSize=${exercisesPerPage}&isDisabled=${isDisabled}`;
+            if (token) {
+                url += `&startAfterId=${token}`;
+            }
+            const responses = await api.get(`/exercise/countByLessonAndDisabledStatus/${lessonId}?isDisabled=${isDisabled}`);
+            setCountAll(Number(responses.data.count));
+            const response = await api.get(url);
+            const newExercises = response.data.data || [];
+            setExercises((prev) => {
+                const existingIds = new Set(prev.map((exercise) => exercise.id));
+                const uniqueNewExercises = newExercises.filter((exercise) => !existingIds.has(exercise.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setVisibleExercises((prev) => {
+                const existingIds = new Set(prev.map((exercise) => exercise.id));
+                const uniqueNewExercises = newExercises.filter((exercise) => !existingIds.has(exercise.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
         } catch (error) {
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            console.error('Error fetching exercises:', error);
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
+            });
+        }
+    };
+    const fetchFilterLevel = async (levelId, token = null) => {
+        try {
+            console.log('Fetching exercises for levelId:', levelId);
+            let url = `/exercise/filterByLevel/${lessonId}/${levelId}?pageSize=${exercisesPerPage}`;
+            if (token) {
+                url += `&startAfterId=${token}`;
+            }
+            const responses = await api.get(`/exercise/countByLessonAndLevel/${lessonId}/${levelId}`);
+            setCountAll(Number(responses.data.count));
+            const response = await api.get(url);
+            const newExercises = response.data.data || [];
+            setExercises((prev) => {
+                const existingIds = new Set(prev.map((exercise) => exercise.id));
+                const uniqueNewExercises = newExercises.filter((exercise) => !existingIds.has(exercise.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setVisibleExercises((prev) => {
+                const existingIds = new Set(prev.map((exercise) => exercise.id));
+                const uniqueNewExercises = newExercises.filter((exercise) => !existingIds.has(exercise.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
+        } catch (error) {
+            console.error('Error fetching exercises:', error);
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
+    };
+    const fetchFilterLevelisDisabled = async (levelId, token = null, isDisabled) => {
+        try {
+            console.log('Fetching exercises for levelId:', levelId);
+            let url = `/exercise/filterByLevelAndIsDisabled/${lessonId}/${levelId}?pageSize=${exercisesPerPage}&isDisabled=${isDisabled}`;
+            if (token) {
+                url += `&startAfterId=${token}`;
+            }
+            const responses = await api.get(`/exercise/countByLessonAndLevelAndDisabledStatus/${lessonId}/${levelId}?isDisabled=${isDisabled}`);
+            setCountAll(Number(responses.data.count));
+            const response = await api.get(url);
+            const newExercises = response.data.data || [];
+            setExercises((prev) => {
+                const existingIds = new Set(prev.map((exercise) => exercise.id));
+                const uniqueNewExercises = newExercises.filter((exercise) => !existingIds.has(exercise.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setVisibleExercises((prev) => {
+                const existingIds = new Set(prev.map((exercise) => exercise.id));
+                const uniqueNewExercises = newExercises.filter((exercise) => !existingIds.has(exercise.id));
+                return [...prev, ...uniqueNewExercises];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
+        } catch (error) {
+            console.error('Error fetching exercises:', error);
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
             });
         }
     };
@@ -75,9 +202,43 @@ const Exercise = () => {
             const response = await api.get(`/lesson/${lessonId}`);
             setLesson(response.data);
         } catch (error) {
-            toast.error(t('errorFetchData', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
+            });
+        }
+    };
+
+    const fetchLevels = async () => {
+        try {
+            const response = await api.get(`/level/getEnabledLevels`);
+            console.log('Levels:', response.data); // Debug API response
+            setLevels(response.data || []);
+        } catch (error) {
+            console.error('Error fetching levels:', error);
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
+            });
+        }
+    };
+
+    const loadMore = async () => {
+        if (!nextPageToken) return;
+        try {
+            if (filterStatus !== 'all' && filterLevel !== 'all') {
+                fetchFilterLevelisDisabled(filterLevel, nextPageToken, filterStatus);
+            } else if (filterLevel !== 'all' && filterStatus === 'all') {
+                fetchFilterLevel(filterLevel, nextPageToken);
+            } else if (filterLevel === 'all' && filterStatus !== 'all') {
+                fetchAllExercisesisDisabled(nextPageToken, filterStatus);
+            } else {
+                fetchAllExercises(nextPageToken);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], {
+                position: 'top-right',
+                autoClose: 3000,
             });
         }
     };
@@ -98,19 +259,36 @@ const Exercise = () => {
                     formData.append('image', fileList[0].originFileObj);
                 }
                 if (optionType === 'text') {
-                    const validOptions = editingExercise.option.filter(opt => opt.trim() !== '');
-                    formData.append('option', JSON.stringify(validOptions));
-                    formData.append('answer', editingExercise.answer);
-                } else {
-                    optionFileList.forEach((fileList, index) => {
-                        if (fileList[0]?.originFileObj) {
-                            formData.append('option', fileList[0].originFileObj);
+                    const validOptions = editingExercise.option.filter(opt => opt && opt.trim() !== '');
+                    if (validOptions.length > 0) {
+                        formData.append('option', JSON.stringify(validOptions));
+                    }
+                } else if (optionType === 'image') {
+                    const validOptionFileList = optionFileList.filter(list => list.length > 0);
+                    if (validOptionFileList.length > 0) {
+                        validOptionFileList.forEach((fileList) => {
+                            if (fileList[0]?.originFileObj) {
+                                formData.append('option', fileList[0].originFileObj);
+                            } else if (fileList[0]?.url && fileList[0].url.startsWith('http')) {
+                                formData.append('option', fileList[0].url);
+                            }
+                        });
+                    }
+                    // Thêm answer vào FormData
+                    if (answerFileList.length > 0) {
+                        if (answerFileList[0]?.originFileObj) {
+                            formData.append('answer', answerFileList[0].originFileObj);
+                        } else if (answerFileList[0]?.url && answerFileList[0].url.startsWith('http')) {
+                            formData.append('answer', answerFileList[0].url);
                         }
-                    });
-                    if (answerFileList[0]?.originFileObj) {
-                        formData.append('answer', answerFileList[0].originFileObj);
                     }
                 }
+
+                console.log('Form Data to be sent:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(`${key}:`, value instanceof File ? value.name : value);
+                }
+
                 if (editingExercise.id) {
                     await api.put(`/exercise/${editingExercise.id}`, formData, {
                         headers: {
@@ -132,12 +310,25 @@ const Exercise = () => {
                         autoClose: 2000,
                     });
                 }
-                fetchExercises();
+                setExercises([]);
+                setVisibleExercises([]);
+                setNextPageToken(null);
+                if (filterStatus !== 'all' && filterLevel !== 'all') {
+                    fetchFilterLevelisDisabled(filterLevel, null, filterStatus);
+                } else if (filterLevel !== 'all' && filterStatus === 'all') {
+                    fetchFilterLevel(filterLevel, null);
+                } else if (filterLevel === 'all' && filterStatus !== 'all') {
+                    fetchAllExercisesisDisabled(null, filterStatus);
+                } else {
+                    fetchAllExercises(null);
+                }
                 closeModal();
             } catch (error) {
-                toast.error(t('validationFailed', { ns: 'common' }), {
+                console.error('Error saving exercise:', error);
+                console.log('Server response:', error.response?.data); // Log chi tiết lỗi từ server
+                toast.error(error.response?.data?.message?.[i18n.language] || t('saveFailed', { ns: 'common' }), {
                     position: 'top-right',
-                    autoClose: 2000,
+                    autoClose: 3000,
                 });
             }
         } else {
@@ -163,16 +354,15 @@ const Exercise = () => {
                 )
             );
         } catch (error) {
-            toast.error(t('validationFailed', { ns: 'common' }), {
+            toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
-                autoClose: 2000,
+                autoClose: 3000,
             });
         }
     };
 
     const validate = () => {
         const newErrors = {};
-
         if (!editingExercise?.levelId || editingExercise.levelId.trim() === '') {
             newErrors.levelId = t('levelIdRequired');
         }
@@ -184,18 +374,19 @@ const Exercise = () => {
         }
         if (optionType === 'text') {
             const validOptions = editingExercise?.option?.filter(opt => opt && opt.trim() !== '');
-            if (!validOptions || validOptions.length < 3) {
+            if (!validOptions || validOptions.length === 0) {
                 newErrors.option = t('optionRequired');
             }
         } else if (optionType === 'image') {
-            if (optionFileList.filter(list => list.length > 0).length < 3) {
+            const validOptionFileList = optionFileList.filter(list => list.length > 0 && (list[0]?.originFileObj || (list[0]?.url && list[0].url.startsWith('http'))));
+            if (validOptionFileList.length === 0) {
                 newErrors.option = t('optionImageRequired');
             }
         }
         if (optionType === 'text' && (!editingExercise?.answer || editingExercise.answer.trim() === '')) {
             newErrors.answer = t('answerRequired');
         }
-        if (optionType === 'image' && answerFileList.length === 0) {
+        if (optionType === 'image' && (!answerFileList.length || (!answerFileList[0]?.originFileObj && !(answerFileList[0]?.url && answerFileList[0].url.startsWith('http'))))) {
             newErrors.answer = t('answerImageRequired');
         }
         setErrors(newErrors);
@@ -208,20 +399,20 @@ const Exercise = () => {
                 levelId: '',
                 lessonId: lessonId,
                 question: { en: '', vi: '' },
-                option: ['', '', ''],
+                option: [''],
                 answer: '',
                 image: '',
             });
             setOptionType('text');
             setImageUrl('');
             setFileList([]);
-            setOptionFileList([[], [], []]);
+            setOptionFileList([[]]);
             setAnswerFileList([]);
         } else if (mode === 'update') {
             const isImageOption = exercise.option?.some(opt => opt.startsWith('http'));
             setEditingExercise({
                 ...exercise,
-                option: exercise.option || ['', '', ''],
+                option: exercise.option || [''],
                 answer: exercise.answer || '',
                 image: exercise.image || '',
             });
@@ -231,7 +422,7 @@ const Exercise = () => {
             setOptionFileList(
                 isImageOption && exercise.option
                     ? exercise.option.map(url => (url ? [{ url }] : []))
-                    : [[], [], []]
+                    : [[]]
             );
             setAnswerFileList(
                 isImageOption && exercise.answer ? [{ url: exercise.answer }] : []
@@ -256,7 +447,7 @@ const Exercise = () => {
         setOptionType('text');
         setImageUrl('');
         setFileList([]);
-        setOptionFileList([[], [], []]);
+        setOptionFileList([[]]);
         setAnswerFileList([]);
         setErrors({});
     };
@@ -282,7 +473,7 @@ const Exercise = () => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const newOptions = [...editingExercise.option];
-                newOptions[index] = e.target.result;
+                newOptions[index] = e.target.result; // Store base64 for preview
                 setEditingExercise((prev) => ({
                     ...prev,
                     option: newOptions,
@@ -325,11 +516,34 @@ const Exercise = () => {
         setImageUrl('');
     };
 
+    const addOption = () => {
+        if (editingExercise.option.length >= 3) {
+            toast.error(t('maxThreeOptions'));
+            return;
+        }
+        setEditingExercise((prev) => ({
+            ...prev,
+            option: [...prev.option, ''],
+        }));
+        setOptionFileList((prev) => [...prev, []]);
+    };
+
+    const removeOption = (index) => {
+        if (editingExercise.option.length === 1) {
+            toast.error(t('atLeastOneOption'));
+            return;
+        }
+        setEditingExercise((prev) => ({
+            ...prev,
+            option: prev.option.filter((_, i) => i !== index),
+        }));
+        setOptionFileList((prev) => prev.filter((_, i) => i !== index));
+    };
+
     const handleRemoveOptionImage = (index) => {
         const newOptionFileList = [...optionFileList];
         newOptionFileList[index] = [];
         setOptionFileList(newOptionFileList);
-
         const newOptions = [...editingExercise.option];
         newOptions[index] = '';
         setEditingExercise((prev) => ({
@@ -346,30 +560,9 @@ const Exercise = () => {
         }));
     };
 
-    const parseDate = (dateString) => {
-        const [time, date] = dateString.split(' ');
-        const [hours, minutes, seconds] = time.split(':').map(Number);
-        const [day, month, year] = date.split('/').map(Number);
-        return new Date(year, month - 1, day, hours, minutes, seconds);
-    };
-
-    const filteredExercises = exercises.filter(exercise => {
-        const matchLevel = filterLevel === 'all' ? true : exercise.levelId === filterLevel;
-        const matchStatus =
-            filterStatus === 'all'
-                ? true
-                : filterStatus === 'no'
-                ? exercise.isDisabled === false
-                : exercise.isDisabled === true;
-        const searchText = searchQuery.toLowerCase();
-        const exerciseName = exercise.question?.[i18n.language]?.toLowerCase() || '';
-        return matchStatus && matchLevel && exerciseName.includes(searchText);
-    });
-
-    // Ant Design Table columns
     const columns = [
         {
-            title: t('no', { ns: 'common' }),
+            title: t('.no', { ns: 'common' }),
             dataIndex: 'index',
             key: 'index',
             width: 80,
@@ -462,7 +655,6 @@ const Exercise = () => {
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
-                            setCurrentPage(1); // Reset to first page on search
                         }}
                     />
                 </div>
@@ -491,31 +683,25 @@ const Exercise = () => {
                                 <Select
                                     className="filter-dropdown"
                                     value={filterLevel}
-                                    onChange={(value) => {
-                                        setFilterLevel(value);
-                                        setCurrentPage(1);
-                                    }}
+                                    onChange={(value) => setFilterLevel(value)}
                                     placeholder={t('level')}
                                 >
-                                    <Select.Option value="all">{t('level')}</Select.Option>
+                                    <Select.Option value="all">{t('All Level')}</Select.Option>
                                     {levels.map((level) => (
                                         <Select.Option key={level.id} value={level.id}>
-                                            {level.name?.[i18n.language] || level.name || level.id}
+                                            {level.name?.[i18n.language] || level.id}
                                         </Select.Option>
                                     ))}
                                 </Select>
                                 <Select
                                     className="filter-dropdown"
                                     value={filterStatus}
-                                    onChange={(value) => {
-                                        setFilterStatus(value);
-                                        setCurrentPage(1);
-                                    }}
+                                    onChange={(value) => { setFilterStatus(value) }}
                                     placeholder={t('exerciseStatus')}
                                 >
-                                    <Select.Option value="all">{t('exerciseStatus')}</Select.Option>
-                                    <Select.Option value="yes">{t('yes', { ns: 'common' })}</Select.Option>
-                                    <Select.Option value="no">{t('no', { ns: 'common' })}</Select.Option>
+                                    <Select.Option value="all">{t('status')}</Select.Option>
+                                    <Select.Option value="false">{t('no', { ns: 'common' })}</Select.Option>
+                                    <Select.Option value="true">{t('yes', { ns: 'common' })}</Select.Option>
                                 </Select>
                             </div>
                         </div>
@@ -527,54 +713,20 @@ const Exercise = () => {
                 <div className="table-container-exercise">
                     <Table
                         columns={columns}
-                        dataSource={filteredExercises.slice(
-                            (currentPage - 1) * exercisesPerPage,
-                            currentPage * exercisesPerPage
-                        )}
+                        dataSource={visibleExercises}
                         pagination={false}
                         rowKey="id"
                         className="custom-table"
                     />
                     <div className="paginations">
-                        <Pagination
-                            current={currentPage}
-                            total={filteredExercises.length}
-                            pageSize={exercisesPerPage}
-                            onChange={(page) => setCurrentPage(page)}
-                            className="pagination"
-                            itemRender={(page, type, originalElement) => {
-                                if (type === 'prev') {
-                                    return (
-                                        <button className="around" disabled={currentPage === 1}>
-                                            {'<'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'next') {
-                                    return (
-                                        <button
-                                            className="around"
-                                            disabled={
-                                                currentPage === Math.ceil(filteredExercises.length / exercisesPerPage)
-                                            }
-                                        >
-                                            {'>'}
-                                        </button>
-                                    );
-                                }
-                                if (type === 'page') {
-                                    return (
-                                        <button className={`around ${currentPage === page ? 'active' : ''}`}>
-                                            {page}
-                                        </button>
-                                    );
-                                }
-                                return originalElement;
-                            }}
-                        />
+                        {nextPageToken && visibleExercises.length < countAll ? (
+                            <Button className="load-more-btn" onClick={loadMore}>
+                                {t('More', { ns: 'common' })}
+                            </Button>
+                        ) : null}
                     </div>
                 </div>
-                {/* Detail Modal */}
+
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px', fontWeight: 'bold', color: '#1a1a1a' }}>
@@ -649,7 +801,6 @@ const Exercise = () => {
                         </div>
                     )}
                 </Modal>
-                {/* Edit/Add Modal */}
                 <Modal
                     title={
                         <div style={{ textAlign: 'center', fontSize: '24px' }}>
@@ -691,6 +842,39 @@ const Exercise = () => {
                             {errors.questionEn && <div className="error-text">{errors.questionEn}</div>}
                         </div>
                         <div className="inputtext">
+                            <label className="titleinput">{t('image')}</label>
+                            <Upload
+                                accept="image/*"
+                                showUploadList={false}
+                                beforeUpload={() => false}
+                                onChange={handleImageChange}
+                                fileList={fileList}
+                            >
+                                <Button icon={<UploadOutlined />} className="custom-upload-button">
+                                    {t('inputImage')}
+                                </Button>
+                            </Upload>
+                            {imageUrl && (
+                                <div className="image-preview-box">
+                                    <Image src={imageUrl} alt="Preview" className="preview-image" />
+                                    <DeleteOutlined
+                                        onClick={handleRemoveImage}
+                                        style={{
+                                            position: 'absolute',
+                                            top: 8,
+                                            right: 8,
+                                            fontSize: 20,
+                                            color: '#ff4d4f',
+                                            cursor: 'pointer',
+                                            background: '#fff',
+                                            borderRadius: '50%',
+                                            padding: 4,
+                                        }}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        <div className="inputtext">
                             <label className="titleinput">{t('level')} <span style={{ color: 'red' }}>*</span></label>
                             <Select
                                 style={{ width: '100%', height: '50px' }}
@@ -710,103 +894,6 @@ const Exercise = () => {
                                 ))}
                             </Select>
                             {errors.levelId && <div className="error-text">{errors.levelId}</div>}
-                        </div>
-                        <div className="inputtexts">
-                            <div style={{ display: 'flex', gap: '20px' }}>
-                                <label className="titleinput">{t('textOption')}</label>
-                                <Checkbox
-                                    checked={optionType === 'text'}
-                                    onChange={(e) => {
-                                        if (e.target.checked) {
-                                            setOptionType('text');
-                                            setEditingExercise((prev) => ({
-                                                ...prev,
-                                                option: ['', '', ''],
-                                                answer: '',
-                                            }));
-                                            setOptionFileList([[], [], []]);
-                                            setAnswerFileList([]);
-                                        }
-                                    }}
-                                />
-                                <label className="titleinput">{t('imageOption')}</label>
-                                <Checkbox
-                                    checked={optionType === 'image'}
-                                    onChange={(e) => {
-                                        if (e.target.checked) {
-                                            setOptionType('image');
-                                            setEditingExercise((prev) => ({
-                                                ...prev,
-                                                option: ['', '', ''],
-                                                answer: '',
-                                            }));
-                                            setOptionFileList([[], [], []]);
-                                            setAnswerFileList([]);
-                                        }
-                                    }}
-                                />
-                            </div>
-                        </div>
-                        <div className="inputtext">
-                            <label className="titleinput">{t('option')} <span style={{ color: 'red' }}>*</span></label>
-                            {optionType === 'text' ? (
-                                editingExercise?.option?.map((opt, index) => (
-                                    <Input
-                                        key={index}
-                                        placeholder={`${t('option')} ${index + 1}`}
-                                        value={opt}
-                                        onChange={(e) => {
-                                            const newOptions = [...editingExercise.option];
-                                            newOptions[index] = e.target.value;
-                                            setEditingExercise({
-                                                ...editingExercise,
-                                                option: newOptions,
-                                            });
-                                        }}
-                                        style={{ marginBottom: '10px' }}
-                                    />
-                                ))
-                            ) : (
-                                editingExercise?.option?.map((opt, index) => (
-                                    <div key={index} style={{ marginBottom: '20px' }}>
-                                        <Upload
-                                            accept="image/*"
-                                            showUploadList={false}
-                                            beforeUpload={() => false}
-                                            onChange={(info) => handleOptionImageChange(index, info)}
-                                            fileList={optionFileList[index]}
-                                        >
-                                            <Button icon={<UploadOutlined />} className="custom-upload-button">
-                                                {t('uploadOption', { number: index + 1 })}
-                                            </Button>
-                                        </Upload>
-                                        {optionFileList[index].length > 0 && (
-                                            <div className="image-preview-box-option">
-                                                <Image
-                                                    src={opt}
-                                                    alt={`Option ${index + 1}`}
-                                                    className="preview-image-option"
-                                                />
-                                                <DeleteOutlined
-                                                    onClick={() => handleRemoveOptionImage(index)}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: 8,
-                                                        right: 8,
-                                                        fontSize: 20,
-                                                        color: '#ff4d4f',
-                                                        cursor: 'pointer',
-                                                        background: '#fff',
-                                                        borderRadius: '50%',
-                                                        padding: 4,
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                ))
-                            )}
-                            {errors.option && <div className="error-text">{errors.option}</div>}
                         </div>
                         <div className="inputtext">
                             <label className="titleinput">{t('answer')} <span style={{ color: 'red' }}>*</span></label>
@@ -861,38 +948,132 @@ const Exercise = () => {
                             )}
                             {errors.answer && <div className="error-text">{errors.answer}</div>}
                         </div>
+                        <div className="inputtexts">
+                            <div style={{ display: 'flex', gap: '20px' }}>
+                                <label className="titleinput">{t('textOption')}</label>
+                                <Checkbox
+                                    checked={optionType === 'text'}
+                                    onChange={(e) => {
+                                        if (e.target.checked) {
+                                            setOptionType('text');
+                                            setEditingExercise((prev) => ({
+                                                ...prev,
+                                                option: [''],
+                                                answer: '',
+                                            }));
+                                            setOptionFileList([[]]);
+                                            setAnswerFileList([]);
+                                        }
+                                    }}
+                                />
+                                <label className="titleinput">{t('imageOption')}</label>
+                                <Checkbox
+                                    checked={optionType === 'image'}
+                                    onChange={(e) => {
+                                        if (e.target.checked) {
+                                            setOptionType('image');
+                                            setEditingExercise((prev) => ({
+                                                ...prev,
+                                                option: [''],
+                                                answer: '',
+                                            }));
+                                            setOptionFileList([[]]);
+                                            setAnswerFileList([]);
+                                        }
+                                    }}
+                                />
+                            </div>
+                        </div>
                         <div className="inputtext">
-                            <label className="titleinput">{t('image')}</label>
-                            <Upload
-                                accept="image/*"
-                                showUploadList={false}
-                                beforeUpload={() => false}
-                                onChange={handleImageChange}
-                                fileList={fileList}
-                            >
-                                <Button icon={<UploadOutlined />} className="custom-upload-button">
-                                    {t('inputImage')}
-                                </Button>
-                            </Upload>
-                            {imageUrl && (
-                                <div className="image-preview-box">
-                                    <Image src={imageUrl} alt="Preview" className="preview-image" />
-                                    <DeleteOutlined
-                                        onClick={handleRemoveImage}
-                                        style={{
-                                            position: 'absolute',
-                                            top: 8,
-                                            right: 8,
-                                            fontSize: 20,
-                                            color: '#ff4d4f',
-                                            cursor: 'pointer',
-                                            background: '#fff',
-                                            borderRadius: '50%',
-                                            padding: 4,
-                                        }}
-                                    />
-                                </div>
+                            <label className="titleinput">{t('option')} <span style={{ color: 'red' }}>*</span></label>
+                            {optionType === 'text' ? (
+                                editingExercise?.option?.map((opt, index) => (
+                                    <div key={index} className='option-text'>
+                                        <Input
+                                            placeholder={`${t('option')} ${index + 1}`}
+                                            value={opt}
+                                            onChange={(e) => {
+                                                const newOptions = [...editingExercise.option];
+                                                newOptions[index] = e.target.value;
+                                                setEditingExercise({
+                                                    ...editingExercise,
+                                                    option: newOptions,
+                                                });
+                                            }}
+                                            style={{ flex: 1 }}
+                                        />
+                                        <Button
+                                            onClick={() => removeOption(index)}
+                                            icon={<DeleteOutlined />}
+                                            style={{
+                                                position: 'absolute',
+                                                top: 3,
+                                                right: 8,
+                                                fontSize: 20,
+                                                color: '#ff4d4f',
+                                                cursor: 'pointer',
+                                                background: '#fff',
+                                                borderRadius: '50%',
+                                                padding: 4,
+                                            }}
+                                        />
+                                    </div>
+                                ))
+                            ) : (
+                                editingExercise?.option?.map((opt, index) => (
+                                    <div key={index} style={{ marginBottom: '20px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                            <Upload
+                                                accept="image/*"
+                                                showUploadList={false}
+                                                beforeUpload={() => false}
+                                                onChange={(info) => handleOptionImageChange(index, info)}
+                                                fileList={optionFileList[index]}
+                                            >
+                                                <Button icon={<UploadOutlined />} className="custom-upload-button">
+                                                    {t('uploadOption', { number: index + 1 })}
+                                                </Button>
+                                            </Upload>
+                                            <Button
+                                                onClick={() => removeOption(index)}
+                                                style={{ marginLeft: '10px', color: '#ff4d4f' }}
+                                                icon={<DeleteOutlined />}
+                                            />
+                                        </div>
+                                        {optionFileList[index].length > 0 && (
+                                            <div className="image-preview-box-option">
+                                                <Image
+                                                    src={opt}
+                                                    alt={`Option ${index + 1}`}
+                                                    className="preview-image-option"
+                                                />
+                                                <DeleteOutlined
+                                                    onClick={() => handleRemoveOptionImage(index)}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: 8,
+                                                        right: 8,
+                                                        fontSize: 20,
+                                                        color: '#ff4d4f',
+                                                        cursor: 'pointer',
+                                                        background: '#fff',
+                                                        borderRadius: '50%',
+                                                        padding: 4,
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
                             )}
+                            <Button
+                                onClick={addOption}
+                                style={{ marginTop: '10px' }}
+                                className="custom-upload-button"
+                            >
+                                + {t('addOption')}
+                            </Button>
+                            {errors.option && <div className="error-text">{errors.option}</div>}
                         </div>
                     </div>
                     <div className="button-row">
