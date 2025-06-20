@@ -27,6 +27,7 @@ export const lightColors = {
   backgroundSavehover: '#2e6bcc',
   backgroundCancel: '#ff4d4f',
   backgroundCancelhover: '#e64446',
+  backgroundTabled: '#F5F5F5',
 
   // Text
   colorText: '#202224',
@@ -36,6 +37,7 @@ export const lightColors = {
   colordHover: '#696969',
   colorCardvalue: '#202224',
   colorTextsearch: '#D8D8D8',
+  colorCardtitle: '#6b7280', // Card values 
   colorSearch: '#202224', // Thêm cho nhất quán (dựa trên darkColors)
   subTitle: '#6b7280',
   labelLogin: '#374151',

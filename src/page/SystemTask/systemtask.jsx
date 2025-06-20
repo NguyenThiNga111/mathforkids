@@ -269,7 +269,7 @@ const SystemTask = () => {
             align: 'center',
             render: (isDisabled, record) => (
                 <Switch
-                    checked={isDisabled}
+                    checked={!isDisabled}
                     onChange={() => handleToggleDisabled(record)}
                     className="custom-switch"
                 />

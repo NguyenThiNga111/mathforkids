@@ -131,6 +131,8 @@ const Rewards = () => {
                 const formData = new FormData();
                 formData.append('name', JSON.stringify(editingReward.name));
                 formData.append('description', JSON.stringify(editingReward.description));
+                formData.append('exchangePoint', Number(editingReward.exchangePoint));
+
                 if (fileList[0]?.originFileObj) {
                     formData.append('image', fileList[0].originFileObj);
                 }
@@ -207,6 +209,9 @@ const Rewards = () => {
         }
         if (!editingReward?.description?.en || editingReward.description.en.trim() === '') {
             newErrors.descriptionEn = t('descriptionEnRequired');
+        }
+        if (!editingReward.exchangePoint || editingReward.exchangePoint < 1) {
+            newErrors.exchangePointRequired = t('exchangePointRequired');
         }
         if (!imageUrl && !editingReward?.image) {
             newErrors.image = t('imageRequired');
@@ -325,7 +330,7 @@ const Rewards = () => {
             align: 'center',
             render: (isDisabled, record) => (
                 <Switch
-                    checked={isDisabled}
+                    checked={!isDisabled}
                     onChange={() => handleToggleAvailable(record)}
                     className="custom-switch"
                 />
@@ -440,6 +445,17 @@ const Rewards = () => {
                                 }
                             />
                             {errors.nameEn && <div className="error-text">{errors.nameEn}</div>}
+                        </div>
+                        <div className="inputtext">
+                            <label className="titleinput">{t('exchangePoint')}<span style={{ color: 'red' }}>*</span></label>
+                            <Input
+                                placeholder={t('inputextchangePoint')}
+                                value={editingReward?.exchangePoint || ''}
+                                onChange={(e) =>
+                                    setEditingReward({ ...editingReward, exchangePoint: e.target.value })
+                                }
+                            />
+                            {errors.exchangePointRequired && <div className="error-text">{errors.exchangePointRequired}</div>}
                         </div>
                         <div className="inputtext">
                             <label className="titleinput">{t('image')} <span style={{ color: 'red' }}>*</span></label>

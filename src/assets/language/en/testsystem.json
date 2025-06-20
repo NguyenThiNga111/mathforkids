@@ -16,5 +16,6 @@
     "lessonRequired": "Lesson is required",
     "durationRequired": "Duration is required",
     "updateTestSystem": "Update Test System",
-    "addTestSystem": "Add Test System"
+    "addTestSystem": "Add Test System",
+    "questiontest": "Question test"
 }

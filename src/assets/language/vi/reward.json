@@ -16,5 +16,8 @@
     "alphabet": "Bảng chữ cái",
     "rewardStatus": "Trạng thái phần thưởng",
     "addReward": "Thêm phần thưởng",
-    "updateReward": "Cập nhật Phần thưởng"
+    "updateReward": "Cập nhật Phần thưởng",
+    "exchangePointRequired":"Cần phải nhập điểm trao đổi",
+    "inputextchangePoint":"Nhập điểm trao đổi",
+    "exchangePoint":"Điểm trao đổi"
 }

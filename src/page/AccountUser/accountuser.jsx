@@ -415,7 +415,7 @@ const AccountUser = () => {
             align: 'center',
             render: (_, user) => (
                 <Switch
-                    checked={user.isDisabled}
+                    checked={!user.isDisabled}
                     onChange={() => handleToggleDisabled(user)}
                     className="custom-switch"
                 />
@@ -517,8 +517,8 @@ const AccountUser = () => {
                             onChange={(value) => { setFilterStatus(value); }}
                         >
                             <Select.Option value="all">{t('status', { ns: 'common' })}</Select.Option>
-                            <Select.Option value="false">{t('no', { ns: 'common' })}</Select.Option>
-                            <Select.Option value="true">{t('yes', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="true">{t('no', { ns: 'common' })}</Select.Option>
+                            <Select.Option value="false">{t('yes', { ns: 'common' })}</Select.Option>
                         </Select>
                     </div>
                     {/* <Button className="rounded-add" onClick={() => openModal('add')}>

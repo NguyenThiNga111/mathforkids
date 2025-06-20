@@ -16,13 +16,15 @@
     "nameEnMinLength": "Tên bài học tiếng Anh phải có ít nhất 3 ký tự",
     "nameViInvalid": "Tên bài học tiếng Việt chứa ký tự không hợp lệ",
     "nameEnInvalid": "Tên bài học tiếng Anh chứa ký tự không hợp lệ",
-    "addition": "Cộng",
-    "subtraction": "Trừ",
-    "multiplication": "Nhân",
-    "division": "Chia",
+    "addition": "Phép cộng",
+    "subtraction": "Phép trừ",
+    "multiplication": "Phép nhân",
+    "division": "Phép chia",
     "typeRequired": "Vui lòng chọn loại bài học",
     "inputType": "Chọn loại bài học",
     "type":"Loại",
     "exercises":"Bài tập",
-    "detail":"Chi tiết"
+    "detail":"Chi tiết",
+    "enableDrag":"Di chuyển",
+    "disableDrag":"Tắt di chuyển"
 }

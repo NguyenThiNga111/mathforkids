@@ -6,7 +6,7 @@
     "exportFile": "Export file",
     "update": "Update",
     "action": "Action",
-    "available": "Disabled",
+    "available": "isEnabled",
     "errorFetchData": "Error fetching data",
     "updateSuccess": "Update successful",
     "addSuccess": "Add successful",

@@ -32,5 +32,12 @@
   "November": "Tháng Mười Một",
   "December": "Tháng Mười Hai",
   "UsersByGender": "Tổng giới tính học sinh",
-  "NumberOfStudents": "Thống kê lớp"
+  "NumberOfStudents": "Thống kê lớp",
+  "pupils": "Tên học sinh",
+  "Top10PupilsByAveragePoint": "Top 10 Học sinh có Điểm trung bình cao nhất",
+  "Top10LessonsByAveragePoint":"Top 10 bài học theo điểm trung bình",
+  "lessons":"Bài học",
+    "noChange":"Không có thay đổi",
+    "ofTotalUsers":"Tổng tài khoản học sinh"
+
 }

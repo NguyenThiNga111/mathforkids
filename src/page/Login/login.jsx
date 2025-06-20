@@ -25,6 +25,7 @@ const Login = () => {
             const userID = response.data.userId;
             console.log(userID);
             localStorage.setItem("userID", userID);
+            localStorage.setItem("userEmail", email);
             navigate(`/verify`);
 
 

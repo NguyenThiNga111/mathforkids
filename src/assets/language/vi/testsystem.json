@@ -16,5 +16,6 @@
     "lessonRequired": "Bài học bắt buộc",
     "durationRequired": "Thời lượng bắt buộc",
     "updateTestSystem": "Cập nhật hệ thống kiểm tra",
-    "addTestSystem": "Thêm hệ thống kiểm tra"
+    "addTestSystem": "Thêm hệ thống kiểm tra",
+    "questiontest":"Câu hỏi"
 }
