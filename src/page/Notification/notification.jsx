@@ -186,12 +186,6 @@ const Notification = () => {
             dataIndex: 'createdAt',
             key: 'createdAt',
         },
-        {
-            title: t('status'),
-            dataIndex: 'isRead',
-            key: 'isRead',
-            render: (isRead) => (isRead ? t('read') : t('unread')),
-        },
     ];
 
     return (

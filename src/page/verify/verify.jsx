@@ -9,7 +9,9 @@ const Verify = () => {
     const [otp, setOtp] = useState(new Array(4).fill(''));
     const navigate = useNavigate();
     const userID = localStorage.getItem("userID");
-    console.log(userID);
+    const userEmail = localStorage.getItem("userEmail");
+
+    console.log(userEmail);
     const handleChange = (e, index) => {
         const value = e.target.value;
         if (/^[0-9]?$/.test(value)) {
@@ -35,7 +37,14 @@ const Verify = () => {
             document.getElementById(`otp-input-${index - 1}`).focus();
         }
     };
-
+    const handleResend = async () => {
+        try {
+            await api.post(`/auth/sendOtpByEmail/${userEmail}`);
+            toast.success('Đã gửi lại OTP thành công!');
+        } catch (error) {
+            toast.error('Không thể gửi lại OTP. Vui lòng thử lại.');
+        }
+    };
     const handleVerify = async () => {
         const enteredOTP = otp.join('');
         if (enteredOTP.length !== 4) {
@@ -93,9 +102,13 @@ const Verify = () => {
                             />
                         ))}
                     </div>
+
                     <div className='buttonverifys'>
+                        <Button className="buttonverify" onClick={handleResend}>Gửi lại OTP</Button>
+
                         <Button className="buttonverify" onClick={handleVerify}>Verify</Button>
                     </div>
+
                 </div>
             </div>
         </div>

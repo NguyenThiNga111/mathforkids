@@ -22,8 +22,9 @@
     "division": "Division",
     "typeRequired": "Please select a lesson type",
     "inputType": "Select lesson type",
-    "type":"Type",
-    "exercises":"Exercises",
-    "detail":"Detail"
-
+    "type": "Type",
+    "exercises": "Exercises",
+    "detail": "Detail",
+    "enableDrag": "Enable drag",
+    "disableDrag": "Disable drag"
 }

@@ -14,7 +14,6 @@ import Navbar from "../../component/Navbar";
 const Exercise = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingExercise, setEditingExercise] = useState(null);
-    const [currentPage, setCurrentPage] = useState(1);
     const [imageUrl, setImageUrl] = useState('');
     const [exercises, setExercises] = useState([]);
     const [fileList, setFileList] = useState([]);
@@ -249,6 +248,7 @@ const Exercise = () => {
     };
 
     const handleSave = async () => {
+
         if (validate()) {
             try {
                 const formData = new FormData();
@@ -288,6 +288,7 @@ const Exercise = () => {
                 for (let [key, value] of formData.entries()) {
                     console.log(`${key}:`, value instanceof File ? value.name : value);
                 }
+
 
                 if (editingExercise.id) {
                     await api.put(`/exercise/${editingExercise.id}`, formData, {
@@ -443,7 +444,7 @@ const Exercise = () => {
 
     const closeModal = () => {
         setIsModalOpen(false);
-        setEditingExercise(null);
+        // setEditingExercise(null);
         setOptionType('text');
         setImageUrl('');
         setFileList([]);
@@ -566,7 +567,7 @@ const Exercise = () => {
             dataIndex: 'index',
             key: 'index',
             width: 80,
-            render: (_, __, index) => (currentPage - 1) * exercisesPerPage + index + 1,
+            render: (_, __, index) => index + 1,
         },
         {
             title: t('question'),
@@ -621,7 +622,7 @@ const Exercise = () => {
             align: 'center',
             render: (isDisabled, record) => (
                 <Switch
-                    checked={isDisabled}
+                    checked={!isDisabled}
                     onChange={() => handleToggleAvailable(record)}
                     className="custom-switch"
                 />

@@ -16,5 +16,8 @@
     "alphabet": "Alphabet",
     "rewardStatus": "Reward status",
     "addReward": "Add Reward",
-    "updateReward": "Update Reward"
+    "updateReward": "Update Reward",
+    "exchangePointRequired": "Exchange point is required",
+    "inputextchangePoint": "Enter exchange point",
+    "exchangePoint": "Exchange point"
 }

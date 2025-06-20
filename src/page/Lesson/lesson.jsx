@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Input, Button, Select, Modal, Table, Pagination, Switch } from 'antd';
-import { Imgs } from '../../assets/theme/images';
+import { Input, Button, Select, Modal, Table, Switch } from 'antd';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
-import { FaEdit, FaBook, FaPlus, FaMinus, FaTimes, FaDivide, FaBookOpen } from 'react-icons/fa';
+import { FaEdit, FaBook, FaPlus, FaMinus, FaTimes, FaDivide, FaBookOpen, FaArrowsAlt } from 'react-icons/fa';
 import api from '../../assets/api/Api';
 import Navbar from '../../component/Navbar';
 import './lesson.css';
@@ -16,30 +16,81 @@ const Lesson = () => {
     const [editingLesson, setEditingLesson] = useState(null);
     const [lessonsData, setLessonsData] = useState([]);
     const [selectedGrade, setSelectedGrade] = useState(1);
-    const [filterType, setFilterType] = useState('addition'); // addition / subtraction / multiplication / division
+    const [filterType, setFilterType] = useState('addition');
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [countAll, setCountAll] = useState('');
     const [visibleLesson, setVisibleLesson] = useState([]);
     const [nextPageToken, setNextPageToken] = useState(null);
+    const [isDragEnabled, setIsDragEnabled] = useState(false); // New state for drag toggle
     const { t, i18n } = useTranslation(['lesson', 'common']);
     const [errors, setErrors] = useState({});
     const navigate = useNavigate();
     const lessonsPerPage = 10;
 
-    const lessonTypes = [
+    const lessonTypes = useMemo(() => [
         { value: 'addition', label: t('addition'), icon: <FaPlus className="icon-type" />, color: '#60D56C' },
         { value: 'subtraction', label: t('subtraction'), icon: <FaMinus className="icon-type" />, color: '#B526E4' },
         { value: 'multiplication', label: t('multiplication'), icon: <FaTimes className="icon-type" />, color: '#F73A7A' },
         { value: 'division', label: t('division'), icon: <FaDivide className="icon-type" />, color: '#FD8550' },
-    ];
+    ], [t]);
+
+
+    const fetchGradeType = useCallback(async (grade, type, token = null) => {
+        try {
+            let url = `/lesson/getAll?pageSize=${lessonsPerPage}&type=${type}&grade=${grade}`;
+            if (token) url += `&startAfterId=${token}`;
+            const response = await api.get(url);
+            const newLessons = response.data.data || [];
+            const responses = await api.get(`/lesson/countAll?type=${type}&grade=${grade}`);
+            setCountAll(Number(responses.data.count));
+            setLessonsData((prev) => {
+                const existingIds = new Set(prev.map((lesson) => lesson.id));
+                const uniqueNewLessons = newLessons.filter((lesson) => !existingIds.has(lesson.id));
+                return [...prev, ...uniqueNewLessons];
+            });
+            setVisibleLesson((prev) => {
+                const existingIds = new Set(prev.map((lesson) => lesson.id));
+                const uniqueNewLessons = newLessons.filter((lesson) => !existingIds.has(lesson.id));
+                return [...prev, ...uniqueNewLessons];
+            });
+            setNextPageToken(response.data.nextPageToken || null);
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], { position: 'top-right', autoClose: 3000 });
+        }
+    }, [i18n.language]);
+
+    const fetchFilterLessonDisabled = useCallback(async (grade, type, token = null, isDisabled) => {
+        try {
+            let url = `/lesson/filterByDisabled?pageSize=${lessonsPerPage}&type=${type}&grade=${grade}&isDisabled=${isDisabled}`;
+            if (token) url += `&startAfterId=${token}`;
+            const response = await api.get(url);
+            const newLessons = response.data.data || [];
+            const responses = await api.get(`/lesson/countByDisabledStatus?type=${type}&grade=${grade}&isDisabled=${isDisabled}`);
+            setCountAll(Number(responses.data.count));
+            setLessonsData((prev) => {
+                const existingIds = new Set(prev.map((lesson) => lesson.id));
+                const uniqueNewLessons = newLessons.filter((lesson) => !existingIds.has(lesson.id));
+                return [...prev, ...uniqueNewLessons];
+            });
+            setVisibleLesson((prev) => {
+                const existingIds = new Set(prev.map((lesson) => lesson.id));
+                const uniqueNewLessons = newLessons.filter((lesson) => !existingIds.has(lesson.id));
+                return [...prev, ...uniqueNewLessons];
+            });
+            // Cena: 0
+            setNextPageToken(response.data.nextPageToken || null);
+        } catch (error) {
+            toast.error(error.response?.data?.message?.[i18n.language], { position: 'top-right', autoClose: 3000 });
+        }
+    }, [i18n.language]);
+
     useEffect(() => {
         if (searchQuery.trim() === '') {
-            setVisibleLesson(lessonsData); // Reset to all when search is empty
+            setVisibleLesson(lessonsData);
         } else {
             const filtered = lessonsData.filter(
-                (lesson) =>
-                    lesson.name?.[i18n.language]?.toLowerCase().includes(searchQuery.toLowerCase())
+                (lesson) => lesson.name?.[i18n.language]?.toLowerCase().includes(searchQuery.toLowerCase())
             );
             setVisibleLesson(filtered);
         }
@@ -55,35 +106,11 @@ const Lesson = () => {
             } else {
                 await fetchGradeType(selectedGrade, filterType, null);
             }
-
         };
         fetchLessons();
-    }, [selectedGrade, filterType, filterStatus]);
+    }, [selectedGrade, filterType, filterStatus, fetchGradeType, fetchFilterLessonDisabled]);
 
-    const fetchGradeType = async (grade, type, token = null) => {
-        try {
-            // Build API query string
-            let url = `/lesson/getAll?pageSize=${lessonsPerPage}&type=${type}&grade=${grade}`;
-            if (token) {
-                url += `&startAfterId=${token}`; // Use startAfterId as per your backend
-            }
-
-            const response = await api.get(url);
-            const newLessons = response.data.data || [];
-            const responses = await api.get(`/lesson/countAll?type=${type}&grade=${grade}`);
-            setCountAll(Number(responses.data.count));
-            setLessonsData((prev) => [...prev, ...newLessons]); // Append new lessons
-            setVisibleLesson((prev) => [...prev, ...newLessons]); // Append to visible lessons
-            setNextPageToken(response.data.nextPageToken || null);
-        } catch (error) {
-            toast.error(error.response?.data?.message?.[i18n.language], {
-                position: 'top-right',
-                autoClose: 3000,
-            });
-        }
-    };
-
-    const loadMore = async () => {
+    const loadMore = useCallback(async () => {
         if (!nextPageToken) return;
         try {
             if (filterStatus !== 'all') {
@@ -92,37 +119,11 @@ const Lesson = () => {
                 await fetchGradeType(selectedGrade, filterType, nextPageToken);
             }
         } catch (error) {
-            toast.error(error.response?.data?.message?.[i18n.language], {
-                position: 'top-right',
-                autoClose: 3000,
-            });
+            toast.error(error.response?.data?.message?.[i18n.language], { position: 'top-right', autoClose: 3000 });
         }
-    };
+    }, [nextPageToken, selectedGrade, filterType, filterStatus, fetchGradeType, fetchFilterLessonDisabled, i18n.language]);
 
-    const fetchFilterLessonDisabled = async (grade, type, token = null, isDisabled) => {
-        try {
-            // Add pagination token to the payload or query string
-            let url = `/lesson/filterByDisabled?pageSize=${lessonsPerPage}&type=${type}&grade=${grade}&isDisabled=${isDisabled}`;
-            if (token) {
-                url += `&startAfterId=${token}`; // Use startAfterId as per your backend
-            }
-            const response = await api.get(url);
-            const newLessons = response.data.data || [];
-            const responses = await api.get(`/lesson/countByDisabledStatus?type=${type}&grade=${grade}&isDisabled=${isDisabled}`);
-            setCountAll(Number(responses.data.count));
-            setLessonsData((prev) => [...prev, ...newLessons]); // Append new lessons
-            setVisibleLesson((prev) => [...prev, ...newLessons]); // Append to visible lessons
-            setNextPageToken(response.data.nextPageToken || null);
-        } catch (error) {
-            console.error('Error fetching more filtered lessons:', error);
-            toast.error(error.response?.data?.message?.[i18n.language], {
-                position: 'top-right',
-                autoClose: 3000,
-            });
-        }
-    };
-
-    const handleSave = async () => {
+    const handleSave = useCallback(async () => {
         if (validateForm()) {
             try {
                 const { id, ...payload } = editingLesson;
@@ -134,18 +135,38 @@ const Lesson = () => {
                 payload.type = editingLesson.type;
 
                 if (editingLesson?.id) {
+                    // Kiểm tra xem type hoặc grade có thay đổi không
+                    const originalLesson = lessonsData.find((lesson) => lesson.id === editingLesson.id);
+                    const isTypeChanged = originalLesson.type !== payload.type;
+                    const isGradeChanged = originalLesson.grade !== payload.grade;
+
+                    if (isTypeChanged || isGradeChanged) {
+                        // Lấy danh sách bài học cho type và grade mới để tìm order lớn nhất
+                        const response = await api.get(`/lesson/getAll?pageSize=${lessonsPerPage}&type=${payload.type}&grade=${payload.grade}`);
+                        const lessons = response.data.data || [];
+                        const maxOrder = lessons.length > 0 ? Math.max(...lessons.map(lesson => lesson.order || 0)) : 0;
+                        payload.order = maxOrder + 1; // Gán order mới cho bài học được cập nhật
+                    } else {
+                        // Giữ nguyên order hiện tại nếu type và grade không thay đổi
+                        payload.order = editingLesson.order;
+                    }
+
                     await api.patch(`/lesson/${editingLesson.id}`, payload);
-                    toast.success(t('updateSuccess', { ns: 'common' }), {
-                        position: 'top-right',
-                        autoClose: 2000,
-                    });
+                    toast.success(t('updateSuccess', { ns: 'common' }), { position: 'top-right', autoClose: 2000 });
                 } else {
+                    // Đối với bài học mới, gán order dựa trên order lớn nhất trong nhóm
+                    let maxOrder = 0;
+                    const response = await api.get(`/lesson/getAll?pageSize=${lessonsPerPage}&type=${payload.type}&grade=${payload.grade}`);
+                    const lessons = response.data.data || [];
+                    if (lessons.length > 0) {
+                        maxOrder = Math.max(...lessons.map(lesson => lesson.order || 0));
+                    }
+                    payload.order = maxOrder + 1;
                     await api.post(`/lesson`, payload);
-                    toast.success(t('addSuccess', { ns: 'common' }), {
-                        position: 'top-right',
-                        autoClose: 2000,
-                    });
+                    toast.success(t('addSuccess', { ns: 'common' }), { position: 'top-right', autoClose: 2000 });
                 }
+
+                // Làm mới danh sách bài học
                 setLessonsData([]);
                 setVisibleLesson([]);
                 setNextPageToken(null);
@@ -156,47 +177,27 @@ const Lesson = () => {
                 }
                 closeModal();
             } catch (error) {
-                toast.error(error.response?.data?.message?.[i18n.language], {
-                    position: 'top-right',
-                    autoClose: 3000,
-                });
+                toast.error(error.response?.data?.message?.[i18n.language], { position: 'top-right', autoClose: 3000 });
             }
         } else {
-            toast.error(t('validationFailed', { ns: 'common' }), {
-                position: 'top-right',
-                autoClose: 2000,
-            });
+            toast.error(t('validationFailed', { ns: 'common' }), { position: 'top-right', autoClose: 2000 });
         }
-    };
+    }, [editingLesson, selectedGrade, filterType, filterStatus, fetchGradeType, fetchFilterLessonDisabled, i18n.language, t, lessonsData]);
 
-    const handleToggleAvailable = async (lesson) => {
+    const handleToggleAvailable = useCallback(async (lesson) => {
         try {
-            const updatedLesson = {
-                ...lesson,
-                isDisabled: !lesson.isDisabled,
-            };
-            await api.patch(`/lesson/${lesson.id}`, {
-                ...updatedLesson,
-                isDisabled: updatedLesson.isDisabled,
-            });
-            toast.success(t('updateSuccess', { ns: 'common' }), {
-                position: 'top-right',
-                autoClose: 2000,
-            });
+            const updatedLesson = { ...lesson, isDisabled: !lesson.isDisabled };
+            await api.patch(`/lesson/${lesson.id}`, { ...updatedLesson, isDisabled: updatedLesson.isDisabled });
+            toast.success(t('updateSuccess', { ns: 'common' }), { position: 'top-right', autoClose: 2000 });
             setLessonsData((prev) =>
-                prev.map((e) =>
-                    e.id === lesson.id ? { ...e, isDisabled: !lesson.isDisabled } : e
-                )
+                prev.map((e) => (e.id === lesson.id ? { ...e, isDisabled: !lesson.isDisabled } : e))
             );
         } catch (error) {
-            toast.error(error.response?.data?.message?.[i18n.language], {
-                position: 'top-right',
-                autoClose: 3000,
-            });
+            toast.error(error.response?.data?.message?.[i18n.language], { position: 'top-right', autoClose: 3000 });
         }
-    };
+    }, [i18n.language, t]);
 
-    const validateForm = () => {
+    const validateForm = useCallback(() => {
         const newErrors = {};
         if (!editingLesson?.name?.vi || editingLesson.name.vi.trim() === '') {
             newErrors.nameVi = t('nameViRequired');
@@ -218,33 +219,62 @@ const Lesson = () => {
         }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    };
+    }, [editingLesson, t]);
 
-    const openModal = (mode, lesson = null) => {
+    const openModal = useCallback((mode, lesson = null) => {
         if (mode === 'add') {
             setEditingLesson({ name: { en: '', vi: '' }, grade: '', type: '' });
         } else if (mode === 'update') {
             setEditingLesson(lesson);
         }
         setIsModalOpen(true);
-    };
+    }, []);
 
-    const handleViewExercises = (lessonId) => {
-        console.log('Navigating with lessonId:', lessonId);
+    const handleViewExercises = useCallback((lessonId) => {
         navigate(`/exercise/getByLesson/${lessonId}`);
-    };
+    }, [navigate]);
 
-    const handleLessonDetail = (lessonId) => {
-        console.log('Navigating with lessonId:', lessonId);
+    const handleLessonDetail = useCallback((lessonId) => {
         navigate(`/lessondetail/${lessonId}`);
-    };
+    }, [navigate]);
 
-    const closeModal = () => {
+    const closeModal = useCallback(() => {
         setIsModalOpen(false);
         setErrors({});
-    };
+    }, []);
 
-    const columns = [
+    const handleDragEnd = useCallback(async (result) => {
+        if (!result.destination) return;
+
+        const reorderedLessons = Array.from(visibleLesson);
+        const [movedLesson] = reorderedLessons.splice(result.source.index, 1);
+        reorderedLessons.splice(result.destination.index, 0, movedLesson);
+
+        const updatedLessons = reorderedLessons.map((lesson, index) => ({
+            ...lesson,
+            order: index + 1,
+        }));
+
+        setVisibleLesson(updatedLessons);
+        setLessonsData(updatedLessons);
+
+        try {
+            const updatePromises = updatedLessons.map((lesson) =>
+                api.patch(`/lesson/order/${lesson.id}`, { order: lesson.order })
+            );
+            await Promise.all(updatePromises);
+            toast.success(t('updateOrderSuccess', { ns: 'common' }), { position: 'top-right', autoClose: 2000 });
+        } catch (error) {
+            toast.error(t('updateOrderFailed', { ns: 'common' }), { position: 'top-right', autoClose: 3000 });
+            setVisibleLesson(lessonsData);
+        }
+    }, [visibleLesson, lessonsData, t]);
+
+    const toggleDrag = useCallback(() => {
+        setIsDragEnabled((prev) => !prev);
+    }, []);
+
+    const columns = useMemo(() => [
         {
             title: t('.no', { ns: 'common' }),
             dataIndex: 'order',
@@ -263,7 +293,7 @@ const Lesson = () => {
             key: 'type',
             align: 'center',
             render: (type) => {
-                const lessonType = lessonTypes.find(t => t.value === type);
+                const lessonType = lessonTypes.find((t) => t.value === type);
                 return (
                     <span style={{ color: lessonType?.color, fontSize: '20px' }}>
                         {lessonType?.icon || type}
@@ -314,13 +344,13 @@ const Lesson = () => {
             align: 'center',
             render: (isDisabled, record) => (
                 <Switch
-                    checked={isDisabled}
+                    checked={!isDisabled}
                     onChange={() => handleToggleAvailable(record)}
                     className="custom-switch"
                 />
             ),
         },
-    ];
+    ], [t, i18n.language, lessonTypes, openModal, handleViewExercises, handleLessonDetail, handleToggleAvailable]);
 
     return (
         <div className="containers">
@@ -333,9 +363,7 @@ const Lesson = () => {
                         className="inputsearch"
                         placeholder={t('searchPlaceholder', { ns: 'common' })}
                         value={searchQuery}
-                        onChange={(e) => {
-                            setSearchQuery(e.target.value);
-                        }}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
             </div>
@@ -361,15 +389,12 @@ const Lesson = () => {
                         <Select
                             className="filter-dropdown"
                             value={filterType}
-                            onChange={(value) => {
-                                setFilterType(value);
-                            }}
+                            onChange={(value) => setFilterType(value)}
                             placeholder={t('type')}
                         >
-                            <Select.Option value="addition">{t('addition')}</Select.Option>
-                            <Select.Option value="subtraction">{t('subtraction')}</Select.Option>
-                            <Select.Option value="multiplication">{t('multiplication')}</Select.Option>
-                            <Select.Option value="division">{t('division')}</Select.Option>
+                            {lessonTypes.map((type) => (
+                                <Select.Option key={type.value} value={type.value}>{type.label}</Select.Option>
+                            ))}
                         </Select>
                         <Select
                             className="filter-dropdown"
@@ -384,7 +409,7 @@ const Lesson = () => {
                         <Select
                             className="filter-dropdown"
                             value={filterStatus}
-                            onChange={(value) => { setFilterStatus(value); }}
+                            onChange={(value) => setFilterStatus(value)}
                             placeholder={t('lessonStatus')}
                         >
                             <Select.Option value="all">{t('status', { ns: 'common' })}</Select.Option>
@@ -392,20 +417,77 @@ const Lesson = () => {
                             <Select.Option value="true">{t('yes', { ns: 'common' })}</Select.Option>
                         </Select>
                     </div>
-
-                    <Button className="rounded-add" onClick={() => openModal('add')}>
-                        + {t('addNew', { ns: 'common' })}
-                    </Button>
+                    <div className="button-group">
+                        <Button
+                            className={`rounded-toggle-drag ${isDragEnabled ? 'active' : ''}`}
+                            onClick={toggleDrag}
+                        >
+                            <FaArrowsAlt style={{ marginRight: '8px' }} />
+                            {isDragEnabled ? t('disableDrag') : t('enableDrag')}
+                        </Button>
+                        <Button className="rounded-add" onClick={() => openModal('add')}>
+                            + {t('addNew', { ns: 'common' })}
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="table-container-lesson">
-                    <Table
-                        columns={columns}
-                        dataSource={visibleLesson}
-                        pagination={false}
-                        rowKey="id"
-                        className="custom-table"
-                    />
+                    {isDragEnabled ? (
+                        <DragDropContext onDragEnd={handleDragEnd}>
+                            <Droppable droppableId="lessons">
+                                {(provided, snapshot) => (
+                                    <div
+                                        {...provided.droppableProps}
+                                        ref={provided.innerRef}
+                                        className={snapshot.isDraggingOver ? 'dragging-over' : ''}
+                                    >
+                                        <Table
+                                            columns={columns}
+                                            dataSource={visibleLesson}
+                                            pagination={false}
+                                            rowKey="id"
+                                            className="custom-table"
+                                            components={{
+                                                body: {
+                                                    row: ({ children, ...props }) => {
+                                                        const index = visibleLesson.findIndex((lesson) => lesson.id === props['data-row-key']);
+                                                        return (
+                                                            <Draggable draggableId={props['data-row-key']} index={index}>
+                                                                {(provided, snapshot) => (
+                                                                    <tr
+                                                                        ref={provided.innerRef}
+                                                                        {...provided.draggableProps}
+                                                                        {...provided.dragHandleProps}
+                                                                        {...props}
+                                                                        className={snapshot.isDragging ? 'dragging' : ''}
+                                                                        style={{
+                                                                            ...provided.draggableProps.style,
+                                                                            ...(snapshot.isDragging ? { backgroundColor: '#f0f0f0', boxShadow: '0 4px 8px rgba(0,0,0,0.2)' } : {}),
+                                                                        }}
+                                                                    >
+                                                                        {children}
+                                                                    </tr>
+                                                                )}
+                                                            </Draggable>
+                                                        );
+                                                    },
+                                                },
+                                            }}
+                                        />
+                                        {provided.placeholder}
+                                    </div>
+                                )}
+                            </Droppable>
+                        </DragDropContext>
+                    ) : (
+                        <Table
+                            columns={columns}
+                            dataSource={visibleLesson}
+                            pagination={false}
+                            rowKey="id"
+                            className="custom-table"
+                        />
+                    )}
                     <div className="paginations">
                         {nextPageToken && visibleLesson.length < countAll ? (
                             <Button className="load-more-btn" onClick={loadMore}>
@@ -503,10 +585,8 @@ const Lesson = () => {
                         </Button>
                     </div>
                 </Modal>
-            </div >
-        </div >
-
-
+            </div>
+        </div>
     );
 };
 

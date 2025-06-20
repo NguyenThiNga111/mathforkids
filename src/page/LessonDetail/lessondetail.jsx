@@ -9,6 +9,9 @@ import { useTranslation } from 'react-i18next';
 import api from '../../assets/api/Api';
 import './lessonDetail.css';
 import Navbar from '../../component/Navbar';
+import { CKEditor } from '@ckeditor/ckeditor5-react';
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import DOMPurify from 'dompurify';
 
 const LessonDetail = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,7 +27,7 @@ const LessonDetail = () => {
     const [visibleLessonDetail, setVisibleLessonDetail] = useState([]);
     const [nextPageToken, setNextPageToken] = useState(null);
     const [countAll, setCountAll] = useState('');
-    const pageSize = 3;
+    const pageSize = 10;
     const { t, i18n } = useTranslation(['lessondetail', 'common']);
     const navigate = useNavigate();
     const { lessonId } = useParams();
@@ -379,6 +382,7 @@ const LessonDetail = () => {
             URL.revokeObjectURL(imageUrl); // Free memory
         }
     };
+
     const breadcrumbItems = [
         {
             title: t('lesson'),
@@ -403,11 +407,22 @@ const LessonDetail = () => {
             key: 'title',
             render: (title) => title?.[i18n.language] || '',
         },
+        // {
+        //     title: t('content'),
+        //     dataIndex: 'content',
+        //     key: 'content',
+        //     render: (content) => <div dangerouslySetInnerHTML={{ __html: content?.[i18n.language] || '' }} />,
+        // },
         {
             title: t('content'),
             dataIndex: 'content',
             key: 'content',
-            render: (content) => content?.[i18n.language] || '',
+            render: (content) => {
+                {
+                    const htmlContent = content?.[i18n.language] || content?.en || content?.vi || '';
+                    return <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent) }} />;
+                }
+            }
         },
         {
             title: t('image'),
@@ -449,7 +464,7 @@ const LessonDetail = () => {
             align: 'center',
             render: (isDisabled, record) => (
                 <Switch
-                    checked={isDisabled}
+                    checked={!isDisabled}
                     onChange={() => handleToggleAvailable(record)}
                     className="custom-switch"
                 />
@@ -623,16 +638,19 @@ const LessonDetail = () => {
                                 <label className="titleinput">
                                     {t('content')} (Vietnamese) <span style={{ color: 'red' }}>*</span>
                                 </label>
-                                <Input.TextArea
-                                    placeholder={t('inputContentVi')}
-                                    value={editingLessonDetail?.content?.vi || ''}
-                                    onChange={(e) =>
+                                <CKEditor
+                                    editor={ClassicEditor}
+                                    data={editingLessonDetail?.content?.vi || ''}
+                                    onChange={(event, editor) => {
+                                        const data = editor.getData();
                                         setEditingLessonDetail({
                                             ...editingLessonDetail,
-                                            content: { ...editingLessonDetail.content, vi: e.target.value },
-                                        })
-                                    }
-                                    rows={4}
+                                            content: { ...editingLessonDetail.content, vi: data },
+                                        });
+                                    }}
+                                    config={{
+                                        toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
+                                    }}
                                 />
                                 {errors.contentVi && <div className="error-text">{errors.contentVi}</div>}
                             </div>
@@ -640,16 +658,19 @@ const LessonDetail = () => {
                                 <label className="titleinput">
                                     {t('content')} (English) <span style={{ color: 'red' }}>*</span>
                                 </label>
-                                <Input.TextArea
-                                    placeholder={t('inputContentEn')}
-                                    value={editingLessonDetail?.content?.en || ''}
-                                    onChange={(e) =>
+                                <CKEditor
+                                    editor={ClassicEditor}
+                                    data={editingLessonDetail?.content?.en || ''}
+                                    onChange={(event, editor) => {
+                                        const data = editor.getData();
                                         setEditingLessonDetail({
                                             ...editingLessonDetail,
-                                            content: { ...editingLessonDetail.content, en: e.target.value },
-                                        })
-                                    }
-                                    rows={4}
+                                            content: { ...editingLessonDetail.content, en: data },
+                                        });
+                                    }}
+                                    config={{
+                                        toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
+                                    }}
                                 />
                                 {errors.contentEn && <div className="error-text">{errors.contentEn}</div>}
                             </div>
@@ -662,19 +683,22 @@ const LessonDetail = () => {
                                 <label className="titleinput">
                                     {t('content')} (Vietnamese) <span style={{ color: 'red' }}>*</span>
                                 </label>
-                                <Input.TextArea
-                                    placeholder={t('inputContentVi')}
-                                    value={editingLessonDetail?.contents?.define?.vi || ''}
-                                    onChange={(e) =>
+                                <CKEditor
+                                    editor={ClassicEditor}
+                                    data={editingLessonDetail?.contents?.define?.vi || ''}
+                                    onChange={(event, editor) => {
+                                        const data = editor.getData();
                                         setEditingLessonDetail({
                                             ...editingLessonDetail,
                                             contents: {
                                                 ...editingLessonDetail.contents,
-                                                define: { ...editingLessonDetail.contents.define, vi: e.target.value },
+                                                define: { ...editingLessonDetail.contents.define, vi: data },
                                             },
-                                        })
-                                    }
-                                    rows={4}
+                                        });
+                                    }}
+                                    config={{
+                                        toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
+                                    }}
                                 />
                                 {errors.defineVi && <div className="error-text">{errors.defineVi}</div>}
                             </div>
@@ -682,19 +706,22 @@ const LessonDetail = () => {
                                 <label className="titleinput">
                                     {t('content')} (English) <span style={{ color: 'red' }}>*</span>
                                 </label>
-                                <Input.TextArea
-                                    placeholder={t('inputContentEn')}
-                                    value={editingLessonDetail?.contents?.define?.en || ''}
-                                    onChange={(e) =>
+                                <CKEditor
+                                    editor={ClassicEditor}
+                                    data={editingLessonDetail?.contents?.define?.en || ''}
+                                    onChange={(event, editor) => {
+                                        const data = editor.getData();
                                         setEditingLessonDetail({
                                             ...editingLessonDetail,
                                             contents: {
                                                 ...editingLessonDetail.contents,
-                                                define: { ...editingLessonDetail.contents.define, en: e.target.value },
+                                                define: { ...editingLessonDetail.contents.define, en: data },
                                             },
-                                        })
-                                    }
-                                    rows={4}
+                                        });
+                                    }}
+                                    config={{
+                                        toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
+                                    }}
                                 />
                                 {errors.defineEn && <div className="error-text">{errors.defineEn}</div>}
                             </div>
@@ -723,19 +750,22 @@ const LessonDetail = () => {
                                 <label className="titleinput">
                                     {t('content')} (Vietnamese) <span style={{ color: 'red' }}>*</span>
                                 </label>
-                                <Input.TextArea
-                                    placeholder={t('inputContentVi')}
-                                    value={editingLessonDetail?.contents?.example?.vi || ''}
-                                    onChange={(e) =>
+                                <CKEditor
+                                    editor={ClassicEditor}
+                                    data={editingLessonDetail?.contents?.example?.vi || ''}
+                                    onChange={(event, editor) => {
+                                        const data = editor.getData();
                                         setEditingLessonDetail({
                                             ...editingLessonDetail,
                                             contents: {
                                                 ...editingLessonDetail.contents,
-                                                example: { ...editingLessonDetail.contents.example, vi: e.target.value },
+                                                example: { ...editingLessonDetail.contents.example, vi: data },
                                             },
-                                        })
-                                    }
-                                    rows={4}
+                                        });
+                                    }}
+                                    config={{
+                                        toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
+                                    }}
                                 />
                                 {errors.exampleVi && <div className="error-text">{errors.exampleVi}</div>}
                             </div>
@@ -743,19 +773,22 @@ const LessonDetail = () => {
                                 <label className="titleinput">
                                     {t('content')} (English) <span style={{ color: 'red' }}>*</span>
                                 </label>
-                                <Input.TextArea
-                                    placeholder={t('inputContentEn')}
-                                    value={editingLessonDetail?.contents?.example?.en || ''}
-                                    onChange={(e) =>
+                                <CKEditor
+                                    editor={ClassicEditor}
+                                    data={editingLessonDetail?.contents?.example?.en || ''}
+                                    onChange={(event, editor) => {
+                                        const data = editor.getData();
                                         setEditingLessonDetail({
                                             ...editingLessonDetail,
                                             contents: {
                                                 ...editingLessonDetail.contents,
-                                                example: { ...editingLessonDetail.contents.example, en: e.target.value },
+                                                example: { ...editingLessonDetail.contents.example, en: data },
                                             },
-                                        })
-                                    }
-                                    rows={4}
+                                        });
+                                    }}
+                                    config={{
+                                        toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
+                                    }}
                                 />
                                 {errors.exampleEn && <div className="error-text">{errors.exampleEn}</div>}
                             </div>
@@ -784,19 +817,22 @@ const LessonDetail = () => {
                                 <label className="titleinput">
                                     {t('content')} (Vietnamese) <span style={{ color: 'red' }}>*</span>
                                 </label>
-                                <Input.TextArea
-                                    placeholder={t('inputContentVi')}
-                                    value={editingLessonDetail?.contents?.remember?.vi || ''}
-                                    onChange={(e) =>
+                                <CKEditor
+                                    editor={ClassicEditor}
+                                    data={editingLessonDetail?.contents?.remember?.vi || ''}
+                                    onChange={(event, editor) => {
+                                        const data = editor.getData();
                                         setEditingLessonDetail({
                                             ...editingLessonDetail,
                                             contents: {
                                                 ...editingLessonDetail.contents,
-                                                remember: { ...editingLessonDetail.contents.remember, vi: e.target.value },
+                                                remember: { ...editingLessonDetail.contents.remember, vi: data },
                                             },
-                                        })
-                                    }
-                                    rows={4}
+                                        });
+                                    }}
+                                    config={{
+                                        toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
+                                    }}
                                 />
                                 {errors.rememberVi && <div className="error-text">{errors.rememberVi}</div>}
                             </div>
@@ -804,19 +840,22 @@ const LessonDetail = () => {
                                 <label className="titleinput">
                                     {t('content')} (English) <span style={{ color: 'red' }}>*</span>
                                 </label>
-                                <Input.TextArea
-                                    placeholder={t('inputContentEn')}
-                                    value={editingLessonDetail?.contents?.remember?.en || ''}
-                                    onChange={(e) =>
+                                <CKEditor
+                                    editor={ClassicEditor}
+                                    data={editingLessonDetail?.contents?.remember?.en || ''}
+                                    onChange={(event, editor) => {
+                                        const data = editor.getData();
                                         setEditingLessonDetail({
                                             ...editingLessonDetail,
                                             contents: {
                                                 ...editingLessonDetail.contents,
-                                                remember: { ...editingLessonDetail.contents.remember, en: e.target.value },
+                                                remember: { ...editingLessonDetail.contents.remember, en: data },
                                             },
-                                        })
-                                    }
-                                    rows={4}
+                                        });
+                                    }}
+                                    config={{
+                                        toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
+                                    }}
                                 />
                                 {errors.rememberEn && <div className="error-text">{errors.rememberEn}</div>}
                             </div>

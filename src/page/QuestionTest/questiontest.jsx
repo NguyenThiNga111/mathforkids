@@ -148,7 +148,7 @@ const QuestionTest = () => {
           onClick={() => openDetailModal(record)}
         >
           <FaInfoCircle className="iconupdate" />
-          {t('details')}
+          {t('detail')}
         </button>
       ),
     },
@@ -215,14 +215,14 @@ const QuestionTest = () => {
                 <label className="detail-label">{t('level')}</label>
                 <div className="detail-content">{getLevelName(selectedQuestionTest.level)}</div>
               </div>
-              <div className="detail-item">
+              {/* <div className="detail-item">
                 <label className="detail-label">{t('testId')}</label>
                 <div className="detail-content">{selectedQuestionTest.testId || '-'}</div>
               </div>
               <div className="detail-item">
                 <label className="detail-label">{t('exerciseId')}</label>
                 <div className="detail-content">{selectedQuestionTest.exerciseId || '-'}</div>
-              </div>
+              </div> */}
               <div className="detail-item">
                 <label className="detail-label">{t('image')}</label>
                 <div className="detail-content">

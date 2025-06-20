@@ -6,18 +6,30 @@
     scrollbar-color: #a0a0a0 transparent;
 }
 
+/* exercise.css */
+.custom-table .ant-table-thead>tr>th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--background-tabled);
+    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+
 .table-container-exercise {
-    max-height: calc(100vh - 270px);
+    max-height: calc(100vh - 250px);
     min-height: 300px;
     overflow-y: auto;
     width: 100%;
     scrollbar-width: thin;
     scrollbar-color: #a0a0a0 transparent;
 }
+
 .table-container-exercise tbody tr:hover>td {
     background-color: var(--background-hover) !important;
     color: var(--color-hover);
 }
+
 .inputtexts {
     margin-top: 20px;
 }
