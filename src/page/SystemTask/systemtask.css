@@ -16,7 +16,6 @@
 }
 .table-container-systemtask tbody tr:hover>td {
     background-color: var(--background-hover) !important;
-    color: var(--color-hover);
 }
 /* Optional: Specific column widths */
 .table-container-systemtask th:nth-child(1),

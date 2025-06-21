@@ -325,25 +325,32 @@ const Dashboard = () => {
     datasets: [
       {
         label: t("AveragePoint"),
-        data: top10Pupils.map((pupil) => pupil.averagePoint),
+        data: top10Pupils.map((pupil) => pupil.averagePoint || 0),
         backgroundColor: [
-          "#ef4444",
-          "#f59e0b",
-          "#a855f7",
-          "#f97316",
-          "#10b981",
-          "#ef4444",
-          "#3b82f6",
-          "#84cc16",
-          "#ec4899",
-          "#8b5cf6",
-        ],
+          "#ef4444", "#f59e0b", "#a855f7", "#f97316", "#10b981",
+          "#3b82f6", "#84cc16", "#ec4899", "#8b5cf6", "#64748b",
+        ].slice(0, top10Pupils.length), // Sử dụng màu sắc cho số lượng thực tế
         borderColor: "#ffffff",
         borderWidth: 1,
       },
     ],
   };
 
+  const top10LessonsChartData = {
+    labels: top10Lessons.map((lesson) => lesson.name),
+    datasets: [
+      {
+        label: t("AveragePoint"),
+        data: top10Lessons.map((lesson) => lesson.averagePoint || 0),
+        backgroundColor: [
+          "#ef4444", "#f59e0b", "#a855f7", "#f97316", "#10b981",
+          "#3b82f6", "#84cc16", "#ec4899", "#8b5cf6", "#64748b",
+        ].slice(0, top10Lessons.length), // Sử dụng màu sắc cho số lượng thực tế
+        borderColor: "#ffffff",
+        borderWidth: 1,
+      },
+    ],
+  };
   const top10PupilsChartOptions = {
     indexAxis: "y",
     maintainAspectRatio: false,
@@ -363,36 +370,13 @@ const Dashboard = () => {
         beginAtZero: true,
         title: { display: true, text: t("Points") },
         ticks: { callback: (value) => value.toFixed(2) },
+        min: 0,
+        max: 100, // Đặt giới hạn tối đa để đồng nhất với hình ảnh
       },
       y: {
         title: { display: true, text: t("pupils") },
       },
     },
-  };
-
-  // Chart data for Top 10 Lessons (NEW)
-  const top10LessonsChartData = {
-    labels: top10Lessons.map((lesson) => lesson.name),
-    datasets: [
-      {
-        label: t("AveragePoint"),
-        data: top10Lessons.map((lesson) => lesson.averagePoint),
-        backgroundColor: [
-          "#ef4444",
-          "#f59e0b",
-          "#a855f7",
-          "#f97316",
-          "#10b981",
-          "#ef4444",
-          "#3b82f6",
-          "#84cc16",
-          "#ec4899",
-          "#8b5cf6",
-        ],
-        borderColor: "#ffffff",
-        borderWidth: 1,
-      },
-    ],
   };
 
   const top10LessonsChartOptions = {
@@ -414,6 +398,8 @@ const Dashboard = () => {
         beginAtZero: true,
         title: { display: true, text: t("Points") },
         ticks: { callback: (value) => value.toFixed(2) },
+        min: 0,
+        max: 100, // Đặt giới hạn tối đa để đồng nhất với hình ảnh
       },
       y: {
         title: { display: true, text: t("lessons") },
@@ -626,7 +612,7 @@ const Dashboard = () => {
                 {(userTimePeriod === "month" ||
                   userTimePeriod === "week" ||
                   userTimePeriod === "year") && (
-                    <Select 
+                    <Select
                       value={selectedUserYear}
                       onChange={setSelectedUserYear}
                       className="filter-dropdown"
@@ -658,7 +644,10 @@ const Dashboard = () => {
                     value: t("StatisticsUser"),
                     angle: -90,
                     position: "insideLeft",
+                    style: { textAnchor: "middle", fill: 'var(--color-cardtitle)' },
+                    offset: 10,
                   }}
+                  className="YAxis"
                 />
                 <Tooltip />
                 <Bar dataKey="value" fill="#8884d8" />
@@ -741,6 +730,8 @@ const Dashboard = () => {
                     value: t("StatisticsStudent"),
                     angle: -90,
                     position: "insideLeft",
+                    style: { textAnchor: "middle", fill: 'var(--color-cardtitle)' },
+                    offset: 10,
                   }}
                 />
                 <Tooltip />
@@ -765,6 +756,7 @@ const Dashboard = () => {
                   label={{
                     value: t("Grade"),
                     position: "insideBottom",
+                    style: { textAnchor: "middle", fill: 'var(--color-cardtitle)' },
                     offset: -5,
                   }}
                 />
@@ -773,6 +765,8 @@ const Dashboard = () => {
                     value: t("NumberOfStudents"),
                     angle: -90,
                     position: "insideLeft",
+                    style: { textAnchor: "middle", fill: 'var(--color-cardtitle)' },
+                    offset: 10,
                   }}
                 />
                 <Tooltip />
@@ -781,23 +775,24 @@ const Dashboard = () => {
             </ResponsiveContainer>
           </div>
           {/* Top 10 Pupils Chart */}
-          <div className="chart-card">
+          <div className="chart-card top-10-pupils">
             <div className="chart-header">
               <h3 className="chart-title">{t("Top10PupilsByAveragePoint")}</h3>
             </div>
-            <div style={{ width: "100%", height: 150 }}>
+            <div className="chart-container">
               <BarChartComponent
                 data={top10PupilsChartData}
                 options={top10PupilsChartOptions}
               />
             </div>
           </div>
-          {/* Top 10 Lessons Chart (NEW) */}
-          <div className="chart-card">
+
+          {/* Top 10 Lessons Chart */}
+          <div className="chart-card top-10-lessons">
             <div className="chart-header">
               <h3 className="chart-title">{t("Top10LessonsByAveragePoint")}</h3>
             </div>
-            <div style={{ width: "100%", height: 150 }}>
+            <div className="chart-container">
               <BarChartComponent
                 data={top10LessonsChartData}
                 options={top10LessonsChartOptions}

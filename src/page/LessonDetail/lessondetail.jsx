@@ -27,16 +27,16 @@ const LessonDetail = () => {
     const [visibleLessonDetail, setVisibleLessonDetail] = useState([]);
     const [nextPageToken, setNextPageToken] = useState(null);
     const [countAll, setCountAll] = useState('');
+    const [editorKey, setEditorKey] = useState(0); // Added to force CKEditor re-mount
     const pageSize = 10;
     const { t, i18n } = useTranslation(['lessondetail', 'common']);
     const navigate = useNavigate();
     const { lessonId } = useParams();
-    console.log("phuc", lessonId);
 
-    // Add search filtering
+    // Search filtering
     useEffect(() => {
         if (searchQuery.trim() === '') {
-            setVisibleLessonDetail(lessonDetails); // Reset to all when search is empty
+            setVisibleLessonDetail(lessonDetails);
         } else {
             const filtered = lessonDetails.filter(
                 (lesson) =>
@@ -47,6 +47,7 @@ const LessonDetail = () => {
         }
     }, [searchQuery, lessonDetails, i18n.language]);
 
+    // Fetch lesson details and lesson
     useEffect(() => {
         const fetchLessonDetails = async () => {
             setLessonDetails([]);
@@ -68,7 +69,7 @@ const LessonDetail = () => {
         };
 
         fetchLessonDetails();
-    }, [lessonId, filterStatus]); // Dependencies are fine
+    }, [lessonId, filterStatus]);
 
     const fetchAllLessonDetails = async (token = null) => {
         try {
@@ -132,9 +133,9 @@ const LessonDetail = () => {
         if (!nextPageToken) return;
         try {
             if (filterStatus !== 'all') {
-                await fetchFilterLessonDetailDisabled(null, filterStatus);
+                await fetchFilterLessonDetailDisabled(nextPageToken, filterStatus);
             } else {
-                await fetchAllLessonDetails(null);
+                await fetchAllLessonDetails(nextPageToken);
             }
         } catch (error) {
             toast.error(error.response?.data?.message?.[i18n.language], {
@@ -164,10 +165,12 @@ const LessonDetail = () => {
         if (!data?.title?.vi || data.title.vi.trim() === '') {
             newErrors.title = t('titleRequired');
         }
-        if (!data?.content?.vi || data.content.vi.trim() === '') {
+        const viContent = data?.content?.vi?.replace(/<div style="font-size: 18px; line-height: 1.5;">|<\/div>/g, '').trim();
+        if (!viContent || viContent === '') {
             newErrors.contentVi = t('contentViRequired');
         }
-        if (!data?.content?.en || data.content.en.trim() === '') {
+        const enContent = data?.content?.en?.replace(/<div style="font-size: 18px; line-height: 1.5;">|<\/div>/g, '').trim();
+        if (!enContent || enContent === '') {
             newErrors.contentEn = t('contentEnRequired');
         }
         setErrors(newErrors);
@@ -176,22 +179,28 @@ const LessonDetail = () => {
 
     const ValidationFullLesson = (data) => {
         const newErrors = {};
-        if (!data?.contents?.define?.vi || data.contents.define.vi.trim() === '') {
+        const defineVi = data?.contents?.define?.vi?.replace(/<div style="font-size: 18px; line-height: 1.5;">|<\/div>/g, '').trim();
+        if (!defineVi || defineVi === '') {
             newErrors.defineVi = t('contentViRequired');
         }
-        if (!data?.contents?.define?.en || data.contents.define.en.trim() === '') {
+        const defineEn = data?.contents?.define?.en?.replace(/<div style="font-size: 18px; line-height: 1.5;">|<\/div>/g, '').trim();
+        if (!defineEn || defineEn === '') {
             newErrors.defineEn = t('contentEnRequired');
         }
-        if (!data?.contents?.example?.vi || data.contents.example.vi.trim() === '') {
+        const exampleVi = data?.contents?.example?.vi?.replace(/<div style="font-size: 18px; line-height: 1.5;">|<\/div>/g, '').trim();
+        if (!exampleVi || exampleVi === '') {
             newErrors.exampleVi = t('contentViRequired');
         }
-        if (!data?.contents?.example?.en || data.contents.example.en.trim() === '') {
+        const exampleEn = data?.contents?.example?.en?.replace(/<div style="font-size: 18px; line-height: 1.5;">|<\/div>/g, '').trim();
+        if (!exampleEn || exampleEn === '') {
             newErrors.exampleEn = t('contentEnRequired');
         }
-        if (!data?.contents?.remember?.vi || data.contents.remember.vi.trim() === '') {
+        const rememberVi = data?.contents?.remember?.vi?.replace(/<div style="font-size: 18px; line-height: 1.5;">|<\/div>/g, '').trim();
+        if (!rememberVi || rememberVi === '') {
             newErrors.rememberVi = t('contentViRequired');
         }
-        if (!data?.contents?.remember?.en || data.contents.remember.en.trim() === '') {
+        const rememberEn = data?.contents?.remember?.en?.replace(/<div style="font-size: 18px; line-height: 1.5;">|<\/div>/g, '').trim();
+        if (!rememberEn || rememberEn === '') {
             newErrors.rememberEn = t('contentEnRequired');
         }
         setErrors(newErrors);
@@ -207,6 +216,7 @@ const LessonDetail = () => {
                     formData.append('order', editingLessonDetail.order);
                     formData.append('title', JSON.stringify(editingLessonDetail.title));
                     formData.append('content', JSON.stringify(editingLessonDetail.content));
+
                     if (fileList[0]?.originFileObj) {
                         formData.append('image', fileList[0].originFileObj);
                     }
@@ -258,9 +268,6 @@ const LessonDetail = () => {
                     if (fileList.remember?.[0]?.originFileObj) {
                         formData.append('remember', fileList.remember[0].originFileObj);
                     }
-                    for (let [key, value] of formData.entries()) {
-                        console.log(`FormData ${key}:`, value);
-                    }
                     await api.post(`/lessondetail/full`, formData, {
                         headers: { 'Content-Type': 'multipart/form-data' },
                     });
@@ -311,11 +318,18 @@ const LessonDetail = () => {
             setFileList({ define: [], example: [], remember: [] });
         } else if (mode === 'update') {
             setCreationMode('single');
-            setEditingLessonDetail(lessonDetail);
+            setEditingLessonDetail({
+                ...lessonDetail,
+                title: lessonDetail.title || { en: '', vi: '' },
+                content: lessonDetail.content || { en: '', vi: '' },
+                image: lessonDetail.image || null,
+            });
             setImageUrl(lessonDetail.image || '');
             setFileList(lessonDetail.image ? [{ uid: '-1', name: 'image', status: 'done', url: lessonDetail.image }] : []);
+            setEditorKey(prev => prev + 1); // Force CKEditor re-mount
         }
         setIsModalOpen(true);
+        setErrors({});
     };
 
     const closeModal = () => {
@@ -325,6 +339,7 @@ const LessonDetail = () => {
         setFileList([]);
         setErrors({});
         setCreationMode('single');
+        setEditorKey(prev => prev + 1); // Reset editorKey for next modal open
     };
 
     const handleTitleChange = (value) => {
@@ -367,6 +382,11 @@ const LessonDetail = () => {
                     e.id === lessonDetail.id ? { ...e, isDisabled: !lessonDetail.isDisabled } : e
                 )
             );
+            setVisibleLessonDetail((prev) =>
+                prev.map((e) =>
+                    e.id === lessonDetail.id ? { ...e, isDisabled: !lessonDetail.isDisabled } : e
+                )
+            );
         } catch (error) {
             toast.error(error.response?.data?.message?.[i18n.language], {
                 position: 'top-right',
@@ -379,7 +399,7 @@ const LessonDetail = () => {
         setFileList([]);
         setImageUrl(null);
         if (imageUrl) {
-            URL.revokeObjectURL(imageUrl); // Free memory
+            URL.revokeObjectURL(imageUrl);
         }
     };
 
@@ -393,7 +413,6 @@ const LessonDetail = () => {
         },
     ];
 
-    // Ant Design Table columns
     const columns = [
         {
             title: t('order'),
@@ -407,22 +426,18 @@ const LessonDetail = () => {
             key: 'title',
             render: (title) => title?.[i18n.language] || '',
         },
-        // {
-        //     title: t('content'),
-        //     dataIndex: 'content',
-        //     key: 'content',
-        //     render: (content) => <div dangerouslySetInnerHTML={{ __html: content?.[i18n.language] || '' }} />,
-        // },
         {
             title: t('content'),
             dataIndex: 'content',
             key: 'content',
             render: (content) => {
-                {
-                    const htmlContent = content?.[i18n.language] || content?.en || content?.vi || '';
-                    return <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent) }} />;
-                }
-            }
+                const htmlContent = content?.[i18n.language] || content?.en || content?.vi || '';
+                return (
+                    <div className="content-wrapper">
+                        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent) }} />
+                    </div>
+                );
+            },
         },
         {
             title: t('image'),
@@ -512,7 +527,7 @@ const LessonDetail = () => {
                         <Select
                             className="filter-dropdown"
                             value={filterStatus}
-                            onChange={(value) => { setFilterStatus(value); }}
+                            onChange={(value) => setFilterStatus(value)}
                             placeholder={t('lessonStatus')}
                         >
                             <Select.Option value="all">{t('status')}</Select.Option>
@@ -639,13 +654,15 @@ const LessonDetail = () => {
                                     {t('content')} (Vietnamese) <span style={{ color: 'red' }}>*</span>
                                 </label>
                                 <CKEditor
+                                    key={`vi-editor-${editorKey}`}
                                     editor={ClassicEditor}
-                                    data={editingLessonDetail?.content?.vi || ''}
+                                    data={editingLessonDetail?.content?.vi?.replace(/<div style="font-size: 18px; line-height: 1.5;">|<\/div>/g, '') || ''}
                                     onChange={(event, editor) => {
                                         const data = editor.getData();
+                                        const wrappedData = `<div style="font-size: 18px; line-height: 1.5;">${data}</div>`;
                                         setEditingLessonDetail({
                                             ...editingLessonDetail,
-                                            content: { ...editingLessonDetail.content, vi: data },
+                                            content: { ...editingLessonDetail.content, vi: wrappedData },
                                         });
                                     }}
                                     config={{
@@ -659,13 +676,15 @@ const LessonDetail = () => {
                                     {t('content')} (English) <span style={{ color: 'red' }}>*</span>
                                 </label>
                                 <CKEditor
+                                    key={`en-editor-${editorKey}`}
                                     editor={ClassicEditor}
-                                    data={editingLessonDetail?.content?.en || ''}
+                                    data={editingLessonDetail?.content?.en?.replace(/<div style="font-size: 18px; line-height: 1.5;">|<\/div>/g, '') || ''}
                                     onChange={(event, editor) => {
                                         const data = editor.getData();
+                                        const wrappedData = `<div style="font-size: 18px; line-height: 1.5;">${data}</div>`;
                                         setEditingLessonDetail({
                                             ...editingLessonDetail,
-                                            content: { ...editingLessonDetail.content, en: data },
+                                            content: { ...editingLessonDetail.content, en: wrappedData },
                                         });
                                     }}
                                     config={{
@@ -677,22 +696,23 @@ const LessonDetail = () => {
                         </div>
                     ) : (
                         <div className="form-content-lesson">
-                            {/* Define Section */}
                             <h4 style={{ marginTop: '15px', textAlign: 'center' }}>{t('defineSection')}</h4>
                             <div className="inputtext">
                                 <label className="titleinput">
                                     {t('content')} (Vietnamese) <span style={{ color: 'red' }}>*</span>
                                 </label>
                                 <CKEditor
+                                    key={`define-vi-editor-${editorKey}`}
                                     editor={ClassicEditor}
-                                    data={editingLessonDetail?.contents?.define?.vi || ''}
+                                    data={editingLessonDetail?.contents?.define?.vi?.replace(/<div style="font-size: 18px; line-height: 1.5;">|<\/div>/g, '') || ''}
                                     onChange={(event, editor) => {
                                         const data = editor.getData();
+                                        const wrappedData = `<div style="font-size: 18px; line-height: 1.5;">${data}</div>`;
                                         setEditingLessonDetail({
                                             ...editingLessonDetail,
                                             contents: {
                                                 ...editingLessonDetail.contents,
-                                                define: { ...editingLessonDetail.contents.define, vi: data },
+                                                define: { ...editingLessonDetail.contents.define, vi: wrappedData },
                                             },
                                         });
                                     }}
@@ -707,15 +727,17 @@ const LessonDetail = () => {
                                     {t('content')} (English) <span style={{ color: 'red' }}>*</span>
                                 </label>
                                 <CKEditor
+                                    key={`define-en-editor-${editorKey}`}
                                     editor={ClassicEditor}
-                                    data={editingLessonDetail?.contents?.define?.en || ''}
+                                    data={editingLessonDetail?.contents?.define?.en?.replace(/<div style="font-size: 18px; line-height: 1.5;">|<\/div>/g, '') || ''}
                                     onChange={(event, editor) => {
                                         const data = editor.getData();
+                                        const wrappedData = `<div style="font-size: 18px; line-height: 1.5;">${data}</div>`;
                                         setEditingLessonDetail({
                                             ...editingLessonDetail,
                                             contents: {
                                                 ...editingLessonDetail.contents,
-                                                define: { ...editingLessonDetail.contents.define, en: data },
+                                                define: { ...editingLessonDetail.contents.define, en: wrappedData },
                                             },
                                         });
                                     }}
@@ -744,22 +766,23 @@ const LessonDetail = () => {
                                     </div>
                                 )}
                             </div>
-                            {/* Example Section */}
                             <h4 style={{ marginTop: '15px', textAlign: 'center' }}>{t('exampleSection')}</h4>
                             <div className="inputtext">
                                 <label className="titleinput">
                                     {t('content')} (Vietnamese) <span style={{ color: 'red' }}>*</span>
                                 </label>
                                 <CKEditor
+                                    key={`example-vi-editor-${editorKey}`}
                                     editor={ClassicEditor}
-                                    data={editingLessonDetail?.contents?.example?.vi || ''}
+                                    data={editingLessonDetail?.contents?.example?.vi?.replace(/<div style="font-size: 18px; line-height: 1.5;">|<\/div>/g, '') || ''}
                                     onChange={(event, editor) => {
                                         const data = editor.getData();
+                                        const wrappedData = `<div style="font-size: 18px; line-height: 1.5;">${data}</div>`;
                                         setEditingLessonDetail({
                                             ...editingLessonDetail,
                                             contents: {
                                                 ...editingLessonDetail.contents,
-                                                example: { ...editingLessonDetail.contents.example, vi: data },
+                                                example: { ...editingLessonDetail.contents.example, vi: wrappedData },
                                             },
                                         });
                                     }}
@@ -774,15 +797,17 @@ const LessonDetail = () => {
                                     {t('content')} (English) <span style={{ color: 'red' }}>*</span>
                                 </label>
                                 <CKEditor
+                                    key={`example-en-editor-${editorKey}`}
                                     editor={ClassicEditor}
-                                    data={editingLessonDetail?.contents?.example?.en || ''}
+                                    data={editingLessonDetail?.contents?.example?.en?.replace(/<div style="font-size: 18px; line-height: 1.5;">|<\/div>/g, '') || ''}
                                     onChange={(event, editor) => {
                                         const data = editor.getData();
+                                        const wrappedData = `<div style="font-size: 18px; line-height: 1.5;">${data}</div>`;
                                         setEditingLessonDetail({
                                             ...editingLessonDetail,
                                             contents: {
                                                 ...editingLessonDetail.contents,
-                                                example: { ...editingLessonDetail.contents.example, en: data },
+                                                example: { ...editingLessonDetail.contents.example, en: wrappedData },
                                             },
                                         });
                                     }}
@@ -811,22 +836,23 @@ const LessonDetail = () => {
                                     </div>
                                 )}
                             </div>
-                            {/* Remember Section */}
                             <h4 style={{ marginTop: '15px', textAlign: 'center' }}>{t('rememberSection')}</h4>
                             <div className="inputtext">
                                 <label className="titleinput">
                                     {t('content')} (Vietnamese) <span style={{ color: 'red' }}>*</span>
                                 </label>
                                 <CKEditor
+                                    key={`remember-vi-editor-${editorKey}`}
                                     editor={ClassicEditor}
-                                    data={editingLessonDetail?.contents?.remember?.vi || ''}
+                                    data={editingLessonDetail?.contents?.remember?.vi?.replace(/<div style="font-size: 18px; line-height: 1.5;">|<\/div>/g, '') || ''}
                                     onChange={(event, editor) => {
                                         const data = editor.getData();
+                                        const wrappedData = `<div style="font-size: 18px; line-height: 1.5;">${data}</div>`;
                                         setEditingLessonDetail({
                                             ...editingLessonDetail,
                                             contents: {
                                                 ...editingLessonDetail.contents,
-                                                remember: { ...editingLessonDetail.contents.remember, vi: data },
+                                                remember: { ...editingLessonDetail.contents.remember, vi: wrappedData },
                                             },
                                         });
                                     }}
@@ -841,15 +867,17 @@ const LessonDetail = () => {
                                     {t('content')} (English) <span style={{ color: 'red' }}>*</span>
                                 </label>
                                 <CKEditor
+                                    key={`remember-en-editor-${editorKey}`}
                                     editor={ClassicEditor}
-                                    data={editingLessonDetail?.contents?.remember?.en || ''}
+                                    data={editingLessonDetail?.contents?.remember?.en?.replace(/<div style="font-size: 18px; line-height: 1.5;">|<\/div>/g, '') || ''}
                                     onChange={(event, editor) => {
                                         const data = editor.getData();
+                                        const wrappedData = `<div style="font-size: 18px; line-height: 1.5;">${data}</div>`;
                                         setEditingLessonDetail({
                                             ...editingLessonDetail,
                                             contents: {
                                                 ...editingLessonDetail.contents,
-                                                remember: { ...editingLessonDetail.contents.remember, en: data },
+                                                remember: { ...editingLessonDetail.contents.remember, en: wrappedData },
                                             },
                                         });
                                     }}

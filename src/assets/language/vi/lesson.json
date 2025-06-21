@@ -25,6 +25,6 @@
     "type":"Loại",
     "exercises":"Bài tập",
     "detail":"Chi tiết",
-    "enableDrag":"Di chuyển",
-    "disableDrag":"Tắt di chuyển"
+    "enableDrag":"Thay đổi thứ tự",
+    "disableDrag":"Tắt thay đổi"
 }

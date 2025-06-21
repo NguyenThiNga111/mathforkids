@@ -28,6 +28,7 @@ export const lightColors = {
   backgroundCancel: '#ff4d4f',
   backgroundCancelhover: '#e64446',
   backgroundTabled: '#F5F5F5',
+  backgroundForm: '#fff',
 
   // Text
   colorText: '#202224',
@@ -46,7 +47,7 @@ export const lightColors = {
   errorText: '#ff0000',
   colorFilter: '#202224',
   tableColor: '#202224',
-
+  colorBlack:"#000",
   // Borders
   colorBorder: '#D8D8D8',
   borderSearch: '#CCC',
@@ -82,7 +83,8 @@ export const darkColors = {
   backgroundPage: '#15233A', // Main page background
   backgroundFilter: '#1E3556', // Filter dropdown background
   backgroundDisabled: '#2A4066', // Disabled elements
-  backgroundHover: '#DCDCDC',
+  backgroundHover: '#2e3e6e',
+  backgroundForm: '#15233A',
 
   // Buttons and Hover
   backgroundButton: '#3A6EA5', // Primary button color
@@ -99,15 +101,18 @@ export const darkColors = {
   backgroundSavehover: '#45A049', // Save hover
   backgroundCancel: '#F44336', // Cancel button
   backgroundCancelhover: '#DA190B', // Cancel hover
+  backgroundTabled: '#1A2A44',
 
   // Text
   colorBlack: "#000",
   colorText: '#B0C4DE', // Light text for readability
   colorTextwhite: '#FFFFFF', // Pure white for emphasis
   colorTitle: '#D3D8E0', // Titles
+  colorPupil: '#ffffff', // Titles
+
   colorCard: '#000', // Card labels
   colorCardvalue: '#000', // Card values
-  colordHover: '#696969',
+  colordHover: '#091ce6',
   colorCardtitle: '#E0E7F0', // Card values 
   colorTextsearch: '#A9B7C9', // Search placeholder
   colorSearch: '#000', // Search text
@@ -117,7 +122,7 @@ export const darkColors = {
   colorDisabled: '#6D829E', // Disabled text
   errorText: '#F44336', // Error messages
   colorFilter: '#B0C4DE', // Filter text
-  tableColor: '#B0C4DE', // Table text
+  tableColor: '#fff', // Table text
 
   // Borders
   colorBorder: '#2A4066', // Subtle border
