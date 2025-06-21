@@ -103,12 +103,11 @@ tbody tr:nth-child(even) {
 
 .table-container-user tbody tr:hover>td {
     background-color: var(--background-hover) !important;
-    color: var(--color-hover);
 }
 
 th,
 td {
-    color: var(--color-title);
+    color: var(--table-color);
     padding: 12px;
     text-align: left;
 }
@@ -287,6 +286,7 @@ input:checked+.slider::before {
     max-width: 90vw;
     margin: auto;
     border-radius: 10px;
+
 }
 
 .modal-content input,
@@ -344,6 +344,7 @@ input:checked+.slider::before {
 .titleinput {
     font-weight: 600;
     margin-bottom: 6px;
+    color: var(--color-text);
 }
 
 .error-text {
@@ -516,4 +517,8 @@ input:checked+.slider::before {
     max-height: 100%;
     border-radius: 8px;
     object-fit: contain;
+}
+
+.anticon svg {
+    color: var(--color-text);
 }

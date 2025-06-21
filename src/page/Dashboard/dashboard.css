@@ -163,7 +163,7 @@
 }
 
 .card-footer {
-  padding: 10px 0;
+  padding: 10px;
   text-align: center;
   flex-shrink: 0;
   height: 40px;
@@ -173,6 +173,10 @@
   font-weight: 600;
   font-size: 16px;
   letter-spacing: 0.5px;
+}
+
+.card-footer p {
+  margin-top: 10px;
 }
 
 .footer-blue {
@@ -215,4 +219,22 @@
 
 .filter-dropdown {
   border-radius: 4px;
+}
+
+.recharts-cartesian-axis-tick-value {
+  fill: var(--color-cardtitle) !important;
+}
+
+/* Specific styles for Top 10 charts */
+.chart-card.top-10-pupils,
+.chart-card.top-10-lessons {
+  height: 100%;
+  /* Increased height to accommodate horizontal bars */
+}
+
+.chart-card.top-10-pupils .chart-container,
+.chart-card.top-10-lessons .chart-container {
+  width: 100%;
+  height: 120px;
+  position: relative;
 }

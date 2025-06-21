@@ -1008,14 +1008,14 @@ const Exercise = () => {
                                             icon={<DeleteOutlined />}
                                             style={{
                                                 position: 'absolute',
-                                                top: 3,
                                                 right: 8,
                                                 fontSize: 20,
                                                 color: '#ff4d4f',
                                                 cursor: 'pointer',
                                                 background: '#fff',
                                                 borderRadius: '50%',
-                                                padding: 4,
+                                                height: '60%',
+                                                margin: 10,
                                             }}
                                         />
                                     </div>

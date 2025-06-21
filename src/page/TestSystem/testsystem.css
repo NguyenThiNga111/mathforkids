@@ -20,7 +20,6 @@
 }
 .table-container-test tbody tr:hover>td {
     background-color: var(--background-hover) !important;
-    color: var(--color-hover);
 }
 /* Specific column widths */
 .table-container-test th:nth-child(1),

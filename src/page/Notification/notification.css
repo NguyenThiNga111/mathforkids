@@ -16,7 +16,6 @@
 }
 .table-container-notification tbody tr:hover>td {
     background-color: var(--background-hover) !important;
-    color: var(--color-hover);
 }
 .table-container-notification table {
     width: 100%;
