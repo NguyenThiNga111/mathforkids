@@ -1,7 +1,13 @@
 .table-container-lessondetail {
-    max-height: 520px;
+    max-height: calc(100vh - 260px);
+    min-height: 300px;
     overflow-y: auto;
-    scrollbar-width: none;
+    width: 100%;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #a0a0a0 transparent;
+    overscroll-behavior: contain;
+    touch-action: none;
 }
 
 .table-container-lessondetail tbody tr:hover>td {
@@ -65,4 +71,15 @@
 .table-container-lessondetail td:nth-child(6) {
     max-width: 100px;
     /* dateOfBirth */
+}
+.emoji-picker-container {
+    position: absolute;
+    z-index: 1000;
+    margin-top: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+}
+
+.form-content-lesson .inputtext {
+    position: relative;
 }

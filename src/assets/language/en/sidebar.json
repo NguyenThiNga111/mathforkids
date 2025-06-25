@@ -14,5 +14,7 @@
     "setting": "Setting",
     "logout": "Logout",
     "pupil": "Pupil",
-    "completetask": "Complete task"
+    "completetask": "Complete task",
+    "level": "Level"
+
 }
