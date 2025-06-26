@@ -25,6 +25,18 @@ const Level = () => {
     const [errors, setErrors] = useState({});
     const navigate = useNavigate();
     const levelsPerPage = 10;
+    const levelColors = useMemo(() => [
+        '#00FF00', // Green
+        '#FFFF00', // Yellow
+        '#FFA500', // Orange
+        '#FF0000', // Red
+        '#8B0000', // Dark Red
+        '#0000FF', // Blue
+        '#00FFFF', // Cyan
+        '#FF00FF', // Magenta
+        '#FFA07A', // Light Salmon
+        '#20B2AA', // Light Sea Green
+    ], []);
 
     const fetchLevels = useCallback(
         async (token = null, isDisabled = null) => {
@@ -286,6 +298,37 @@ const Level = () => {
                 render: (name) => name?.[i18n.language] || '',
             },
             {
+                title: t('likertScale'),
+                key: 'likertScale',
+                align: 'center',
+                render: (_, record) => {
+                    const maxLevels = Math.max(...levelsData.map((level) => level.level || 1), 1);
+                    return (
+                        <div style={{
+                            display: 'flex',
+                            width: '200px',
+                            height: '20px',
+                            borderRadius: '10px',
+                            overflow: 'hidden',
+                            margin: '0 auto' // Căn giữa thanh
+                        }}>
+                            {Array.from({ length: maxLevels }).map((_, index) => {
+                                const colorIndex = Math.min(index, levelColors.length - 1); // Đảm bảo không vượt quá 10 màu
+                                return (
+                                    <div
+                                        key={index}
+                                        style={{
+                                            flex: 1,
+                                            backgroundColor: index < (record.level || 1) ? levelColors[colorIndex] : '#E0E0E0',
+                                        }}
+                                    />
+                                );
+                            })}
+                        </div>
+                    );
+                },
+            },
+            {
                 title: t('action', { ns: 'common' }),
                 key: 'action',
                 align: 'center',
@@ -315,7 +358,7 @@ const Level = () => {
                 ),
             },
         ],
-        [t, i18n.language, openModal, handleToggleAvailable]
+        [t, i18n.language, openModal, handleToggleAvailable, levelsData]
     );
 
     return (
@@ -436,7 +479,7 @@ const Level = () => {
                             dataSource={visibleLevels}
                             pagination={false}
                             rowKey="id"
-                            className="custom-table"
+                            className="custom-table-level"
                         />
                     )}
                     <div className="paginations">

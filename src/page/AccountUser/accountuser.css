@@ -520,7 +520,6 @@ input:checked+.slider::before {
     
 }
 
-.anticon svg {
+/* .anticon svg {
     color: var(--background-white);
-    
-}
+} */
