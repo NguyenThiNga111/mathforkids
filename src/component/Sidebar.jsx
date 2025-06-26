@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
     FaTachometerAlt, FaUser, FaFlask, FaBell, FaBookOpen,
     FaUserCircle, FaBook, FaDumbbell, FaQuestionCircle,
-    FaTasks, FaAward, FaUsers, FaCog, FaSignOutAlt
+    FaTasks, FaAward, FaUsers, FaCog, FaSignOutAlt, FaSitemap,
 } from 'react-icons/fa';
 import './Sidebar.css';
 
@@ -73,7 +73,10 @@ const Dashboard = () => {
                             <FaUsers className={getIconClass('/pupil')} />
                             {t('pupil')}
                         </Link>
-
+                        <Link to="/level" className={`sidebar-item ${activeItem === '/level' ? 'active' : ''}`}>
+                            <FaSitemap className={getIconClass('/level')} />
+                            {t('level')}
+                        </Link>
                         <div className="sidebar-divider"></div>
                         <a className="sidebar-a">Settings & Logout</a>
 

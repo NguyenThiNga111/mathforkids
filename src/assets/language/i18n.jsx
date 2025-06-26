@@ -38,6 +38,8 @@ import viDashboard from './vi/dashboard.json';
 import enDashboard from './en/dashboard.json';
 import viQuestionTest from './vi/questiontest.json';
 import enQuestionTest from './en/questiontest.json';
+import viLevel from './vi/level.json';
+import enLevel from './en/level.json';
 i18next
     .use(LanguageDetector)
     .use(initReactI18next)
@@ -62,7 +64,7 @@ i18next
                 lessondetail: viLessonDetail,
                 dashboard: viDashboard,
                 questiontest: viQuestionTest,
-
+                level: viLevel,
             },
             en: {
                 common: enCommon,
@@ -83,6 +85,7 @@ i18next
                 lessondetail: enLessonDetail,
                 dashboard: enDashboard,
                 questiontest: enQuestionTest,
+                level: enLevel,
 
             },
         },
@@ -106,7 +109,8 @@ i18next
             'completelesson',
             'lessondetail',
             'dashboard',
-            'questiontest'
+            'questiontest',
+            'level'
         ], // Danh sách namespace
         defaultNS: 'common', // Namespace mặc định
         fallbackNS: 'common', // Namespace dự phòng

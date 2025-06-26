@@ -1,0 +1,25 @@
+/* Optional: Specific column widths */
+.custom-table-level th:nth-child(1),
+.custom-table-level td:nth-child(1) {
+    width: 100px;
+}
+
+.custom-table-level th:nth-child(2),
+.custom-table-level td:nth-child(2) {
+    max-width: 400px;
+}
+
+.custom-table-level th:nth-child(3),
+.custom-table-level td:nth-child(3) {
+    max-width: 300px;
+}
+
+.custom-table-level th:nth-child(4),
+.custom-table-level td:nth-child(4) {
+    max-width: 150px;
+}
+
+.custom-table-level th:nth-child(5),
+.custom-table-level td:nth-child(5) {
+    max-width: 150px;
+}

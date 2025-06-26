@@ -18,7 +18,7 @@ import QuestionTestPage from './page/QuestionTest/questiontest';
 import AssessmentPage from './page/Assessment/assessment';
 import NotificationPage from './page/Notification/notification';
 import ExercisePage from './page/Exercise/exercise';
-import ContactPage from './page/Contact/contact';
+import LevelPage from './page/Level/level';
 import PupilPage from './page/Pupil/pupil';
 import CompleteTaskPage from './page/CompleteTask/completetask';
 import CompleteLessonPage from './page/CompleteLesson/completelesson';
@@ -61,7 +61,7 @@ function App() {
               <Route path="assessment" element={<AssessmentPage />} />
               <Route path="notification" element={<NotificationPage />} />
               <Route path="/exercise/getByLesson/:lessonId" element={<ExercisePage />} />
-              <Route path="contact" element={<ContactPage />} />
+              <Route path="level" element={<LevelPage />} />
               <Route path="pupil" element={<PupilPage />} />
               <Route path="completetask" element={<CompleteTaskPage />} />
               <Route path="completelesson" element={<CompleteLessonPage />} />

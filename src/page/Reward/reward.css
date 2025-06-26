@@ -35,7 +35,7 @@
 
 /* Đảm bảo placeholder giữ màu mặc định */
 .inputtext ::placeholder {
-    color: var(--color-text);
+    color: var(--color-card);
 }
 
 /* Khi nhập liệu, giữ chữ màu đen */
