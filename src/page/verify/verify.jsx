@@ -104,7 +104,7 @@ const Verify = () => {
                     </div>
 
                     <div className='buttonverifys'>
-                        <Button className="buttonverify" onClick={handleResend}>Gửi lại OTP</Button>
+                        <Button className="buttonverify" onClick={handleResend}>Resend OTP</Button>
 
                         <Button className="buttonverify" onClick={handleVerify}>Verify</Button>
                     </div>

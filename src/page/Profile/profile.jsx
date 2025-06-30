@@ -25,6 +25,7 @@ const Profile = () => {
     const [emailChanged, setEmailChanged] = useState(false);
     const [phoneChanged, setPhoneChanged] = useState(false);
     const [otpPurpose, setOtpPurpose] = useState(''); // 'email' or 'phone'
+    const [errors, setErrors] = useState({}); // New state for validation errors
     const { Option } = Select;
 
     // Fetch user data
@@ -55,6 +56,7 @@ const Profile = () => {
                     address: address || '',
                     image: image || 'https://i.pravatar.cc/100',
                 });
+                setErrors({}); // Clear errors on successful fetch
             } else {
                 toast.error(t('fetchFailed', { ns: 'common' }), {
                     position: 'top-right',
@@ -135,13 +137,14 @@ const Profile = () => {
         if (!userData.gender || userData.gender === '') {
             newErrors.gender = t('genderRequired');
         }
+        setErrors(newErrors); // Update error state
         return newErrors;
     };
 
     // Handle profile update
     const handleUpdate = async () => {
-        const errors = validateForm();
-        if (Object.keys(errors).length === 0) {
+        const validationErrors = validateForm();
+        if (Object.keys(validationErrors).length === 0) {
             try {
                 const payload = {
                     fullName: userData.fullName,
@@ -157,6 +160,7 @@ const Profile = () => {
                 if (response.status === 200) {
                     toast.success(t('updateSuccess', { ns: 'common' }));
                     setUserData({ ...userData, ...response.data });
+                    setErrors({}); // Clear errors on successful update
                 } else {
                     toast.error(t('updateFailed', { ns: 'common' }), {
                         position: 'top-right',
@@ -169,10 +173,6 @@ const Profile = () => {
                     autoClose: 3000,
                 });
             }
-        } else {
-            Object.values(errors).forEach((errorMsg) => {
-                toast.error(errorMsg);
-            });
         }
     };
 
@@ -195,7 +195,7 @@ const Profile = () => {
         try {
             const res = await api.post(`/auth/sendOtpByEmail/${userData.email}`, {}, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-            });
+            })
             if (res.status === 200) {
                 toast.success(t('otpSent'));
                 setIsEmailModalVisible(false);
@@ -308,7 +308,13 @@ const Profile = () => {
                                         placeholder={t('enterFullName')}
                                         value={userData.fullName}
                                         onChange={(e) => setUserData({ ...userData, fullName: e.target.value })}
+                                        status={errors.fullName ? 'error' : ''}
                                     />
+                                    {errors.fullName && (
+                                        <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                                            {errors.fullName}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="form-group">
                                     <label>{t('birthday')}</label>
@@ -323,7 +329,13 @@ const Profile = () => {
                                                 dateOfBirth: date ? date.format('YYYY-MM-DD') : '',
                                             })
                                         }
+                                        status={errors.dateOfBirth ? 'error' : ''}
                                     />
+                                    {errors.dateOfBirth && (
+                                        <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                                            {errors.dateOfBirth}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="form-group">
                                     <label>{t('address')}</label>
@@ -332,7 +344,13 @@ const Profile = () => {
                                         placeholder={t('enterAddress')}
                                         value={userData.address}
                                         onChange={(e) => setUserData({ ...userData, address: e.target.value })}
+                                        status={errors.address ? 'error' : ''}
                                     />
+                                    {errors.address && (
+                                        <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                                            {errors.address}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="form-group">
                                     <label>{t('gender')}</label>
@@ -342,10 +360,16 @@ const Profile = () => {
                                         placeholder={t('selectionGender')}
                                         value={userData.gender || undefined}
                                         onChange={(value) => setUserData({ ...userData, gender: value })}
+                                        status={errors.gender ? 'error' : ''}
                                     >
                                         <Select.Option value="Male">{t('male')}</Select.Option>
                                         <Select.Option value="Female">{t('female')}</Select.Option>
                                     </Select>
+                                    {errors.gender && (
+                                        <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                                            {errors.gender}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="form-group">
                                     <label>{t('email')}</label>
@@ -368,7 +392,13 @@ const Profile = () => {
                                                 {t('change')}
                                             </Button>
                                         }
+                                        status={errors.email ? 'error' : ''}
                                     />
+                                    {errors.email && (
+                                        <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                                            {errors.email}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="form-group">
                                     <label>{t('phoneNumber')}</label>
@@ -391,7 +421,13 @@ const Profile = () => {
                                                 {t('change')}
                                             </Button>
                                         }
+                                        status={errors.phoneNumber ? 'error' : ''}
                                     />
+                                    {errors.phoneNumber && (
+                                        <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                                            {errors.phoneNumber}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

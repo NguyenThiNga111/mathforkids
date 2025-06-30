@@ -23,9 +23,7 @@ import PupilPage from './page/Pupil/pupil';
 import CompleteTaskPage from './page/CompleteTask/completetask';
 import CompleteLessonPage from './page/CompleteLesson/completelesson';
 import Logout from './page/Logout/logout';
-
 import Auth from './component/auth';
-
 
 import { darkColors, injectColorsToRoot, lightColors } from './assets/theme/colors';
 import { injectFontsToRoot } from './assets/theme/fonts';

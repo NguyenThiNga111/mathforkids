@@ -42,16 +42,22 @@ const months = [
 const Dashboard = () => {
   const { t, i18n } = useTranslation(["dashboard", "common"]);
 
+  // Get current month and year
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1; // JavaScript months are 0-based
+  const currentYear = currentDate.getFullYear();
+  const currentMonthStr = currentMonth.toString().padStart(2, "0");
+
   // State for time period selections
   const [userTimePeriod, setUserTimePeriod] = useState("month");
   const [pupilTimePeriod, setPupilTimePeriod] = useState("month");
   // State for time period values
-  const [selectedUserMonth, setSelectedUserMonth] = useState("05");
+  const [selectedUserMonth, setSelectedUserMonth] = useState(currentMonthStr);
   const [selectedUserWeek, setSelectedUserWeek] = useState("01");
-  const [selectedUserYear, setSelectedUserYear] = useState("2025");
-  const [selectedPupilMonth, setSelectedPupilMonth] = useState("05");
+  const [selectedUserYear, setSelectedUserYear] = useState(currentYear.toString());
+  const [selectedPupilMonth, setSelectedPupilMonth] = useState(currentMonthStr);
   const [selectedPupilWeek, setSelectedPupilWeek] = useState("01");
-  const [selectedPupilYear, setSelectedPupilYear] = useState("2025");
+  const [selectedPupilYear, setSelectedPupilYear] = useState(currentYear.toString());
   // State for data
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalStudents, setTotalStudents] = useState(0);
@@ -76,7 +82,7 @@ const Dashboard = () => {
   ]);
   // State for top 10 pupils
   const [top10Pupils, setTop10Pupils] = useState([]);
-  // State for top 10 lessons (NEW)
+  // State for top 10 lessons
   const [top10Lessons, setTop10Lessons] = useState([]);
 
   // Fetch data
@@ -117,6 +123,7 @@ const Dashboard = () => {
           } else if (userTimePeriod === "week") {
             userEndpoint = "/user/countusersbyweek";
             userParams.week = selectedUserWeek;
+            userParams.month = selectedUserMonth;
           } else if (userTimePeriod === "year") {
             userEndpoint = "/user/countusersbyyear";
           }
@@ -158,6 +165,7 @@ const Dashboard = () => {
             pupilParams.month = selectedPupilMonth;
           } else if (pupilTimePeriod === "week") {
             pupilEndpoint = "/pupil/countpupilsbyweek";
+            pupilParams.month = selectedPupilMonth;
             pupilParams.week = selectedPupilWeek;
           } else if (pupilTimePeriod === "year") {
             pupilEndpoint = "/pupil/countpupilsbyyear";
@@ -205,7 +213,7 @@ const Dashboard = () => {
           console.warn("Failed to fetch top 10 pupils:", error.message);
           setTop10Pupils([]);
         }
-        // Fetch top 10 lessons (NEW)
+        // Fetch top 10 lessons
         try {
           const top10LessonsResponse = await api.get("/test/top10TestsByAveragePoint");
           const lessonsData = top10LessonsResponse.data.data || [];
@@ -307,15 +315,15 @@ const Dashboard = () => {
       ? t("noData")
       : `${t(dominantGender)}: ${genderPercentage}% ${t("ofTotalUsers")}`;
 
-  // Generate week options
-  const weeks = Array.from({ length: 52 }, (_, i) => ({
+  // Generate week options (limited to 5 weeks for simplicity)
+  const weeks = Array.from({ length: 5 }, (_, i) => ({
     label: `${t("Week")} ${i + 1}`,
     value: (i + 1).toString().padStart(2, "0"),
   }));
 
-  // Generate year options
-  const years = Array.from({ length: 6 }, (_, i) => {
-    const year = 2020 + i;
+  // Generate year options (5 most recent years: 2021–2025)
+  const years = Array.from({ length: 5 }, (_, i) => {
+    const year = 2025 - i;
     return { label: year.toString(), value: year.toString() };
   });
 
@@ -329,7 +337,7 @@ const Dashboard = () => {
         backgroundColor: [
           "#ef4444", "#f59e0b", "#a855f7", "#f97316", "#10b981",
           "#3b82f6", "#84cc16", "#ec4899", "#8b5cf6", "#64748b",
-        ].slice(0, top10Pupils.length), // Sử dụng màu sắc cho số lượng thực tế
+        ].slice(0, top10Pupils.length),
         borderColor: "#ffffff",
         borderWidth: 1,
       },
@@ -345,12 +353,13 @@ const Dashboard = () => {
         backgroundColor: [
           "#ef4444", "#f59e0b", "#a855f7", "#f97316", "#10b981",
           "#3b82f6", "#84cc16", "#ec4899", "#8b5cf6", "#64748b",
-        ].slice(0, top10Lessons.length), // Sử dụng màu sắc cho số lượng thực tế
+        ].slice(0, top10Lessons.length),
         borderColor: "#ffffff",
         borderWidth: 1,
       },
     ],
   };
+
   const top10PupilsChartOptions = {
     indexAxis: "y",
     maintainAspectRatio: false,
@@ -371,7 +380,7 @@ const Dashboard = () => {
         title: { display: true, text: t("Points") },
         ticks: { callback: (value) => value.toFixed(2) },
         min: 0,
-        max: 100, // Đặt giới hạn tối đa để đồng nhất với hình ảnh
+        max: 100,
       },
       y: {
         title: { display: true, text: t("pupils") },
@@ -399,7 +408,7 @@ const Dashboard = () => {
         title: { display: true, text: t("Points") },
         ticks: { callback: (value) => value.toFixed(2) },
         min: 0,
-        max: 100, // Đặt giới hạn tối đa để đồng nhất với hình ảnh
+        max: 100,
       },
       y: {
         title: { display: true, text: t("lessons") },
@@ -579,7 +588,7 @@ const Dashboard = () => {
                   <Option value="week">{t("Week")}</Option>
                   <Option value="year">{t("Year")}</Option>
                 </Select>
-                {userTimePeriod === "month" && (
+                {(userTimePeriod === "month" || userTimePeriod === "week") && (
                   <Select
                     value={selectedUserMonth}
                     onChange={setSelectedUserMonth}
@@ -668,7 +677,7 @@ const Dashboard = () => {
                   <Option value="week">{t("Week")}</Option>
                   <Option value="year">{t("Year")}</Option>
                 </Select>
-                {pupilTimePeriod === "month" && (
+                {(pupilTimePeriod === "month" || pupilTimePeriod === "week") && (
                   <Select
                     value={selectedPupilMonth}
                     onChange={setSelectedPupilMonth}
@@ -786,7 +795,6 @@ const Dashboard = () => {
               />
             </div>
           </div>
-
           {/* Top 10 Lessons Chart */}
           <div className="chart-card top-10-lessons">
             <div className="chart-header">

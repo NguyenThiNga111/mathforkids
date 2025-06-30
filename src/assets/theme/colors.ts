@@ -47,13 +47,14 @@ export const lightColors = {
   errorText: '#ff0000',
   colorFilter: '#202224',
   tableColor: '#202224',
-  colorBlack:"#000",
+  colorBlack: "#000",
   // Borders
   colorBorder: '#D8D8D8',
   borderSearch: '#CCC',
   filterBorder: '#d1d5db',
   borderInput: '#3b82f6',
   sidebarDivider: '#FFFFFF',
+  colorBreadcrumb: "#2563eb",
 
   // Sidebar
   activeBackground: '#FFFFFF',
@@ -130,7 +131,7 @@ export const darkColors = {
   filterBorder: '#2A4066', // Filter border
   borderInput: '#3A6EA5', // Focused input border
   sidebarDivider: '#2A4066', // Sidebar divider
-
+  colorBreadcrumb: "#202224",
   // Sidebar
   activeBackground: '#3A6EA5', // Active sidebar item
   colorSidebaractive: '#FFFFFF', // Active sidebar text

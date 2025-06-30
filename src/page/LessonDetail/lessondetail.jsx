@@ -407,9 +407,11 @@ const LessonDetail = () => {
         {
             title: t('lesson'),
             onClick: () => navigate('/lesson'),
+            className: 'current-breadcrumb-title',
         },
         {
             title: lesson?.name?.[i18n.language] || lessonId,
+            className: 'current-breadcrumb',
         },
     ];
 

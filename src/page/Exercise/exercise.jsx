@@ -263,6 +263,7 @@ const Exercise = () => {
                     if (validOptions.length > 0) {
                         formData.append('option', JSON.stringify(validOptions));
                     }
+                    formData.append('answer', editingExercise.answer);
                 } else if (optionType === 'image') {
                     const validOptionFileList = optionFileList.filter(list => list.length > 0);
                     if (validOptionFileList.length > 0) {
@@ -281,6 +282,8 @@ const Exercise = () => {
                         } else if (answerFileList[0]?.url && answerFileList[0].url.startsWith('http')) {
                             formData.append('answer', answerFileList[0].url);
                         }
+                    } else if (editingExercise.answer && editingExercise.answer.startsWith('http')) {
+                        formData.append('answer', editingExercise.answer); // Giữ nguyên URL hiện tại
                     }
                 }
 
@@ -634,9 +637,11 @@ const Exercise = () => {
         {
             title: t('lesson'),
             onClick: () => navigate('/lesson'),
+            className: 'current-breadcrumb-title',
         },
         {
             title: lesson?.name?.[i18n.language] || lessonId,
+            className: 'current-breadcrumb',
         },
     ];
 
