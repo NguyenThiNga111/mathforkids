@@ -23,19 +23,24 @@
     line-height: 1.5;
 }
 
+.current-breadcrumb {
+    font-weight: bold;
+    color: var(--color-breadcrumb);
+}
+
+.current-breadcrumb-title {
+    color: var(--color-breadcrumb);
+}
+
+.current-breadcrumb-title:hover {
+    cursor: pointer;
+}
+
 .ant-breadcrumb {
     padding-left: 20px;
     font-size: 16px;
 }
 
-.ant-breadcrumb span:last-child {
-    color: var(--color-text);
-    /* Gray color for the active item */
-}
-
-.ant-breadcrumb .ant-breadcrumb-separator {
-    color: var(--color-text);
-}
 
 /* Optional: Specific column widths */
 .table-container-lessondetail th:nth-child(1),
@@ -72,6 +77,7 @@
     max-width: 100px;
     /* dateOfBirth */
 }
+
 .emoji-picker-container {
     position: absolute;
     z-index: 1000;

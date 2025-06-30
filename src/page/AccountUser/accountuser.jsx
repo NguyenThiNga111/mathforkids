@@ -521,9 +521,9 @@ const AccountUser = () => {
                             <Select.Option value="false">{t('yes', { ns: 'common' })}</Select.Option>
                         </Select>
                     </div>
-                    {/* <Button className="rounded-add" onClick={() => openModal('add')}>
+                    <Button className="rounded-add" onClick={() => openModal('add')}>
                         + {t('addNew', { ns: 'common' })}
-                    </Button> */}
+                    </Button>
                 </div>
                 <div className="table-container-user">
                     <Table

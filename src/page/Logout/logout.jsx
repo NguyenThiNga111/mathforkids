@@ -11,7 +11,7 @@ const Logout = () => {
             const confirmed = window.confirm('Bạn có chắc chắn muốn đăng xuất không?');
             if (confirmed) {
                 try {
-                    await api.get('/auth/logout');
+                    await api.post('/auth/logout');
                     localStorage.removeItem('token');
                     localStorage.removeItem('userID');
                     toast.success('Đăng xuất thành công!');
