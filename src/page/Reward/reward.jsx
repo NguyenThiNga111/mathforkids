@@ -22,7 +22,7 @@ const Rewards = () => {
     const [countAll, setCountAll] = useState('');
     const [visibleReward, setVisibleReward] = useState([]);
     const [nextPageToken, setNextPageToken] = useState(null);
-    const rewardsPerPage = 10;
+    const rewardsPerPage = 20;
     const { t, i18n } = useTranslation(['reward', 'common']);
 
     useEffect(() => {
