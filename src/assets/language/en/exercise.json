@@ -23,11 +23,15 @@
     "lessonIdRequired": "Lesson is required",
     "questionViRequired": "Vietnamese question is required",
     "questionEnRequired": "English question is required",
+     "inputAnswerVi": "Enter answer (Vietnamese)",
+    "inputAnswerEn": "Enter answer (English)",
     "optionRequired": "At least three options are required",
     "optionImageRequired": "At least three option images are required",
     "answerRequired": "Answer is required",
     "answerImageRequired": "Answer image is required",
     "addOption": "Add option",
     "maxThreeOptions": "Maximum selection is 3",
-    "atLeastOneOption": "at least one option"
+    "atLeastOneOption": "at least one option",
+    "answerViRequired": "Vietnamese answer is required!",
+    "answerEnRequired": "English answer is required!"
 }
