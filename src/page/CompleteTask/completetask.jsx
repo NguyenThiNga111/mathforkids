@@ -19,7 +19,7 @@ const CompleteTask = () => {
 
     const { t, i18n } = useTranslation(['completetask', 'common']);
     const { Option } = Select;
-    const tasksPerPage = 15;
+    const tasksPerPage = 20;
 
     useEffect(() => {
         fetchData();

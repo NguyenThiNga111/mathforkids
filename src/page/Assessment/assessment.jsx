@@ -36,7 +36,7 @@ const Assessment = () => {
     const [errors, setErrors] = useState({});
     const [searchQuery, setSearchQuery] = useState('');
 
-    const assessmentsPerPage = 16;
+    const assessmentsPerPage = 20;
     const { t, i18n } = useTranslation(['assessment', 'common']);
 
     useEffect(() => {

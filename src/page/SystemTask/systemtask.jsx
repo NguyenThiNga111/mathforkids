@@ -21,7 +21,7 @@ const SystemTask = () => {
     const [visibleDailyTask, setVisibleDailyTask] = useState([]);
     const [nextPageToken, setNextPageToken] = useState(null);
     const [errors, setErrors] = useState({});
-    const tasksPerPage = 10;
+    const tasksPerPage = 20;
     const { Option } = Select;
     const { t, i18n } = useTranslation(['systemtask', 'common']);
 

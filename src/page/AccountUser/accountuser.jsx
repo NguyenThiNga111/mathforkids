@@ -25,7 +25,7 @@ const AccountUser = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const { t, i18n } = useTranslation(['account', 'common']);
     const { Option } = Select;
-    const userPerPage = 10;
+    const userPerPage = 20;
 
     useEffect(() => {
         if (searchQuery.trim() === '') {
