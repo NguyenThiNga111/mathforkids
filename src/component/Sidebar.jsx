@@ -5,6 +5,7 @@ import {
     FaTachometerAlt, FaUser, FaFlask, FaBell, FaBookOpen,
     FaUserCircle, FaBook, FaDumbbell, FaQuestionCircle,
     FaTasks, FaAward, FaUsers, FaCog, FaSignOutAlt, FaSitemap,
+    FaCheckCircle
 } from 'react-icons/fa';
 import './Sidebar.css';
 
@@ -53,10 +54,10 @@ const Dashboard = () => {
                             <FaCheckCircle className={getIconClass('/completetask')} />
                             {t('completetask')}
                         </Link> */}
-                        {/* <Link to="/completelesson" className={`sidebar-item ${activeItem === '/completelesson' ? 'active' : ''}`}>
+                        <Link to="/completelesson" className={`sidebar-item ${activeItem === '/completelesson' ? 'active' : ''}`}>
                             <FaCheckCircle className={getIconClass('/completelesson')} />
                             {t('completelesson')}
-                        </Link> */}
+                        </Link>
                         <Link to="/profile" className={`sidebar-item ${activeItem === '/profile' ? 'active' : ''}`}>
                             <FaUserCircle className={getIconClass('/profile')} />
                             {t('profile')}

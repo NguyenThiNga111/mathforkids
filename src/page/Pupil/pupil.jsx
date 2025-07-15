@@ -20,7 +20,7 @@ const PupilManagement = () => {
     const [countAll, setCountAll] = useState('');
     const [visiblePupil, setVisiblePupil] = useState([]);
     const [nextPageToken, setNextPageToken] = useState(null);
-    const pupilsPerPage = 16;
+    const pupilsPerPage = 20;
 
     const { t } = useTranslation(['pupil', 'common']);
     const { Option } = Select;

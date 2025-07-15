@@ -23,6 +23,8 @@
     "lessonIdRequired": "Bài học là bắt buộc",
     "questionViRequired": "Câu hỏi tiếng Việt là bắt buộc",
     "questionEnRequired": "Câu hỏi tiếng Anh là bắt buộc",
+    "inputAnswerVi": "Nhập đáp án (Tiếng Việt)",
+    "inputAnswerEn": "Nhập đáp án (Tiếng Anh)",
     "optionRequired": "Cần ít nhất ba tùy chọn",
     "optionImageRequired": "Cần ít nhất ba hình ảnh tùy chọn",
     "answerRequired": "Đáp án là bắt buộc",
@@ -35,5 +37,7 @@
     "question_level": "Câu hỏi & Mức độ",
     "ratio": "Tỉ lệ",
     "true": "Đúng",
-    "false": "Sai"
+    "false": "Sai",
+    "answerViRequired": "Đáp án tiếng Việt là bắt buộc!",
+    "answerEnRequired": "Đáp án tiếng Anh là bắt buộc!"
 }

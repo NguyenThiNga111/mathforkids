@@ -17,9 +17,6 @@ const Exercise = () => {
     const [imageUrl, setImageUrl] = useState('');
     const [exercises, setExercises] = useState([]);
     const [fileList, setFileList] = useState([]);
-    const [optionFileList, setOptionFileList] = useState([]);
-    const [answerFileList, setAnswerFileList] = useState([]);
-    const [optionType, setOptionType] = useState('text');
     const [filterLevel, setFilterLevel] = useState('all'); // Default to null, will be set to 'easy' after levels load
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -258,31 +255,11 @@ const Exercise = () => {
                 if (fileList[0]?.originFileObj) {
                     formData.append('image', fileList[0].originFileObj);
                 }
-                if (optionType === 'text') {
-                    const validOptions = editingExercise.option.filter(opt => opt && opt.trim() !== '');
-                    if (validOptions.length > 0) {
-                        formData.append('option', JSON.stringify(validOptions));
-                    }
-                } else if (optionType === 'image') {
-                    const validOptionFileList = optionFileList.filter(list => list.length > 0);
-                    if (validOptionFileList.length > 0) {
-                        validOptionFileList.forEach((fileList) => {
-                            if (fileList[0]?.originFileObj) {
-                                formData.append('option', fileList[0].originFileObj);
-                            } else if (fileList[0]?.url && fileList[0].url.startsWith('http')) {
-                                formData.append('option', fileList[0].url);
-                            }
-                        });
-                    }
-                    // Thêm answer vào FormData
-                    if (answerFileList.length > 0) {
-                        if (answerFileList[0]?.originFileObj) {
-                            formData.append('answer', answerFileList[0].originFileObj);
-                        } else if (answerFileList[0]?.url && answerFileList[0].url.startsWith('http')) {
-                            formData.append('answer', answerFileList[0].url);
-                        }
-                    }
+                const validOptions = editingExercise.option.filter(opt => opt.vi?.trim() || opt.en?.trim());
+                if (validOptions.length > 0) {
+                    formData.append('option', JSON.stringify(validOptions));
                 }
+                formData.append('answer', JSON.stringify(editingExercise.answer));
 
                 console.log('Form Data to be sent:');
                 for (let [key, value] of formData.entries()) {
@@ -373,22 +350,15 @@ const Exercise = () => {
         if (!editingExercise?.question?.en || editingExercise.question.en.trim() === '') {
             newErrors.questionEn = t('questionEnRequired');
         }
-        if (optionType === 'text') {
-            const validOptions = editingExercise?.option?.filter(opt => opt && opt.trim() !== '');
-            if (!validOptions || validOptions.length === 0) {
-                newErrors.option = t('optionRequired');
-            }
-        } else if (optionType === 'image') {
-            const validOptionFileList = optionFileList.filter(list => list.length > 0 && (list[0]?.originFileObj || (list[0]?.url && list[0].url.startsWith('http'))));
-            if (validOptionFileList.length === 0) {
-                newErrors.option = t('optionImageRequired');
-            }
+        const validOptions = editingExercise?.option?.filter(opt => opt.vi?.trim() || opt.en?.trim());
+        if (!validOptions || validOptions.length === 0) {
+            newErrors.option = t('optionRequired');
         }
-        if (optionType === 'text' && (!editingExercise?.answer || editingExercise.answer.trim() === '')) {
-            newErrors.answer = t('answerRequired');
+        if (!editingExercise?.answer?.vi || editingExercise.answer.vi.trim() === '') {
+            newErrors.answerVi = t('answerViRequired');
         }
-        if (optionType === 'image' && (!answerFileList.length || (!answerFileList[0]?.originFileObj && !(answerFileList[0]?.url && answerFileList[0].url.startsWith('http'))))) {
-            newErrors.answer = t('answerImageRequired');
+        if (!editingExercise?.answer?.en || editingExercise.answer.en.trim() === '') {
+            newErrors.answerEn = t('answerEnRequired');
         }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -400,34 +370,21 @@ const Exercise = () => {
                 levelId: '',
                 lessonId: lessonId,
                 question: { en: '', vi: '' },
-                option: [''],
-                answer: '',
+                option: [{ vi: '', en: '' }],
+                answer: { en: '', vi: '' },
                 image: '',
             });
-            setOptionType('text');
             setImageUrl('');
             setFileList([]);
-            setOptionFileList([[]]);
-            setAnswerFileList([]);
         } else if (mode === 'update') {
-            const isImageOption = exercise.option?.some(opt => opt.startsWith('http'));
             setEditingExercise({
                 ...exercise,
-                option: exercise.option || [''],
-                answer: exercise.answer || '',
+                option: exercise.option?.map(otp => typeof otp === 'string' ? { vi: otp, en: otp } : otp) || [{ vi: '', en: '' }],
+                answer: typeof exercise.answer === 'string' ? { vi: exercise.answer, en: exercise.answer } : exercise.answer || { vi: '', en: '' },
                 image: exercise.image || '',
             });
-            setOptionType(isImageOption ? 'image' : 'text');
             setImageUrl(exercise.image || '');
             setFileList(exercise.image ? [{ url: exercise.image }] : []);
-            setOptionFileList(
-                isImageOption && exercise.option
-                    ? exercise.option.map(url => (url ? [{ url }] : []))
-                    : [[]]
-            );
-            setAnswerFileList(
-                isImageOption && exercise.answer ? [{ url: exercise.answer }] : []
-            );
         }
         setIsModalOpen(true);
     };
@@ -444,12 +401,8 @@ const Exercise = () => {
 
     const closeModal = () => {
         setIsModalOpen(false);
-        // setEditingExercise(null);
-        setOptionType('text');
         setImageUrl('');
         setFileList([]);
-        setOptionFileList([[]]);
-        setAnswerFileList([]);
         setErrors({});
     };
 
@@ -465,53 +418,6 @@ const Exercise = () => {
         }
     };
 
-    const handleOptionImageChange = (index, info) => {
-        const newOptionFileList = [...optionFileList];
-        newOptionFileList[index] = info.fileList.slice(-1);
-        setOptionFileList(newOptionFileList);
-        if (info.fileList.length > 0) {
-            const fileObj = info.fileList[info.fileList.length - 1].originFileObj;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const newOptions = [...editingExercise.option];
-                newOptions[index] = e.target.result; // Store base64 for preview
-                setEditingExercise((prev) => ({
-                    ...prev,
-                    option: newOptions,
-                }));
-            };
-            reader.readAsDataURL(fileObj);
-        } else {
-            const newOptions = [...editingExercise.option];
-            newOptions[index] = '';
-            setEditingExercise((prev) => ({
-                ...prev,
-                option: newOptions,
-            }));
-        }
-    };
-
-    const handleAnswerImageChange = (info) => {
-        const fileObj = info.fileList[info.fileList.length - 1]?.originFileObj;
-        if (fileObj) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                setEditingExercise((prev) => ({
-                    ...prev,
-                    answer: e.target.result,
-                }));
-            };
-            reader.readAsDataURL(fileObj);
-            setAnswerFileList([info.fileList[info.fileList.length - 1]]);
-        } else {
-            setEditingExercise((prev) => ({
-                ...prev,
-                answer: '',
-            }));
-            setAnswerFileList([]);
-        }
-    };
-
     const handleRemoveImage = () => {
         setFileList([]);
         setImageUrl('');
@@ -524,9 +430,8 @@ const Exercise = () => {
         }
         setEditingExercise((prev) => ({
             ...prev,
-            option: [...prev.option, ''],
+            option: [...prev.option, { vi: '', en: '' }],
         }));
-        setOptionFileList((prev) => [...prev, []]);
     };
 
     const removeOption = (index) => {
@@ -538,29 +443,7 @@ const Exercise = () => {
             ...prev,
             option: prev.option.filter((_, i) => i !== index),
         }));
-        setOptionFileList((prev) => prev.filter((_, i) => i !== index));
     };
-
-    const handleRemoveOptionImage = (index) => {
-        const newOptionFileList = [...optionFileList];
-        newOptionFileList[index] = [];
-        setOptionFileList(newOptionFileList);
-        const newOptions = [...editingExercise.option];
-        newOptions[index] = '';
-        setEditingExercise((prev) => ({
-            ...prev,
-            option: newOptions,
-        }));
-    };
-
-    const handleRemoveAnswerImage = () => {
-        setAnswerFileList([]);
-        setEditingExercise((prev) => ({
-            ...prev,
-            answer: '',
-        }));
-    };
-
     const columns = [
         {
             title: t('.no', { ns: 'common' }),
@@ -642,7 +525,7 @@ const Exercise = () => {
 
     return (
         <div className="containers">
-            <Navbar />
+            {/* <Navbar /> */}
             <Breadcrumb items={breadcrumbItems} style={{ marginTop: 10, marginBottom: -20 }} />
             <div className="title-search">
                 <h1 className="container-title">
@@ -771,16 +654,8 @@ const Exercise = () => {
                                 <label className="detail-label">{t('option')}</label>
                                 <div className="detail-content option-grid">
                                     {selectedExercise.option?.map((opt, index) => (
-                                        <div key={index} className="option-item">
-                                            {opt && opt.startsWith("http") ? (
-                                                <Image
-                                                    src={opt}
-                                                    alt={`Option ${index + 1}`}
-                                                    className="option-image"
-                                                />
-                                            ) : (
-                                                <span>{opt || '-'}</span>
-                                            )}
+                                        <div key={index}>
+                                            <span>{opt?.[i18n.language] || otp || '-'}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -788,15 +663,7 @@ const Exercise = () => {
                             <div className="detail-item">
                                 <label className="detail-label">{t('answer')}</label>
                                 <div className="detail-content">
-                                    {selectedExercise.answer && selectedExercise.answer.startsWith("http") ? (
-                                        <Image
-                                            src={selectedExercise.answer}
-                                            alt="Answer"
-                                            className="answer-image"
-                                        />
-                                    ) : (
-                                        <span>{selectedExercise.answer || '-'}</span>
-                                    )}
+                                    <span>{selectedExercise.answer?.[i18n.language] || selectedExercise.answer || '-'}</span>
                                 </div>
                             </div>
                         </div>
@@ -898,175 +765,96 @@ const Exercise = () => {
                         </div>
                         <div className="inputtext">
                             <label className="titleinput">{t('answer')} <span style={{ color: 'red' }}>*</span></label>
-                            {optionType === 'text' ? (
+                            <div style={{ display: 'flex', gap: '10px' }}>
                                 <Input
-                                    placeholder={t('inputAnswer')}
-                                    value={editingExercise?.answer || ''}
+                                    placeholder={t('inputAnswerVi')}
+                                    value={editingExercise?.answer?.vi || ''}
                                     onChange={(e) =>
                                         setEditingExercise({
                                             ...editingExercise,
-                                            answer: e.target.value,
+                                            answer: {
+                                                ...editingExercise.answer,
+                                                vi: e.target.value
+                                            },
                                         })
                                     }
+                                    style={{ flex: 1 }}
                                 />
-                            ) : (
-                                <div>
-                                    <Upload
-                                        accept="image/*"
-                                        showUploadList={false}
-                                        beforeUpload={() => false}
-                                        onChange={handleAnswerImageChange}
-                                        fileList={answerFileList}
-                                    >
-                                        <Button icon={<UploadOutlined />} className="custom-upload-button">
-                                            {t('uploadAnswer')}
-                                        </Button>
-                                    </Upload>
-                                    {answerFileList.length > 0 && (
-                                        <div className="image-preview-box-option">
-                                            <Image
-                                                src={editingExercise.answer}
-                                                alt="Answer"
-                                                className="preview-image-option"
-                                            />
-                                            <DeleteOutlined
-                                                onClick={handleRemoveAnswerImage}
-                                                style={{
-                                                    position: 'absolute',
-                                                    top: 8,
-                                                    right: 8,
-                                                    fontSize: 20,
-                                                    color: '#ff4d4f',
-                                                    cursor: 'pointer',
-                                                    background: '#fff',
-                                                    borderRadius: '50%',
-                                                    padding: 4,
-                                                }}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                            {errors.answer && <div className="error-text">{errors.answer}</div>}
-                        </div>
-                        <div className="inputtexts">
-                            <div style={{ display: 'flex', gap: '20px' }}>
-                                <label className="titleinput">{t('textOption')}</label>
-                                <Checkbox
-                                    checked={optionType === 'text'}
-                                    onChange={(e) => {
-                                        if (e.target.checked) {
-                                            setOptionType('text');
-                                            setEditingExercise((prev) => ({
-                                                ...prev,
-                                                option: [''],
-                                                answer: '',
-                                            }));
-                                            setOptionFileList([[]]);
-                                            setAnswerFileList([]);
-                                        }
-                                    }}
-                                />
-                                <label className="titleinput">{t('imageOption')}</label>
-                                <Checkbox
-                                    checked={optionType === 'image'}
-                                    onChange={(e) => {
-                                        if (e.target.checked) {
-                                            setOptionType('image');
-                                            setEditingExercise((prev) => ({
-                                                ...prev,
-                                                option: [''],
-                                                answer: '',
-                                            }));
-                                            setOptionFileList([[]]);
-                                            setAnswerFileList([]);
-                                        }
-                                    }}
+
+                                <Input
+                                    placeholder={t('inputAnswerEn')}
+                                    value={editingExercise?.answer?.en || ''}
+                                    onChange={(e) =>
+                                        setEditingExercise({
+                                            ...editingExercise,
+                                            answer: {
+                                                ...editingExercise.answer,
+                                                en: e.target.value
+                                            },
+                                        })
+                                    }
+                                    style={{ flex: 1 }}
                                 />
                             </div>
+                            <div style={{ display: 'flex', gap: '85px' }}>
+                                {errors.answerVi && <div className="error-text">{errors.answerVi}</div>}
+                                {errors.answerEn && <div className="error-text">{errors.answerEn}</div>}
+                            </div>
                         </div>
+
                         <div className="inputtext">
                             <label className="titleinput">{t('option')} <span style={{ color: 'red' }}>*</span></label>
-                            {optionType === 'text' ? (
-                                editingExercise?.option?.map((opt, index) => (
-                                    <div key={index} className='option-text'>
-                                        <Input
-                                            placeholder={`${t('option')} ${index + 1}`}
-                                            value={opt}
-                                            onChange={(e) => {
-                                                const newOptions = [...editingExercise.option];
-                                                newOptions[index] = e.target.value;
-                                                setEditingExercise({
-                                                    ...editingExercise,
-                                                    option: newOptions,
-                                                });
-                                            }}
-                                            style={{ flex: 1 }}
-                                        />
-                                        <Button
-                                            onClick={() => removeOption(index)}
-                                            icon={<DeleteOutlined />}
-                                            style={{
-                                                position: 'absolute',
-                                                right: 8,
-                                                fontSize: 20,
-                                                color: '#ff4d4f',
-                                                cursor: 'pointer',
-                                                background: '#fff',
-                                                borderRadius: '50%',
-                                                height: '60%',
-                                                margin: 10,
-                                            }}
-                                        />
-                                    </div>
-                                ))
-                            ) : (
-                                editingExercise?.option?.map((opt, index) => (
-                                    <div key={index} style={{ marginBottom: '20px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                                            <Upload
-                                                accept="image/*"
-                                                showUploadList={false}
-                                                beforeUpload={() => false}
-                                                onChange={(info) => handleOptionImageChange(index, info)}
-                                                fileList={optionFileList[index]}
-                                            >
-                                                <Button icon={<UploadOutlined />} className="custom-upload-button">
-                                                    {t('uploadOption', { number: index + 1 })}
-                                                </Button>
-                                            </Upload>
-                                            <Button
-                                                onClick={() => removeOption(index)}
-                                                style={{ marginLeft: '10px', color: '#ff4d4f' }}
-                                                icon={<DeleteOutlined />}
-                                            />
-                                        </div>
-                                        {optionFileList[index].length > 0 && (
-                                            <div className="image-preview-box-option">
-                                                <Image
-                                                    src={opt}
-                                                    alt={`Option ${index + 1}`}
-                                                    className="preview-image-option"
-                                                />
-                                                <DeleteOutlined
-                                                    onClick={() => handleRemoveOptionImage(index)}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: 8,
-                                                        right: 8,
-                                                        fontSize: 20,
-                                                        color: '#ff4d4f',
-                                                        cursor: 'pointer',
-                                                        background: '#fff',
-                                                        borderRadius: '50%',
-                                                        padding: 4,
-                                                    }}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                ))
-                            )}
+                            {editingExercise?.option?.map((opt, index) => (
+                                <div
+                                    key={index}
+                                    className='option-text'
+                                    style={{ display: 'flex', gap: '10px', marginBottom: '10px', position: 'relative' }}
+                                >
+                                    <Input
+                                        placeholder={`${t('option')} ${index + 1} (VietNamese)`}
+                                        value={opt?.vi || ''}
+                                        onChange={(e) => {
+                                            const newOptions = [...editingExercise.option];
+                                            newOptions[index] = { ...newOptions[index], vi: e.target.value };
+                                            setEditingExercise({
+                                                ...editingExercise,
+                                                option: newOptions,
+                                            });
+                                        }}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <Input
+                                        placeholder={`${t('option')} ${index + 1} (English)`}
+                                        value={opt?.en || ''}
+                                        onChange={(e) => {
+                                            const newOptions = [...editingExercise.option];
+                                            newOptions[index] = { ...newOptions[index], en: e.target.value };
+                                            setEditingExercise({
+                                                ...editingExercise,
+                                                option: newOptions,
+                                            });
+                                        }}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <Button
+                                        onClick={() => removeOption(index)}
+                                        icon={<DeleteOutlined />}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '0',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            fontSize: '20',
+                                            color: '#ff4d4f',
+                                            cursor: 'pointer',
+                                            background: 'white',
+                                            borderRadius: '50%',
+                                            height: '60%',
+                                        }}
+                                    />
+                                </div>
+                            ))
+                            }
                             <Button
                                 onClick={addOption}
                                 style={{ marginTop: '10px' }}

@@ -28,7 +28,7 @@ const LessonDetail = () => {
     const [nextPageToken, setNextPageToken] = useState(null);
     const [countAll, setCountAll] = useState('');
     const [editorKey, setEditorKey] = useState(0); // Added to force CKEditor re-mount
-    const pageSize = 10;
+    const pageSize = 20;
     const { t, i18n } = useTranslation(['lessondetail', 'common']);
     const navigate = useNavigate();
     const { lessonId } = useParams();

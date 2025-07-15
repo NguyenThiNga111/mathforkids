@@ -37,6 +37,10 @@
     "resendOTP": "Resend OTP",
     "verify": "Verify",
     "confirmNewEmail": "Confirm new email",
+    "changePhoneNumber": "Change phone number",
+    "otpSendFailed": "Send OTP fail",
     "emailsDoNotMatch": "Emails do not match!",
+    "phoneInvalid":"Invalid Phone number",
+
     "loading": "Loading..."
 }

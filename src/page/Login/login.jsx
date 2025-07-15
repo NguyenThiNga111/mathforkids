@@ -43,7 +43,6 @@ const Login = () => {
             <div className='wave'></div>
             <div className='containtlogin'>
                 <h2 className='titlelogin'>Login as Admin</h2>
-                <p className='subtitle'>Please enter your email and password to continue</p>
                 <form onSubmit={handleLogin}>
                     <div className='contentlogin'>
                         <div>

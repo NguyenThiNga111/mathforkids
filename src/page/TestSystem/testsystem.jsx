@@ -19,7 +19,7 @@ const TestSystem = () => {
   const [lessons, setLessons] = useState([]);
   const [pupils, setPupils] = useState([]);
   const navigate = useNavigate();
-  const testPage = 10;
+  const testPage = 20;
 
   useEffect(() => {
     fetchAllTests(null);

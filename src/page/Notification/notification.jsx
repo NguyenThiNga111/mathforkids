@@ -14,7 +14,7 @@ const Notification = () => {
     const [countAll, setCountAll] = useState('');
     const [visibleNotification, setVisibleNotification] = useState([]);
     const [nextPageToken, setNextPageToken] = useState(null);
-    const notificationsPerPage = 10;
+    const notificationsPerPage = 20;
     const [errors, setErrors] = useState({});
     const { t, i18n } = useTranslation(['notification', 'common']);
 

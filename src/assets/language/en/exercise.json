@@ -23,6 +23,8 @@
     "lessonIdRequired": "Lesson is required",
     "questionViRequired": "Vietnamese question is required",
     "questionEnRequired": "English question is required",
+     "inputAnswerVi": "Enter answer (Vietnamese)",
+    "inputAnswerEn": "Enter answer (English)",
     "optionRequired": "At least three options are required",
     "optionImageRequired": "At least three option images are required",
     "answerRequired": "Answer is required",
@@ -35,5 +37,7 @@
     "question_level": "Question & Level",
     "ratio": "Ratio",
     "true": "Correct",
-    "false": "Wrong"
+    "false": "Wrong",
+    "answerViRequired": "Vietnamese answer is required!",
+    "answerEnRequired": "English answer is required!"
 }
