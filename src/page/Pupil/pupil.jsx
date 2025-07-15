@@ -316,7 +316,7 @@ const PupilManagement = () => {
 
     return (
         <div className="containers">
-            <Navbar />
+            {/* <Navbar /> */}
             <div className="title-search">
                 <h1 className="container-title">{t('managementLessons')}</h1>
                 <div className="search">

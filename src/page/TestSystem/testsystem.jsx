@@ -155,7 +155,7 @@ const TestSystem = () => {
 
   return (
     <div className="containers">
-      <Navbar />
+      {/* <Navbar /> */}
       <h1 className="container-title">{t('managementTestSystem')}</h1>
       <div className="containers-content">
         <div className="filter-bar mb-2">

@@ -1,12 +1,12 @@
 .app-container {
     display: flex;
-    height: 100vh;
+    height: calc(100vh - 64px);
     background-color: #F8F8FF;
     overflow: hidden;
 }
 
 .sidebar {
-    width: 14rem;
+    width: 20rem;
     background-color: var(--background-sidebar);
     display: flex;
     flex-direction: column;

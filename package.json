@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ant-design/charts": "^2.6.0",
     "@ant-design/icons": "^6.0.0",
+    "@ant-design/plots": "^2.6.0",
     "@ckeditor/ckeditor5-build-classic": "^41.4.2",
     "@ckeditor/ckeditor5-react": "^9.5.0",
     "antd": "^5.25.1",
@@ -26,6 +28,7 @@
     "react-beautiful-dnd": "^13.1.1",
     "react-bootstrap": "^2.10.10",
     "react-chartjs-2": "^5.3.0",
+    "react-countup": "^6.5.3",
     "react-datepicker": "^8.4.0",
     "react-dom": "^18.2.0",
     "react-i18next": "^15.5.1",

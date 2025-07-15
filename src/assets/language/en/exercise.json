@@ -29,5 +29,11 @@
     "answerImageRequired": "Answer image is required",
     "addOption": "Add option",
     "maxThreeOptions": "Maximum selection is 3",
-    "atLeastOneOption": "at least one option"
+    "atLeastOneOption": "at least one option",
+    "exercise_statistic": "Exercise Statistic",
+    "chart": "Answer statistics",
+    "question_level": "Question & Level",
+    "ratio": "Ratio",
+    "true": "Correct",
+    "false": "Wrong"
 }

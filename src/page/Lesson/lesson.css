@@ -2,7 +2,7 @@
     height: 380px;
     overflow-x: auto;
     scrollbar-width: none;
-    
+
 }
 
 .custom-table .ant-table-thead>tr>th {
@@ -12,6 +12,7 @@
     color: var(--table-color);
     background: var(--background-tabled);
     box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+    margin-top: 0 !important;
 }
 
 /* lesson.css */

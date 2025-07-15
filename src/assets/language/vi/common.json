@@ -17,5 +17,7 @@
     "searchPlaceholder": "Tìm kiếm",
     "adminRole": "Quản trị viên",
     "status": "Tất cả trạng thái",
-    ".no": "STT"
+    ".no": "STT",
+    "no_lesson_available": "Không có bài học khả dụng",
+    "exercise_statistic": "Thống kê bài tập"
 }

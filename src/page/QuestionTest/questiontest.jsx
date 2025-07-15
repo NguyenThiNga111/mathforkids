@@ -156,7 +156,7 @@ const QuestionTest = () => {
 
   return (
     <div className="containers">
-      <Navbar />
+      {/* <Navbar /> */}
       <Breadcrumb items={breadcrumbItems} style={{ marginBottom: 16 }} />
       <h1 className="container-title">{t('managementQuestionTest')}</h1>
       <div className="containers-content">

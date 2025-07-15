@@ -1,0 +1,6 @@
+.main-content {
+  /* padding: 24px; */
+  overflow-y: auto;
+  height: calc(100vh - 64px); /* Trừ chiều cao Navbar */
+  background-color: var(--background-content)
+}

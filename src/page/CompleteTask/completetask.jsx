@@ -151,7 +151,7 @@ const CompleteTask = () => {
 
     return (
         <div className="container">
-            <Navbar />
+            {/* <Navbar /> */}
             <div className="container-content">
                 <h1 className="container-title">{t('managementCompleteTasks')}</h1>
                 <div className="flex justify-between items-center mb-4">

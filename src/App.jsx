@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import MainLayout from "./component/MainLayout"
 import Siderbar from './component/Sidebar';
-import DashboardPage from './page/Dashboard/dashboard';
+import DashboardPage_Nhap from './page/Dashboard/dashboard';
+import DashboardPage from './page/Dashboard';
 import AccountUserPage from './page/AccountUser/accountuser';
 import RewardPage from './page/Reward/reward';
 import LoginPage from './page/Login/login';
@@ -22,9 +24,10 @@ import LevelPage from './page/Level/level';
 import PupilPage from './page/Pupil/pupil';
 import CompleteTaskPage from './page/CompleteTask/completetask';
 import CompleteLessonPage from './page/CompleteLesson/completelesson';
+import ExerciseStatistic from './page/ExerciseStatistic';
 import Logout from './page/Logout/logout';
 import Auth from './component/auth';
-
+import { Navigate } from 'react-router-dom';
 import { darkColors, injectColorsToRoot, lightColors } from './assets/theme/colors';
 import { injectFontsToRoot } from './assets/theme/fonts';
 import { ToastContainer } from 'react-toastify';
@@ -44,8 +47,9 @@ function App() {
       <Router>
         <Routes>
           <Route element={<Auth />}>
-            <Route path="/" element={<Siderbar />}>
-              <Route index element={<DashboardPage />} />
+            <Route path="/" element={<MainLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard-nhap" element={<DashboardPage_Nhap />} />
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="account-user" element={<AccountUserPage />} />
               <Route path="rewards" element={<RewardPage />} />
@@ -63,6 +67,7 @@ function App() {
               <Route path="pupil" element={<PupilPage />} />
               <Route path="completetask" element={<CompleteTaskPage />} />
               <Route path="completelesson" element={<CompleteLessonPage />} />
+              <Route path="exercise_statistic" element={<ExerciseStatistic />} />              
               <Route path="logout" element={<Logout />} />
 
             </Route>
