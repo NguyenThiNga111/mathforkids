@@ -215,7 +215,7 @@ const CompletedLesson = () => {
 
     return (
         <div className="containers">
-            <Navbar />
+            {/* <Navbar /> */}
             <Breadcrumb items={breadcrumbItems} style={{ marginTop: 10, marginBottom: -20 }} />
             <div className="title-search">
                 <h1 className="container-title">{t('managementCompletedLesson')}</h1>

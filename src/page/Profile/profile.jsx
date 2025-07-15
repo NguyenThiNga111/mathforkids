@@ -282,7 +282,7 @@ const Profile = () => {
 
     return (
         <div className="containers">
-            <Navbar />
+            {/* <Navbar /> */}
             <h1 className="container-title">{t('profile')}</h1>
             <div className="profile-container">
                 <div className="flex justify-between items-center mb-4">

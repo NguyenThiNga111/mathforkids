@@ -56,6 +56,12 @@ const Login = () => {
                                 required
                             />
                         </div>
+                        {/* <div>
+                            <div className='forgotlabel'>
+                                <label className='labellogin'></label>
+                                <a href="/forgotpassword" className='forgotpassword'>ForgotPassword?</a>
+                            </div>
+                        </div> */}
                         <div className='buttonlogins'>
                             <Button className='buttonlogin' htmlType='submit'>
                                 Login

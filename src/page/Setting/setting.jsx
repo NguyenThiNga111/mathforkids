@@ -83,7 +83,7 @@ const Setting = () => {
 
     return (
         <div className="containers">
-            <Navbar />
+            {/* <Navbar /> */}
             <h1 className="container-title">{t('managementsetting')}</h1>
             <div className="profile-container">
                 <div className="flex justify-between items-center mb-4">

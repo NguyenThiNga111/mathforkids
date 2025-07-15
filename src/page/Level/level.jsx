@@ -363,7 +363,7 @@ const Level = () => {
 
     return (
         <div className="containers">
-            <Navbar />
+            {/* <Navbar /> */}
             <div className="title-search">
                 <h1 className="container-title">{t('managementLevels')}</h1>
                 <div className="search">

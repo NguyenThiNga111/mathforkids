@@ -190,7 +190,7 @@ const Notification = () => {
 
     return (
         <div className="containers">
-            <Navbar />
+            {/* <Navbar /> */}
             <div className="title-search">
                 <h1 className="container-title">{t('managementNotifications')}</h1>
                 <div className="search">

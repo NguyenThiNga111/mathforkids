@@ -15,6 +15,15 @@
     scrollbar-color: #a0a0a0 transparent;
 }
 
+.table-container-exercise2 {
+    max-height: calc(100vh - 225px);
+    min-height: 300px;
+    overflow-y: auto;
+    width: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: #B8B8B9 transparent;
+}
+
 .table-container-exercise tbody tr:hover>td {
     background-color: var(--background-hover) !important;
 }

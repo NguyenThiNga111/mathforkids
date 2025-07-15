@@ -28,7 +28,7 @@ const Exercise = () => {
     const [visibleExercises, setVisibleExercises] = useState([]);
     const [nextPageToken, setNextPageToken] = useState(null);
     const [countAll, setCountAll] = useState('');
-    const exercisesPerPage = 100;
+    const exercisesPerPage = 5;
     const { Option } = Select;
     const { lessonId } = useParams();
     const navigate = useNavigate();
@@ -517,17 +517,15 @@ const Exercise = () => {
         {
             title: t('lesson'),
             onClick: () => navigate('/lesson'),
-            className: 'current-breadcrumb-title',
         },
         {
             title: lesson?.name?.[i18n.language] || lessonId,
-            className: 'current-breadcrumb',
         },
     ];
 
     return (
         <div className="containers">
-            <Navbar />
+            {/* <Navbar /> */}
             <Breadcrumb items={breadcrumbItems} style={{ marginTop: 10, marginBottom: -20 }} />
             <div className="title-search">
                 <h1 className="container-title">

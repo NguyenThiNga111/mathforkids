@@ -32,6 +32,12 @@
     "addOption": "Thêm lựa chọn",
     "maxThreeOptions": "Lựa chọn tối đa là 3",
     "atLeastOneOption": "ít nhất một tùy chọn",
+    "exercise_statistic": "Thống kê bài tập",
+    "chart": "Thống kê câu trả lời",
+    "question_level": "Câu hỏi & Mức độ",
+    "ratio": "Tỉ lệ",
+    "true": "Đúng",
+    "false": "Sai",
     "answerViRequired": "Đáp án tiếng Việt là bắt buộc!",
     "answerEnRequired": "Đáp án tiếng Anh là bắt buộc!"
 }

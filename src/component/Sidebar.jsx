@@ -22,13 +22,21 @@ const Dashboard = () => {
     return (
         <div className="app-container">
             <div className="sidebar">
-                <div className="sidebar-header">DashStack</div>
+                {/* <div className="sidebar-header">DashStack</div> */}
                 <div className="sidebar-divider">
                     <a className="sidebar-a">Admin Pages</a>
                     <nav className="sidebar-nav">
+                        {/* <Link to="/dashboard-nhap" className={`sidebar-item ${activeItem === '/dashboard-nhap' ? 'active' : ''}`}>
+                            <FaTachometerAlt className={getIconClass('/dashboard-nhap')} />
+                            Thong Ke - nhap
+                        </Link> */}
                         <Link to="/dashboard" className={`sidebar-item ${activeItem === '/dashboard' ? 'active' : ''}`}>
                             <FaTachometerAlt className={getIconClass('/dashboard')} />
                             {t('dashboard')}
+                        </Link>
+                        <Link to="/exercise_statistic" className={`sidebar-item ${activeItem === '/exercise_statistic' ? 'active' : ''}`}>
+                            <FaTachometerAlt className={getIconClass('/exercise_statistic')} />
+                            {t('exercise_statistic')}
                         </Link>
                         <Link to="/account-user" className={`sidebar-item ${activeItem === '/account-user' ? 'active' : ''}`}>
                             <FaUser className={getIconClass('/account-user')} />
@@ -92,9 +100,9 @@ const Dashboard = () => {
                     </nav>
                 </div>
             </div>
-            <div className="content">
+            {/* <div className="content">
                 <Outlet />
-            </div>
+            </div> */}
         </div>
     );
 };

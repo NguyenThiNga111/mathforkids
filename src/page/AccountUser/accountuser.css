@@ -93,12 +93,12 @@ thead tr {
     background-color: var(--table-name);
 }
 
-tbody tr:nth-child(odd) {
+.custom-table tbody tr:nth-child(odd) {
     background-color: var(--background-white);
 }
 
-tbody tr:nth-child(even) {
-    background-color: var(--background-content);
+.custom-table tbody tr:nth-child(even) {
+    background-color: #f1f1fb;
 }
 
 .table-container-user tbody tr:hover>td {
