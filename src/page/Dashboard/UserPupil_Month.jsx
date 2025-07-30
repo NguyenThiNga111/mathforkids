@@ -53,11 +53,11 @@ export default function UserPupil_Month({ selectedMonthRange }) {
     yField: "total",
     colorField: "type",
     shapeField: "smooth",
-    height: 350,
+    height: 420,
   };
 
   return loading ? (
-    <Flex justify="center" align="center" style={{ height: "371.5px" }}>
+    <Flex justify="center" align="center" style={{ height: "441.5px" }}>
       <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
     </Flex>
   ) : (

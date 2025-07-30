@@ -13,7 +13,7 @@ import MathTypePoint from "./MathTypePoint";
 import "./dashboard.css";
 
 export default function Dashboard() {
-  const { t, i18n } = useTranslation(["dashboard", "common", "lesson"]);
+  const { t, i18n } = useTranslation(["dashboard", "common", "lesson", "sidebar"]);
   const [activeTab, setActiveTab] = useState("userpupil");
 
   const tabList = [
@@ -43,7 +43,8 @@ export default function Dashboard() {
 
   return (
     <div>
-      <div className="p-4">
+      <h1 className="container-title">{t("dashboard", { ns: "sidebar" })}</h1>
+      <div className="px-4 pt-2 pb-4">
         <Row gutter={16}>
           <Col span={6}>
             <TotalParent />

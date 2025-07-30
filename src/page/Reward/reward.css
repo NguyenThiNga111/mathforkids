@@ -97,16 +97,14 @@
     height: 50px;
     background: #FFA500;
     padding: 10px 16px;
-    display: flex;
-    align-items: center;
     gap: 8px;
     border-radius: 8px;
 }
 
-.custom-upload-button:hover {
+/* .custom-upload-button:hover {
     color: #FFA500 !important;
     background: #FFFFFF !important;
-}
+} */
 
 /* Optional: Specific column widths */
 .table-container-reward th:nth-child(1),

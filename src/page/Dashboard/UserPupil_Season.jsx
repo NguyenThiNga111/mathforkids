@@ -187,11 +187,11 @@ export default function UserPupil_Season({ selectedYearRange }) {
         },
       },
     },
-    height: 350,
+    height: 420,
   };
 
   return loading ? (
-    <Flex justify="center" align="center" style={{ height: "371.5px" }}>
+    <Flex justify="center" align="center" style={{ height: "441.5px" }}>
       <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
     </Flex>
   ) : (

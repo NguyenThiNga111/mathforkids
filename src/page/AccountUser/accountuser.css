@@ -72,14 +72,13 @@
 }
 
 .rounded-add {
-    padding: 8px 16px;
+    padding: 4px 16px;
     background-color: var(--background-buttonadd);
-    color: var(--color-buttonadd);
+    color: var(--color-textwhite);
     border: none;
     border-radius: 8px;
     cursor: pointer;
     font-weight: 500;
-    border: 1px solid var(--color-border);
 }
 
 /* Bảng chính */
@@ -101,6 +100,30 @@ thead tr {
     background-color: #f1f1fb;
 }
 
+.custom-table .ant-table .ant-table-container .ant-table-body,
+.custom-table .ant-table .ant-table-container .ant-table-content {
+  scrollbar-width: thin;
+  scrollbar-color: #eaeaea transparent;
+  scrollbar-gutter: stable;
+}
+
+.custom-table .ant-table .ant-table-container .ant-table-body::-webkit-scrollbar,
+.custom-table .ant-table .ant-table-container .ant-table-content::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-table .ant-table .ant-table-container .ant-table-body::-webkit-scrollbar-thumb,
+.custom-table .ant-table .ant-table-container .ant-table-content::-webkit-scrollbar-thumb {
+  background-color: #eaeaea;
+  border-radius: 10px;
+}
+
+.custom-table .ant-table .ant-table-container .ant-table-body::-webkit-scrollbar-track,
+.custom-table .ant-table .ant-table-container .ant-table-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .table-container-user tbody tr:hover>td {
     background-color: var(--background-hover) !important;
 }
@@ -109,7 +132,7 @@ th,
 td {
     color: var(--table-color);
     padding: 12px;
-    text-align: left;
+    /* text-align: left; */
 }
 
 /* Search */
@@ -286,7 +309,6 @@ input:checked+.slider::before {
     max-width: 90vw;
     margin: auto;
     border-radius: 10px;
-
 }
 
 .modal-content input,
@@ -369,8 +391,8 @@ input:checked+.slider::before {
 }
 
 .save-button {
-    background-color: var(--background-save);
-    color: var(--color-textwhite);
+    background-color: var(--background-save) !important;
+    color: var(--color-textwhite) !important;
     border: none;
     border-radius: 8px;
     height: 40px;
@@ -381,13 +403,13 @@ input:checked+.slider::before {
 }
 
 .save-button:hover {
-    background-color: var(--background-savehover);
-    color: var(--color-textwhite);
+    background-color: var(--background-savehover) !important;
+    color: var(--color-textwhite) !important;
 }
 
 .cancel-button {
-    background-color: var(--background-cancel);
-    color: var(--color-textwhite);
+    background-color: var(--background-cancel) !important;
+    color: var(--color-textwhite) !important;
     border: none;
     border-radius: 8px;
     height: 40px;
@@ -397,8 +419,8 @@ input:checked+.slider::before {
 }
 
 .cancel-button:hover {
-    background-color: var(--background-cancelhover);
-    color: var(--color-textwhite);
+    background-color: var(--background-cancelhover) !important;
+    color: var(--color-textwhite) !important;
 }
 
 /* Bảng dữ liệu */
@@ -463,6 +485,7 @@ input:checked+.slider::before {
     box-sizing: border-box;
     scrollbar-width: thin;
     scrollbar-color: var(--color-textsearch) transparent;
+    padding: 10px 0;
 }
 
 .user-detail-section {
@@ -505,8 +528,9 @@ input:checked+.slider::before {
     border-radius: 12px;
     padding: 6px;
     width: 200px;
-    height: 100px;
-    display: flex;
+    /* height: 100px; */
+    /* display: flex; */
+    /* margin-top: 10px; */
     margin-left: auto;
     justify-content: center;
     background-color: var(--background-white);

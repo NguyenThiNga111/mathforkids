@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Image, Flex } from "antd";
+import { Table, Image, Flex, Empty } from "antd";
 import { FaEdit } from "react-icons/fa";
 import { Column } from "@ant-design/plots";
 import MoreButton from "./MoreButton";
@@ -92,7 +92,11 @@ export default function TableStatistic({
             width={200}
             height={100}
           />
-        ) : null;
+        ) : (
+          <span style={{ width: 60, opacity: 0.5 }}>
+            {t("none", { ns: "common" })}
+          </span>
+        );
       },
     },
     {
@@ -235,6 +239,23 @@ export default function TableStatistic({
       rowKey="id"
       className="custom-table"
       scroll={{ y: "calc(100vh - 300px)" }}
+      style={{ height: "calc(100vh - 225px)" }}
+      locale={{
+        emptyText: (
+          <Flex
+            justify="center"
+            align="center"
+            style={{ height: "calc(100vh - 355px)" }}
+          >
+            <div>
+              <Empty
+                description={t("nodata", { ns: "common" })}
+                image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
+              ></Empty>
+            </div>
+          </Flex>
+        ),
+      }}
     />
   );
 }

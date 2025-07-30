@@ -67,7 +67,7 @@ const Verify = () => {
   };
   const handleVerify = async () => {
     const enteredOTP = otp.join("");
-    if (enteredOTP.length !== 4 || otp.some((digit) => digit === "")) {
+    if (enteredOTP.length < 4 || enteredOTP.length > 5 || !/^\d+$/.test(otp)) {
       setErrorText("Please enter all 4 digits code sent to your email.");
       return;
     }
@@ -133,8 +133,8 @@ const Verify = () => {
           </div>
 
           <div className="buttonverifys">
-            <Button className="buttonverify" onClick={handleResend}>
-              {loadingResend ? (
+            {loadingResend ? (
+              <div className="buttonverify">
                 <Spin
                   indicator={
                     <LoadingOutlined
@@ -143,13 +143,15 @@ const Verify = () => {
                     />
                   }
                 />
-              ) : (
-                "Resend OTP"
-              )}
-            </Button>
+              </div>
+            ) : (
+              <Button className="buttonverify" onClick={handleResend}>
+                Resend OTP
+              </Button>
+            )}
 
-            <Button className="buttonverify" onClick={handleVerify}>
-              {loadingVerify ? (
+            {loadingVerify ? (
+              <div className="buttonverify">
                 <Spin
                   indicator={
                     <LoadingOutlined
@@ -158,10 +160,12 @@ const Verify = () => {
                     />
                   }
                 />
-              ) : (
-                "Verify"
-              )}
-            </Button>
+              </div>
+            ) : (
+              <Button className="buttonverify" onClick={handleVerify}>
+                Verify
+              </Button>
+            )}
           </div>
         </div>
       </div>

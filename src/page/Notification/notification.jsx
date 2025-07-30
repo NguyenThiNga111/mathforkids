@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Navbar from "../../component/Navbar";
-import { Input, Button, Modal, Table, Flex, Spin } from "antd";
+import { Input, Button, Modal, Table, Flex, Spin, Empty } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import { FaPlus } from "react-icons/fa";
 import { toast } from "react-toastify";
@@ -11,6 +11,7 @@ import "./notification.css";
 const Notification = () => {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadingSave, setLoadingSave] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingNotification, setEditingNotification] = useState(null);
   const [notificationsData, setNotificationsData] = useState([]);
@@ -82,8 +83,9 @@ const Notification = () => {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async () => {    
     if (validateForm()) {
+      setLoadingSave(true);
       try {
         const payload = {
           title: {
@@ -122,41 +124,50 @@ const Notification = () => {
           position: "top-right",
           autoClose: 3000,
         });
+      } finally {
+        setLoadingSave(false);
       }
-    } else {
-      toast.error(t("validationFailed", { ns: "common" }), {
-        position: "top-right",
-        autoClose: 2000,
-      });
     }
   };
 
   const validateForm = () => {
     const newErrors = {};
+    // Title Vi
     if (
       !editingNotification?.title?.vi ||
       editingNotification.title.vi.trim() === ""
-    ) {
+    )
       newErrors.titleVi = t("titleViRequired");
-    }
+    else if (editingNotification.title.vi.trim().length < 3)
+      newErrors.titleVi = t("titleViLenghth");
+
+    // Title En
     if (
       !editingNotification?.title?.en ||
       editingNotification.title.en.trim() === ""
-    ) {
+    )
       newErrors.titleEn = t("titleEnRequired");
-    }
+    else if (editingNotification.title.en.trim().length < 3)
+      newErrors.titleEn = t("titleEnLenghth");
+
+    // Content Vi
     if (
       !editingNotification?.content?.vi ||
       editingNotification.content.vi.trim() === ""
-    ) {
+    )
       newErrors.contentVi = t("contentViRequired");
-    }
+    else if (editingNotification.content.vi.trim().length < 10)
+      newErrors.contentVi = t("contentViLenghth");
+
+    // Content En
     if (
       !editingNotification?.content?.en ||
       editingNotification.content.en.trim() === ""
-    ) {
+    )
       newErrors.contentEn = t("contentEnRequired");
-    }
+    else if (editingNotification.content.en.trim().length < 10)
+      newErrors.contentEn = t("contentEnLenghth");
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -292,12 +303,12 @@ const Notification = () => {
                             <button className="filter-text">{t('filterBy', { ns: 'common' })}</button>
                         </span> */}
           </div>
-          <Button className="rounded-add" onClick={() => openModal("add")}>
+          <button className="rounded-add" onClick={() => openModal("add")}>
             <Flex justify="center" align="center" gap="small">
               <FaPlus />
               <span>{t("addNew", { ns: "common" })}</span>
             </Flex>
-          </Button>
+          </button>
         </div>
         <div>
           {loading ? (
@@ -325,6 +336,23 @@ const Notification = () => {
               rowKey="id"
               className="custom-table"
               scroll={{ y: "calc(100vh - 300px)" }}
+              style={{ height: "calc(100vh - 225px)" }}
+              locale={{
+                emptyText: (
+                  <Flex
+                    justify="center"
+                    align="center"
+                    style={{ height: "calc(100vh - 355px)" }}
+                  >
+                    <div>
+                      <Empty
+                        description={t("nodata", { ns: "common" })}
+                        image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
+                      ></Empty>
+                    </div>
+                  </Flex>
+                ),
+              }}
             />
           )}
           {/* <div className="paginations">
@@ -347,12 +375,12 @@ const Notification = () => {
           onCancel={closeModal}
           footer={null}
           className="modal-content"
+          centered
         >
-          <div className="form-content-notification">
+          <div className="form-content-lesson">
             <div className="inputtext">
               <label className="titleinput">
-                {t("title")} (Vietnamese){" "}
-                <span style={{ color: "red" }}>*</span>
+                {t("titleVi")} <span style={{ color: "red" }}>*</span>
               </label>
               <Input
                 placeholder={t("inputTitleVi")}
@@ -363,6 +391,7 @@ const Notification = () => {
                     title: { ...editingNotification.title, vi: e.target.value },
                   })
                 }
+                status={errors.titleVi ? "error" : ""}
               />
               {errors.titleVi && (
                 <div className="error-text">{errors.titleVi}</div>
@@ -370,7 +399,7 @@ const Notification = () => {
             </div>
             <div className="inputtext">
               <label className="titleinput">
-                {t("title")} (English) <span style={{ color: "red" }}>*</span>
+                {t("titleEn")} <span style={{ color: "red" }}>*</span>
               </label>
               <Input
                 placeholder={t("inputTitleEn")}
@@ -381,6 +410,7 @@ const Notification = () => {
                     title: { ...editingNotification.title, en: e.target.value },
                   })
                 }
+                status={errors.titleEn ? "error" : ""}
               />
               {errors.titleEn && (
                 <div className="error-text">{errors.titleEn}</div>
@@ -388,8 +418,7 @@ const Notification = () => {
             </div>
             <div className="inputtext">
               <label className="titleinput">
-                {t("content")} (Vietnamese){" "}
-                <span style={{ color: "red" }}>*</span>
+                {t("contentVi")} <span style={{ color: "red" }}>*</span>
               </label>
               <Input.TextArea
                 placeholder={t("inputContentVi")}
@@ -404,6 +433,7 @@ const Notification = () => {
                   })
                 }
                 rows={4}
+                status={errors.contentVi ? "error" : ""}
               />
               {errors.contentVi && (
                 <div className="error-text">{errors.contentVi}</div>
@@ -411,7 +441,7 @@ const Notification = () => {
             </div>
             <div className="inputtext">
               <label className="titleinput">
-                {t("content")} (English) <span style={{ color: "red" }}>*</span>
+                {t("contentEn")} <span style={{ color: "red" }}>*</span>
               </label>
               <Input.TextArea
                 placeholder={t("inputContentEn")}
@@ -426,6 +456,7 @@ const Notification = () => {
                   })
                 }
                 rows={4}
+                status={errors.contentEn ? "error" : ""}
               />
               {errors.contentEn && (
                 <div className="error-text">{errors.contentEn}</div>
@@ -436,9 +467,22 @@ const Notification = () => {
             <Button className="cancel-button" onClick={closeModal} block>
               {t("cancel", { ns: "common" })}
             </Button>
-            <Button className="save-button" onClick={handleSave} block>
-              {t("save", { ns: "common" })}
-            </Button>
+            {loadingSave ? (
+              <Button className="save-button">
+                <Spin
+                  indicator={
+                    <LoadingOutlined
+                      style={{ fontSize: 20, color: "#fff" }}
+                      spin
+                    />
+                  }
+                />
+              </Button>
+            ) : (
+              <Button className="save-button" onClick={handleSave} block>
+                {t("save", { ns: "common" })}
+              </Button>
+            )}
           </div>
         </Modal>
       </div>

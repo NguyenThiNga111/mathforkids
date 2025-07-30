@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Input, Button, Select, Modal, Table, Switch, Flex, Spin } from "antd";
+import {
+  Input,
+  Button,
+  Select,
+  Modal,
+  Table,
+  Switch,
+  Flex,
+  Spin,
+  Empty,
+} from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { toast } from "react-toastify";
@@ -15,6 +25,7 @@ const { Option } = Select;
 const Level = () => {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadingSave, setLoadingSave] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLevel, setEditingLevel] = useState(null);
   const [levelsData, setLevelsData] = useState([]);
@@ -177,18 +188,25 @@ const Level = () => {
 
   const validateForm = useCallback(() => {
     const newErrors = {};
-    if (!editingLevel?.name?.vi || editingLevel.name.vi.trim() === "") {
+    // Name Vi
+    if (!editingLevel?.name?.vi || editingLevel.name.vi.trim() === "")
       newErrors.nameVi = t("nameViRequired");
-    }
-    if (!editingLevel?.name?.en || editingLevel.name.en.trim() === "") {
+    else if (editingLevel.name.vi.trim().length < 2)
+      newErrors.nameVi = t("nameViMinLength");
+
+    //Name En
+    if (!editingLevel?.name?.en || editingLevel.name.en.trim() === "")
       newErrors.nameEn = t("nameEnRequired");
-    }
+    else if (editingLevel.name.en.trim().length < 3)
+      newErrors.nameEn = t("nameEnMinLength");
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [editingLevel, t]);
 
   const handleSave = useCallback(async () => {
     if (validateForm()) {
+      setLoadingSave(true);
       try {
         const { id, ...payload } = editingLevel;
         payload.name = {
@@ -234,12 +252,9 @@ const Level = () => {
             autoClose: 3000,
           }
         );
+      } finally {
+        setLoadingSave(false);
       }
-    } else {
-      toast.error(t("validationFailed", { ns: "common" }), {
-        position: "top-right",
-        autoClose: 2000,
-      });
     }
   }, [editingLevel, filterStatus, fetchLevels, i18n.language, t, validateForm]);
 
@@ -547,10 +562,12 @@ const Level = () => {
                 {isDragEnabled ? t("disableDrag") : t("enableDrag")}
               </Button>
             )}
-            <Button className="rounded-add" onClick={() => openModal("add")}>
-              <FaPlus className="inline mr-2" />
-              {t("addNew", { ns: "common" })}
-            </Button>
+            <button className="rounded-add" onClick={() => openModal("add")}>
+              <Flex justify="center" align="center" gap="small">
+                <FaPlus />
+                <span>{t("addNew", { ns: "common" })}</span>
+              </Flex>
+            </button>
           </div>
         </div>
 
@@ -578,6 +595,7 @@ const Level = () => {
                     rowKey="id"
                     className="custom-table custom-table-drag"
                     scroll={{ y: "calc(100vh - 300px)" }}
+                    style={{ height: "calc(100vh - 225px)" }}
                     components={{
                       body: {
                         row: ({ children, ...props }) => {
@@ -657,6 +675,23 @@ const Level = () => {
                 rowKey="id"
                 className="custom-table"
                 scroll={{ y: "calc(100vh - 300px)" }}
+                style={{ height: "calc(100vh - 225px)" }}
+                locale={{
+                  emptyText: (
+                    <Flex
+                      justify="center"
+                      align="center"
+                      style={{ height: "calc(100vh - 355px)" }}
+                    >
+                      <div>
+                        <Empty
+                          description={t("nodata", { ns: "common" })}
+                          image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
+                        ></Empty>
+                      </div>
+                    </Flex>
+                  ),
+                }}
               />
             )}
           </>
@@ -680,12 +715,12 @@ const Level = () => {
           onCancel={closeModal}
           footer={null}
           className="modal-content"
+          centered
         >
           <div className="form-content-level">
             <div className="inputtext">
               <label className="titleinput">
-                {t("levelName")} (Vietnamese){" "}
-                <span style={{ color: "red" }}>*</span>
+                {t("levelNameVi")} <span style={{ color: "red" }}>*</span>
               </label>
               <Input
                 placeholder={t("inputLevelNameVi")}
@@ -696,6 +731,7 @@ const Level = () => {
                     name: { ...editingLevel?.name, vi: e.target.value },
                   })
                 }
+                status={errors.nameVi ? "error" : ""}
               />
               {errors.nameVi && (
                 <div className="error-text">{errors.nameVi}</div>
@@ -703,8 +739,7 @@ const Level = () => {
             </div>
             <div className="inputtext">
               <label className="titleinput">
-                {t("levelName")} (English){" "}
-                <span style={{ color: "red" }}>*</span>
+                {t("levelNameEn")} <span style={{ color: "red" }}>*</span>
               </label>
               <Input
                 placeholder={t("inputLevelNameEn")}
@@ -715,6 +750,7 @@ const Level = () => {
                     name: { ...editingLevel?.name, en: e.target.value },
                   })
                 }
+                status={errors.nameEn ? "error" : ""}
               />
               {errors.nameEn && (
                 <div className="error-text">{errors.nameEn}</div>
@@ -725,9 +761,22 @@ const Level = () => {
             <Button className="cancel-button" onClick={closeModal} block>
               {t("cancel", { ns: "common" })}
             </Button>
-            <Button className="save-button" onClick={handleSave} block>
-              {t("save", { ns: "common" })}
-            </Button>
+            {loadingSave ? (
+              <Button className="save-button">
+                <Spin
+                  indicator={
+                    <LoadingOutlined
+                      style={{ fontSize: 20, color: "#fff" }}
+                      spin
+                    />
+                  }
+                />
+              </Button>
+            ) : (
+              <Button className="save-button" onClick={handleSave} block>
+                {t("save", { ns: "common" })}
+              </Button>
+            )}
           </div>
         </Modal>
       </div>

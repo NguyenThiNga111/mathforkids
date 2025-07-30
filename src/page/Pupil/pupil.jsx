@@ -10,6 +10,7 @@ import {
   Switch,
   Flex,
   Spin,
+  Empty,
 } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import {
@@ -510,6 +511,23 @@ const PupilManagement = () => {
             rowKey="id"
             className="custom-table"
             scroll={{ y: "calc(100vh - 300px)" }}
+            style={{ height: "calc(100vh - 225px)" }}
+            locale={{
+              emptyText: (
+                <Flex
+                  justify="center"
+                  align="center"
+                  style={{ height: "calc(100vh - 355px)" }}
+                >
+                  <div>
+                    <Empty
+                      description={t("nodata", { ns: "common" })}
+                      image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
+                    ></Empty>
+                  </div>
+                </Flex>
+              ),
+            }}
           />
         )}
         {/* <div className="paginations">
