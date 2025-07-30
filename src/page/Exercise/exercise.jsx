@@ -13,6 +13,9 @@ import {
   Image,
   Flex,
   Spin,
+  Empty,
+  Col,
+  Row,
 } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import { UploadOutlined, DeleteOutlined } from "@ant-design/icons";
@@ -28,6 +31,7 @@ import Navbar from "../../component/Navbar";
 const Exercise = () => {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadingSave, setLoadingSave] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExercise, setEditingExercise] = useState(null);
   const [imageUrl, setImageUrl] = useState("");
@@ -293,12 +297,13 @@ const Exercise = () => {
 
   const getLevelName = (levelId) => {
     const level = levels.find((lvl) => lvl.id === levelId);
-    console.log(levels, level);
+    // console.log(levels, level);
     return level ? level.name : levelId;
   };
 
   const handleSave = async () => {
     if (validate()) {
+      setLoadingSave(true);
       try {
         const formData = new FormData();
         formData.append("levelId", editingExercise.levelId);
@@ -345,13 +350,13 @@ const Exercise = () => {
         setVisibleExercises([]);
         setNextPageToken(null);
         if (filterStatus !== "all" && filterLevel !== "all") {
-          fetchFilterLevelisDisabled(filterLevel, null, filterStatus);
+          await fetchFilterLevelisDisabled(filterLevel, null, filterStatus);
         } else if (filterLevel !== "all" && filterStatus === "all") {
-          fetchFilterLevel(filterLevel, null);
+          await fetchFilterLevel(filterLevel, null);
         } else if (filterLevel === "all" && filterStatus !== "all") {
-          fetchAllExercisesisDisabled(null, filterStatus);
+          await fetchAllExercisesisDisabled(null, filterStatus);
         } else {
-          fetchAllExercises(null);
+          await fetchAllExercises(null);
         }
         closeModal();
       } catch (error) {
@@ -365,12 +370,9 @@ const Exercise = () => {
             autoClose: 3000,
           }
         );
+      } finally {
+        setLoadingSave(false);
       }
-    } else {
-      toast.error(t("validationFailed", { ns: "common" }), {
-        position: "top-right",
-        autoClose: 2000,
-      });
     }
   };
 
@@ -398,40 +400,72 @@ const Exercise = () => {
 
   const validate = () => {
     const newErrors = {};
+    // Level
     if (!editingExercise?.levelId || editingExercise.levelId.trim() === "") {
       newErrors.levelId = t("levelIdRequired");
     }
+
+    // Question Vi
     if (
       !editingExercise?.question?.vi ||
       editingExercise.question.vi.trim() === ""
     ) {
       newErrors.questionVi = t("questionViRequired");
-    }
+    } else if (editingExercise.question.vi.trim().length < 3)
+      newErrors.questionVi = t("questionViLength");
+
+    //Question En
     if (
       !editingExercise?.question?.en ||
       editingExercise.question.en.trim() === ""
     ) {
       newErrors.questionEn = t("questionEnRequired");
-    }
-    const validOptions = editingExercise?.option?.filter(
-      (opt) => opt.vi?.trim() || opt.en?.trim()
-    );
-    if (!validOptions || validOptions.length === 0) {
-      newErrors.option = t("optionRequired");
-    }
+    } else if (editingExercise.question.en.trim().length < 3)
+      newErrors.questionEn = t("questionEnLength");
+
+    // const validOptions = editingExercise?.option?.filter(
+    //   (opt) => opt.vi?.trim() || opt.en?.trim()
+    // );
+    // if (!validOptions || validOptions.length === 0) {
+    //   newErrors.option = t("optionRequired");
+    // }
+
+    const optionViErrors = [];
+    const optionEnErrors = [];
+    editingExercise?.option?.forEach((item, index) => {
+      if (!item.vi || item.vi.trim() === "")
+        optionViErrors.push(t("wrongAnswerViRequired"));
+      else if (item.vi.trim().length < 3)
+        optionViErrors.push(t("wrongAnswerViLength"));
+
+      if (!item.en || item.en.trim() === "")
+        optionEnErrors.push(t("wrongAnswerEnRequired"));
+      else if (item.en.trim().length < 3)
+        optionEnErrors.push(t("wrongAnswerEnLength"));
+    });
+    if (optionViErrors.length > 0) newErrors.optionVi = optionViErrors;
+    if (optionEnErrors.length > 0) newErrors.optionEn = optionEnErrors;
+
+    // Answer Vi
     if (
       !editingExercise?.answer?.vi ||
       editingExercise.answer.vi.trim() === ""
     ) {
       newErrors.answerVi = t("answerViRequired");
-    }
+    } else if (editingExercise.answer.vi.trim().length < 3)
+      newErrors.answerVi = t("answerViLength");
+
+    // Answer En
     if (
       !editingExercise?.answer?.en ||
       editingExercise.answer.en.trim() === ""
     ) {
       newErrors.answerEn = t("answerEnRequired");
-    }
+    } else if (editingExercise.answer.en.trim().length < 3)
+      newErrors.answerEn = t("answerEnLength");
+
     setErrors(newErrors);
+    console.log(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -511,15 +545,21 @@ const Exercise = () => {
   };
 
   const removeOption = (index) => {
-    if (editingExercise.option.length === 1) {
-      toast.error(t("atLeastOneOption"));
-      return;
-    }
+    // if (editingExercise.option.length === 1) {
+    //   toast.error(t("atLeastOneOption"));
+    //   return;
+    // }
     setEditingExercise((prev) => ({
       ...prev,
       option: prev.option.filter((_, i) => i !== index),
     }));
+    setErrors((prev) => ({
+      ...prev,
+      optionVi: prev.optionVi?.filter((_, i) => i !== index) || [],
+      optionEn: prev.optionEn?.filter((_, i) => i !== index) || [],
+    }));
   };
+
   const columns = [
     {
       title: t(".no", { ns: "common" }),
@@ -594,7 +634,9 @@ const Exercise = () => {
             }}
           />
         ) : (
-          "None"
+          <span style={{ width: 60, opacity: 0.5 }}>
+            {t("none", { ns: "common" })}
+          </span>
         );
       },
     },
@@ -687,7 +729,7 @@ const Exercise = () => {
                 </div>
             </div> */}
       <div className="containers-content">
-        <div className="flex justify-between items-center mb-2">
+        <div className="flex justify-between items-center">
           <div className="filter-bar">
             <div className="filter-container">
               <div className="filter-containers">
@@ -741,12 +783,12 @@ const Exercise = () => {
                 </Select>
               </div>
             </div>
-            <Button className="rounded-add" onClick={() => openModal("add")}>
+            <button className="rounded-add" onClick={() => openModal("add")}>
               <Flex justify="center" align="center" gap="small">
                 <FaPlus />
                 <span>{t("addNew", { ns: "common" })}</span>
               </Flex>
-            </Button>
+            </button>
           </div>
         </div>
         {/* <div className="table-container-exercise"> */}
@@ -754,7 +796,7 @@ const Exercise = () => {
           <Flex
             justify="center"
             align="center"
-            style={{ height: "calc(100vh - 255px)" }}
+            style={{ height: "calc(100vh - 249px)" }}
           >
             <Spin
               indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />}
@@ -774,7 +816,24 @@ const Exercise = () => {
             pagination={false}
             rowKey="id"
             className="custom-table"
-            scroll={{ y: "calc(100vh - 330px)" }}
+            scroll={{ y: "calc(100vh - 324px)" }}
+            style={{ height: "calc(100vh - 249px)" }}
+            locale={{
+              emptyText: (
+                <Flex
+                  justify="center"
+                  align="center"
+                  style={{ height: "calc(100vh - 379px)" }}
+                >
+                  <div>
+                    <Empty
+                      description={t("nodata", { ns: "common" })}
+                      image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
+                    ></Empty>
+                  </div>
+                </Flex>
+              ),
+            }}
           />
         )}
         {/* <div className="paginations">
@@ -803,12 +862,13 @@ const Exercise = () => {
           onCancel={closeDetailModal}
           footer={null}
           className="modal-content"
+          centered
         >
           {selectedExercise && (
             <div className="form-content-assessment-detail">
               <div className="detail-item">
                 <label className="detail-label">
-                  {t("question")} (Vietnamese)
+                  {t("question")} ({t("vietnamese")})
                 </label>
                 <div className="detail-content">
                   {selectedExercise.question?.vi || "-"}
@@ -816,7 +876,7 @@ const Exercise = () => {
               </div>
               <div className="detail-item">
                 <label className="detail-label">
-                  {t("question")} (English)
+                  {t("question")} ({t("english")})
                 </label>
                 <div className="detail-content">
                   {selectedExercise.question?.en || "-"}
@@ -875,11 +935,12 @@ const Exercise = () => {
           onCancel={closeModal}
           footer={null}
           className="modal-content"
+          centered
         >
-          <div className="form-content-exercise">
+          <div className="form-content-lesson">
             <div className="inputtext">
               <label className="titleinput">
-                {t("question")} (Vietnamese){" "}
+                {t("question")} ({t("vietnamese")}){" "}
                 <span style={{ color: "red" }}>*</span>
               </label>
               <Input
@@ -894,6 +955,7 @@ const Exercise = () => {
                     },
                   })
                 }
+                status={errors.questionVi ? "error" : ""}
               />
               {errors.questionVi && (
                 <div className="error-text">{errors.questionVi}</div>
@@ -901,7 +963,7 @@ const Exercise = () => {
             </div>
             <div className="inputtext">
               <label className="titleinput">
-                {t("question")} (English){" "}
+                {t("question")} ({t("english")}){" "}
                 <span style={{ color: "red" }}>*</span>
               </label>
               <Input
@@ -916,6 +978,7 @@ const Exercise = () => {
                     },
                   })
                 }
+                status={errors.questionEn ? "error" : ""}
               />
               {errors.questionEn && (
                 <div className="error-text">{errors.questionEn}</div>
@@ -923,43 +986,45 @@ const Exercise = () => {
             </div>
             <div className="inputtext">
               <label className="titleinput">{t("image")}</label>
-              <Upload
-                accept="image/*"
-                showUploadList={false}
-                beforeUpload={() => false}
-                onChange={handleImageChange}
-                fileList={fileList}
-              >
-                <Button
-                  icon={<UploadOutlined />}
-                  className="custom-upload-button"
+              <Flex>
+                <Upload
+                  accept="image/*"
+                  showUploadList={false}
+                  beforeUpload={() => false}
+                  onChange={handleImageChange}
+                  fileList={fileList}
                 >
-                  {t("inputImage")}
-                </Button>
-              </Upload>
-              {imageUrl && (
-                <div className="image-preview-box">
-                  <Image
-                    src={imageUrl}
-                    alt="Preview"
-                    className="preview-image"
-                  />
-                  <DeleteOutlined
-                    onClick={handleRemoveImage}
-                    style={{
-                      position: "absolute",
-                      top: 8,
-                      right: 8,
-                      fontSize: 20,
-                      color: "#ff4d4f",
-                      cursor: "pointer",
-                      background: "#fff",
-                      borderRadius: "50%",
-                      padding: 4,
-                    }}
-                  />
-                </div>
-              )}
+                  <Button
+                    icon={<UploadOutlined />}
+                    className="custom-upload-button"
+                  >
+                    {t("inputImage")}
+                  </Button>
+                </Upload>
+                {imageUrl && (
+                  <div className="image-preview-box">
+                    <Image
+                      src={imageUrl}
+                      alt="Preview"
+                      className="preview-image"
+                    />
+                    <DeleteOutlined
+                      onClick={handleRemoveImage}
+                      style={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        fontSize: 20,
+                        color: "#ff4d4f",
+                        cursor: "pointer",
+                        background: "#fff",
+                        borderRadius: "50%",
+                        padding: 4,
+                      }}
+                    />
+                  </div>
+                )}
+              </Flex>
             </div>
             <div className="inputtext">
               <label className="titleinput">
@@ -975,6 +1040,7 @@ const Exercise = () => {
                     levelId: value,
                   })
                 }
+                status={errors.levelId ? "error" : ""}
               >
                 {levels.map((level) => (
                   <Select.Option key={level.id} value={level.id}>
@@ -1004,6 +1070,7 @@ const Exercise = () => {
                     })
                   }
                   style={{ flex: 1 }}
+                  status={errors.answerVi ? "error" : ""}
                 />
 
                 <Input
@@ -1019,102 +1086,160 @@ const Exercise = () => {
                     })
                   }
                   style={{ flex: 1 }}
+                  status={errors.answerEn ? "error" : ""}
                 />
               </div>
-              <div style={{ display: "flex", gap: "85px" }}>
-                {errors.answerVi && (
-                  <div className="error-text">{errors.answerVi}</div>
+              <Row gutter={10}>
+                {errors.answerVi ? (
+                  <Col span={12} className="error-text">
+                    {errors.answerVi}
+                  </Col>
+                ) : (
+                  <Col span={12} className="error-text"></Col>
                 )}
-                {errors.answerEn && (
-                  <div className="error-text">{errors.answerEn}</div>
+                {errors.answerEn ? (
+                  <Col span={12} className="error-text">
+                    {errors.answerEn}
+                  </Col>
+                ) : (
+                  <Col span={12} className="error-text"></Col>
                 )}
-              </div>
+              </Row>
             </div>
 
             <div className="inputtext">
               <label className="titleinput">
-                {t("option")} <span style={{ color: "red" }}>*</span>
+                {t("options")} <span style={{ color: "red" }}>*</span>
               </label>
               {editingExercise?.option?.map((opt, index) => (
-                <div
-                  key={index}
-                  className="option-text"
-                  style={{
-                    display: "flex",
-                    gap: "10px",
-                    marginBottom: "10px",
-                    position: "relative",
-                  }}
-                >
-                  <Input
-                    placeholder={`${t("option")} ${index + 1} (VietNamese)`}
-                    value={opt?.vi || ""}
-                    onChange={(e) => {
-                      const newOptions = [...editingExercise.option];
-                      newOptions[index] = {
-                        ...newOptions[index],
-                        vi: e.target.value,
-                      };
-                      setEditingExercise({
-                        ...editingExercise,
-                        option: newOptions,
-                      });
-                    }}
-                    style={{ flex: 1 }}
-                  />
-                  <Input
-                    placeholder={`${t("option")} ${index + 1} (English)`}
-                    value={opt?.en || ""}
-                    onChange={(e) => {
-                      const newOptions = [...editingExercise.option];
-                      newOptions[index] = {
-                        ...newOptions[index],
-                        en: e.target.value,
-                      };
-                      setEditingExercise({
-                        ...editingExercise,
-                        option: newOptions,
-                      });
-                    }}
-                    style={{ flex: 1 }}
-                  />
-                  <Button
-                    onClick={() => removeOption(index)}
-                    icon={<DeleteOutlined />}
+                <>
+                  <div
+                    key={index}
+                    className="option-text"
                     style={{
-                      position: "absolute",
-                      right: "0",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      fontSize: "20",
-                      color: "#ff4d4f",
-                      cursor: "pointer",
-                      background: "white",
-                      borderRadius: "50%",
-                      height: "60%",
+                      display: "flex",
+                      gap: "10px",
+                      marginBottom: "0",
+                      position: "relative",
                     }}
-                  />
-                </div>
+                  >
+                    <Input
+                      placeholder={`${t("option")} ${index + 1} (${t(
+                        "vietnamese"
+                      )})`}
+                      value={opt?.vi || ""}
+                      onChange={(e) => {
+                        const newOptions = [...editingExercise.option];
+                        newOptions[index] = {
+                          ...newOptions[index],
+                          vi: e.target.value,
+                        };
+                        setEditingExercise({
+                          ...editingExercise,
+                          option: newOptions,
+                        });
+                      }}
+                      style={{ flex: 1 }}
+                      status={errors.optionVi?.[index] ? "error" : ""}
+                    />
+                    <Input
+                      placeholder={`${t("option")} ${index + 1} (${t(
+                        "english"
+                      )})`}
+                      value={opt?.en || ""}
+                      onChange={(e) => {
+                        const newOptions = [...editingExercise.option];
+                        newOptions[index] = {
+                          ...newOptions[index],
+                          en: e.target.value,
+                        };
+                        setEditingExercise({
+                          ...editingExercise,
+                          option: newOptions,
+                        });
+                      }}
+                      style={{ flex: 1 }}
+                      status={errors.optionEn?.[index] ? "error" : ""}
+                    />
+                    {editingExercise?.option.length !== 1 && (
+                      <Button
+                        onClick={() => removeOption(index)}
+                        icon={<DeleteOutlined />}
+                        style={{
+                          position: "absolute",
+                          right: "0",
+                          top: "50%",
+                          transform: "translateY(-50%) translateX(-10%)",
+                          fontSize: "20",
+                          color: "#ff4d4f",
+                          cursor: "pointer",
+                          background: "white",
+                          borderRadius: "50%",
+                          height: "60%",
+                        }}
+                      />
+                    )}
+                  </div>
+                  <Row
+                    gutter={10}
+                    style={{
+                      marginBottom: "10px",
+                    }}
+                  >
+                    {errors.optionVi?.[index] ? (
+                      <Col span={12} className="error-text">
+                        {errors.optionVi?.[index]}
+                      </Col>
+                    ) : (
+                      <Col span={12} className="error-text"></Col>
+                    )}
+                    {errors.optionEn?.[index] ? (
+                      <Col span={12} className="error-text">
+                        {errors.optionEn?.[index]}
+                      </Col>
+                    ) : (
+                      <Col span={12} className="error-text"></Col>
+                    )}
+                  </Row>
+                </>
               ))}
-              <Button
-                onClick={addOption}
-                style={{ marginTop: "10px" }}
-                className="custom-upload-button"
-              >
-                + {t("addOption")}
-              </Button>
-              {errors.option && (
-                <div className="error-text">{errors.option}</div>
+              {editingExercise?.option.length < 3 && (
+                <button
+                  onClick={addOption}
+                  style={{ marginTop: "10px" }}
+                  className="custom-upload-button"
+                >
+                  <Flex justify="center" align="center" gap="small">
+                    <FaPlus />
+                    <span>{t("addOption")}</span>
+                  </Flex>
+                </button>
               )}
+              {/* {errors.option && (
+                <div className="error-text">{errors.option}</div>
+              )} */}
             </div>
           </div>
           <div className="button-row">
             <Button className="cancel-button" onClick={closeModal} block>
               {t("cancel", { ns: "common" })}
             </Button>
-            <Button className="save-button" onClick={handleSave} block>
-              {t("save", { ns: "common" })}
-            </Button>
+            {loadingSave ? (
+              <Button className="save-button">
+                <Spin
+                  indicator={
+                    <LoadingOutlined
+                      style={{ fontSize: 20, color: "#fff" }}
+                      spin
+                    />
+                  }
+                />
+              </Button>
+            ) : (
+              <Button className="save-button" onClick={handleSave} block>
+                {t("save", { ns: "common" })}
+              </Button>
+            )}
           </div>
         </Modal>
       </div>

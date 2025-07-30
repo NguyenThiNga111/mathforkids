@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Input, Button, Select, Modal, Table, Switch, Flex, Spin } from "antd";
+import {
+  Input,
+  Button,
+  Select,
+  Modal,
+  Table,
+  Switch,
+  Flex,
+  Spin,
+  Empty,
+} from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { toast } from "react-toastify";
@@ -24,6 +34,7 @@ const { Option } = Select;
 const Lesson = () => {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadingSave, setLoadingSave] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState(null);
   const [lessonsData, setLessonsData] = useState([]);
@@ -220,6 +231,7 @@ const Lesson = () => {
 
   const handleSave = useCallback(async () => {
     if (validateForm()) {
+      setLoadingSave(true);
       try {
         const { id, ...payload } = editingLesson;
         payload.name = {
@@ -296,12 +308,9 @@ const Lesson = () => {
           position: "top-right",
           autoClose: 3000,
         });
+      } finally {
+        setLoadingSave(false);
       }
-    } else {
-      toast.error(t("validationFailed", { ns: "common" }), {
-        position: "top-right",
-        autoClose: 2000,
-      });
     }
   }, [
     editingLesson,
@@ -344,21 +353,28 @@ const Lesson = () => {
 
   const validateForm = useCallback(() => {
     const newErrors = {};
+    // Name Vi
     if (!editingLesson?.name?.vi || editingLesson.name.vi.trim() === "") {
       newErrors.nameVi = t("nameViRequired");
     } else if (editingLesson.name.vi.trim().length < 3) {
       newErrors.nameVi = t("nameViMinLength");
     }
+
+    // Name En
     if (!editingLesson?.name?.en || editingLesson.name.en.trim() === "") {
       newErrors.nameEn = t("nameEnRequired");
     } else if (editingLesson.name.en.trim().length < 3) {
       newErrors.nameEn = t("nameEnMinLength");
     }
+
+    // Grade
     if (!editingLesson?.grade || editingLesson.grade === "") {
       newErrors.grade = t("gradeRequired");
     } else if (!["1", "2", "3"].includes(String(editingLesson.grade))) {
       newErrors.grade = t("gradeInvalid");
     }
+
+    // Type
     if (!editingLesson?.type || editingLesson.type === "") {
       newErrors.type = t("typeRequired");
     }
@@ -680,16 +696,16 @@ const Lesson = () => {
                 }`}
                 onClick={toggleDrag}
               >
-                <FaArrowsAlt style={{ marginRight: "8px" }} />
+                <FaArrowsAlt className="inline mr-2" />
                 {isDragEnabled ? t("disableDrag") : t("enableDrag")}
               </Button>
             )}
-            <Button className="rounded-add" onClick={() => openModal("add")}>
+            <button className="rounded-add" onClick={() => openModal("add")}>
               <Flex justify="center" align="center" gap="small">
                 <FaPlus />
                 <span>{t("addNew", { ns: "common" })}</span>
               </Flex>
-            </Button>
+            </button>
           </div>
         </div>
 
@@ -717,6 +733,7 @@ const Lesson = () => {
                     rowKey="id"
                     className="custom-table custom-table-drag"
                     scroll={{ y: "calc(100vh - 300px)" }}
+                    style={{ height: "calc(100vh - 225px)" }}
                     components={{
                       body: {
                         row: ({ children, ...props }) => {
@@ -795,6 +812,23 @@ const Lesson = () => {
                 rowKey="id"
                 className="custom-table"
                 scroll={{ y: "calc(100vh - 300px)" }}
+                style={{ height: "calc(100vh - 225px)" }}
+                locale={{
+                  emptyText: (
+                    <Flex
+                      justify="center"
+                      align="center"
+                      style={{ height: "calc(100vh - 355px)" }}
+                    >
+                      <div>
+                        <Empty
+                          description={t("nodata", { ns: "common" })}
+                          image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
+                        ></Empty>
+                      </div>
+                    </Flex>
+                  ),
+                }}
               />
             )}
           </>
@@ -818,12 +852,12 @@ const Lesson = () => {
           onCancel={closeModal}
           footer={null}
           className="modal-content"
+          centered
         >
           <div className="form-content-lesson">
             <div className="inputtext">
               <label className="titleinput">
-                {t("lessonName")} (Vietnamese){" "}
-                <span style={{ color: "red" }}>*</span>
+                {t("lessonNameVi")} <span style={{ color: "red" }}>*</span>
               </label>
               <Input
                 placeholder={t("inputlessonNameVi")}
@@ -834,6 +868,7 @@ const Lesson = () => {
                     name: { ...editingLesson?.name, vi: e.target.value },
                   })
                 }
+                status={errors.nameVi ? "error" : ""}
               />
               {errors.nameVi && (
                 <div className="error-text">{errors.nameVi}</div>
@@ -841,8 +876,7 @@ const Lesson = () => {
             </div>
             <div className="inputtext">
               <label className="titleinput">
-                {t("lessonName")} (English){" "}
-                <span style={{ color: "red" }}>*</span>
+                {t("lessonNameEn")} <span style={{ color: "red" }}>*</span>
               </label>
               <Input
                 placeholder={t("inputlessonNameEn")}
@@ -853,6 +887,7 @@ const Lesson = () => {
                     name: { ...editingLesson?.name, en: e.target.value },
                   })
                 }
+                status={errors.nameEn ? "error" : ""}
               />
               {errors.nameEn && (
                 <div className="error-text">{errors.nameEn}</div>
@@ -869,6 +904,7 @@ const Lesson = () => {
                 onChange={(value) =>
                   setEditingLesson({ ...editingLesson, grade: value })
                 }
+                status={errors.grade ? "error" : ""}
               >
                 <Select.Option value="1">{t("grade")} 1</Select.Option>
                 <Select.Option value="2">{t("grade")} 2</Select.Option>
@@ -887,6 +923,7 @@ const Lesson = () => {
                 onChange={(value) =>
                   setEditingLesson({ ...editingLesson, type: value })
                 }
+                status={errors.type ? "error" : ""}
               >
                 {lessonTypes.map((type) => (
                   <Select.Option key={type.value} value={type.value}>
@@ -901,9 +938,22 @@ const Lesson = () => {
             <Button className="cancel-button" onClick={closeModal} block>
               {t("cancel", { ns: "common" })}
             </Button>
-            <Button className="save-button" onClick={handleSave} block>
-              {t("save", { ns: "common" })}
-            </Button>
+            {loadingSave ? (
+              <Button className="save-button">
+                <Spin
+                  indicator={
+                    <LoadingOutlined
+                      style={{ fontSize: 20, color: "#fff" }}
+                      spin
+                    />
+                  }
+                />
+              </Button>
+            ) : (
+              <Button className="save-button" onClick={handleSave} block>
+                {t("save", { ns: "common" })}
+              </Button>
+            )}
           </div>
         </Modal>
       </div>

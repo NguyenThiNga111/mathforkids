@@ -103,11 +103,11 @@ export default function Grade() {
         },
       },
     },
-    height: 387.5,
+    height: 457.5,
     width: 600,
   };
   return loading ? (
-    <Flex justify="center" align="center" style={{ height: "403.5px" }}>
+    <Flex justify="center" align="center" style={{ height: "473.5px" }}>
       <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
     </Flex>
   ) : (

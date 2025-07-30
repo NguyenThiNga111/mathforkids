@@ -13,6 +13,7 @@ import {
   message,
   Flex,
   Spin,
+  Empty,
 } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import moment from "moment";
@@ -34,6 +35,7 @@ import api from "../../assets/api/Api";
 const AccountUser = () => {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadingSave, setLoadingSave] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [edittingUser, setEditingUser] = useState(null);
@@ -233,6 +235,7 @@ const AccountUser = () => {
 
   const handleSave = async () => {
     if (validateForm()) {
+      setLoadingSave(true);
       try {
         const response = await api.post(`/user`, edittingUser);
         const newuser = response.data.id;
@@ -243,16 +246,13 @@ const AccountUser = () => {
         });
         closeModal();
       } catch (error) {
-        toast.success(t("updateSuccess", { ns: "common" }), {
+        toast.error(error.response?.data?.message?.[i18n.language], {
           position: "top-right",
-          autoClose: 2000,
+          autoClose: 3000,
         });
+      } finally {
+        setLoadingSave(false);
       }
-    } else {
-      toast.error(t("errorSavingData", { ns: "common" }), {
-        position: "top-right",
-        autoClose: 2000,
-      });
     }
   };
 
@@ -280,36 +280,21 @@ const AccountUser = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (
-      !edittingUser?.phoneNumber ||
-      !/^\d{10}$/.test(edittingUser.phoneNumber)
-    ) {
+    // Phone
+    if (!edittingUser?.phoneNumber)
       newErrors.phoneNumber = t("numberPhoneRequired");
-    } else {
-      const phoneExists = userData.some(
-        (user) =>
-          user.phoneNumber === edittingUser.phoneNumber &&
-          (!edittingUser.id || user.id !== edittingUser.id)
-      );
-      if (phoneExists) {
-        newErrors.phoneNumber = t("phoneExists");
-      }
-    }
-    if (!edittingUser?.email || !/\S+@\S+\.\S+/.test(edittingUser.email)) {
-      newErrors.email = t("emailRequired");
-    } else {
-      const emailExists = userData.some(
-        (user) =>
-          user.email.toLowerCase() === edittingUser.email.toLowerCase() &&
-          (!edittingUser.id || user.id !== edittingUser.id)
-      );
-      if (emailExists) {
-        newErrors.email = t("emailExists");
-      }
-    }
-    if (!edittingUser?.dateOfBirth || edittingUser.dateOfBirth === "") {
+    else if (!/^0\d{9}$/.test(edittingUser.phoneNumber))
+      newErrors.phoneNumber = t("numberPhoneFormat");
+
+    // Email
+    if (!edittingUser?.email) newErrors.email = t("emailRequired");
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(edittingUser.email))
+      newErrors.email = t("emailFormat");
+
+    // Date of birth
+    if (!edittingUser?.dateOfBirth || edittingUser.dateOfBirth === "")
       newErrors.dateOfBirth = t("dateOfBirthRequired");
-    } else {
+    else {
       const dob = new Date(edittingUser.dateOfBirth);
       const now = new Date();
       if (dob > now) {
@@ -318,20 +303,29 @@ const AccountUser = () => {
         const ageDifMs = now - dob;
         const ageDate = new Date(ageDifMs);
         const age = Math.abs(ageDate.getUTCFullYear() - 1970);
-        if (age < 30) {
+        if (age < 18) {
           newErrors.dateOfBirth = t("dateOfBirtholdRequired");
         }
       }
     }
-    if (!edittingUser?.address || edittingUser.address === "") {
+
+    // Address
+    if (!edittingUser?.address || edittingUser.address === "")
       newErrors.address = t("addressRequired");
-    }
-    if (!edittingUser?.fullName || edittingUser.fullName === "") {
+    else if (edittingUser.address.trim().length < 3)
+      newErrors.address = t("addressLength");
+
+    // Fullname
+    if (!edittingUser?.fullName || edittingUser.fullName === "")
       newErrors.fullName = t("fullNameRequired");
-    }
+    else if (edittingUser.fullName.trim().length < 3)
+      newErrors.fullName = t("fullNameLength");
+
+    // Gender
     if (!edittingUser?.gender || edittingUser.gender === "") {
       newErrors.gender = t("genderRequired");
     }
+
     if (!edittingUser?.role || edittingUser.role === "") {
       newErrors.role = t("roleRequired");
     }
@@ -654,12 +648,12 @@ const AccountUser = () => {
             </Select>
           </div>
           {selectedRole == "admin" && (
-            <Button className="rounded-add" onClick={() => openModal("add")}>
+            <button className="rounded-add" onClick={() => openModal("add")}>
               <Flex justify="center" align="center" gap="small">
                 <FaPlus />
                 <span>{t("addNew", { ns: "common" })}</span>
               </Flex>
-            </Button>
+            </button>
           )}
         </div>
         {/* <div className="table-container-user"> */}
@@ -688,6 +682,23 @@ const AccountUser = () => {
             rowKey="id"
             className="custom-table"
             scroll={{ y: "calc(100vh - 300px)" }}
+            style={{ height: "calc(100vh - 225px)" }}
+            locale={{
+              emptyText: (
+                <Flex
+                  justify="center"
+                  align="center"
+                  style={{ height: "calc(100vh - 355px)" }}
+                >
+                  <div>
+                    <Empty
+                      description={t("nodata", { ns: "common" })}
+                      image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
+                    ></Empty>
+                  </div>
+                </Flex>
+              ),
+            }}
           />
         )}
         {/* <div className="paginations">
@@ -709,6 +720,7 @@ const AccountUser = () => {
           onCancel={closeDetailModal}
           footer={null}
           className="modal-content"
+          centered
         >
           {selectedUserDetail ? (
             <div className="pupil-detail-content">
@@ -767,7 +779,7 @@ const AccountUser = () => {
                       dataSource={selectedUserDetail.children}
                       pagination={false}
                       className="custom-table"
-                      scroll={{ y: "250px" }}
+                      scroll={{ y: "230px" }}
                     />
                   ) : (
                     <p>{t("noPupilProfile")}</p>
@@ -790,8 +802,25 @@ const AccountUser = () => {
           onCancel={closeModal}
           footer={null}
           className="modal-content"
+          centered
         >
-          <div className="form-content">
+          <div className="form-content-lesson">
+            <div className="inputtext">
+              <label className="titleinput">
+                {t("fullName")} <span style={{ color: "red" }}>*</span>
+              </label>
+              <Input
+                placeholder={t("inputFullName")}
+                value={edittingUser?.fullName || ""}
+                onChange={(e) =>
+                  setEditingUser({ ...edittingUser, fullName: e.target.value })
+                }
+                status={errors.fullName ? "error" : ""}
+              />
+              {errors.fullName && (
+                <div className="error-text">{errors.fullName}</div>
+              )}
+            </div>
             <div className="inputtext">
               <label className="titleinput">
                 {t("numberPhone")} <span style={{ color: "red" }}>*</span>
@@ -805,39 +834,10 @@ const AccountUser = () => {
                     phoneNumber: e.target.value,
                   })
                 }
+                status={errors.phoneNumber ? "error" : ""}
               />
               {errors.phoneNumber && (
                 <div className="error-text">{errors.phoneNumber}</div>
-              )}
-            </div>
-            <div className="inputtext">
-              <label className="titleinput">
-                {t("fullName")} <span style={{ color: "red" }}>*</span>
-              </label>
-              <Input
-                placeholder={t("inputFullName")}
-                value={edittingUser?.fullName || ""}
-                onChange={(e) =>
-                  setEditingUser({ ...edittingUser, fullName: e.target.value })
-                }
-              />
-              {errors.fullName && (
-                <div className="error-text">{errors.fullName}</div>
-              )}
-            </div>
-            <div className="inputtext">
-              <label className="titleinput">
-                {t("address")} <span style={{ color: "red" }}>*</span>
-              </label>
-              <Input
-                placeholder={t("inputAddress")}
-                value={edittingUser?.address || ""}
-                onChange={(e) =>
-                  setEditingUser({ ...edittingUser, address: e.target.value })
-                }
-              />
-              {errors.address && (
-                <div className="error-text">{errors.address}</div>
               )}
             </div>
             <div className="inputtext">
@@ -851,8 +851,25 @@ const AccountUser = () => {
                 onChange={(e) =>
                   setEditingUser({ ...edittingUser, email: e.target.value })
                 }
+                status={errors.email ? "error" : ""}
               />
               {errors.email && <div className="error-text">{errors.email}</div>}
+            </div>
+            <div className="inputtext">
+              <label className="titleinput">
+                {t("address")} <span style={{ color: "red" }}>*</span>
+              </label>
+              <Input
+                placeholder={t("inputAddress")}
+                value={edittingUser?.address || ""}
+                onChange={(e) =>
+                  setEditingUser({ ...edittingUser, address: e.target.value })
+                }
+                status={errors.address ? "error" : ""}
+              />
+              {errors.address && (
+                <div className="error-text">{errors.address}</div>
+              )}
             </div>
             <div className="inputtext">
               <label className="titleinput">
@@ -861,18 +878,20 @@ const AccountUser = () => {
               <DatePicker
                 placeholder={t("inputDateOfBirth")}
                 style={{ width: "100%", height: "50px" }}
-                defaultValue={moment()}
-                value={
-                  edittingUser?.dateOfBirth
-                    ? moment(edittingUser.dateOfBirth, "YYYY/MM/DD")
-                    : null
-                }
+                // defaultValue={moment()}
+                // value={
+                //   edittingUser?.dateOfBirth
+                //     ? moment(edittingUser.dateOfBirth, "YYYY/MM/DD")
+                //     : null
+                // }
+                format="DD/MM/YYYY"
                 onChange={(date) =>
                   setEditingUser({
                     ...edittingUser,
                     dateOfBirth: date ? date.format("YYYY/MM/DD") : "",
                   })
                 }
+                status={errors.dateOfBirth ? "error" : ""}
               />
               {errors.dateOfBirth && (
                 <div className="error-text">{errors.dateOfBirth}</div>
@@ -889,6 +908,7 @@ const AccountUser = () => {
                 onChange={(value) =>
                   setEditingUser({ ...edittingUser, gender: value })
                 }
+                status={errors.gender ? "error" : ""}
               >
                 <Select.Option value="Male">{t("male")}</Select.Option>
                 <Select.Option value="Female">{t("female")}</Select.Option>
@@ -902,9 +922,22 @@ const AccountUser = () => {
             <Button className="cancel-button" onClick={closeModal} block>
               {t("cancel", { ns: "common" })}
             </Button>
-            <Button className="save-button" onClick={handleSave} block>
-              {t("save", { ns: "common" })}
-            </Button>
+            {loadingSave ? (
+              <Button className="save-button">
+                <Spin
+                  indicator={
+                    <LoadingOutlined
+                      style={{ fontSize: 20, color: "#fff" }}
+                      spin
+                    />
+                  }
+                />
+              </Button>
+            ) : (
+              <Button className="save-button" onClick={handleSave} block>
+                {t("save", { ns: "common" })}
+              </Button>
+            )}
           </div>
         </Modal>
       </div>
