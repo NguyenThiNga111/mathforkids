@@ -67,8 +67,8 @@ const Verify = () => {
   };
   const handleVerify = async () => {
     const enteredOTP = otp.join("");
-    if (enteredOTP.length < 4 || enteredOTP.length > 5 || !/^\d+$/.test(otp)) {
-      setErrorText("Please enter all 4 digits code sent to your email.");
+    if (enteredOTP.length !== 4 || otp.some((digit) => digit === "")) {
+      setErrorText("Please enter all 4 digits OTP code.");
       return;
     }
 
