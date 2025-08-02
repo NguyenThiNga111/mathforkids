@@ -64,7 +64,7 @@ export default function Dashboard() {
             width: "100%",
             marginTop: 20,
             minHeight: "500px",
-            boxShadow: "5px 5px 10px rgb(218, 218, 244)",
+            boxShadow: "5px 5px 7px var(--box-shadow)",
           }}
           tabList={tabList}
           activeTabKey={activeTab}

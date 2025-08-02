@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import { UserContext } from "../../contexts/UserContext";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Input,
@@ -17,7 +18,7 @@ import {
   Col,
   Row,
 } from "antd";
-import { LoadingOutlined } from "@ant-design/icons";
+import { LoadingOutlined, DownOutlined } from "@ant-design/icons";
 import { UploadOutlined, DeleteOutlined } from "@ant-design/icons";
 import { Upload } from "antd";
 import { Imgs } from "../../assets/theme/images";
@@ -29,6 +30,7 @@ import "./exercise.css";
 import Navbar from "../../component/Navbar";
 
 const Exercise = () => {
+  const { user } = useContext(UserContext);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadingSave, setLoadingSave] = useState(false);
@@ -48,7 +50,7 @@ const Exercise = () => {
   const [visibleExercises, setVisibleExercises] = useState([]);
   const [nextPageToken, setNextPageToken] = useState(null);
   const [countAll, setCountAll] = useState("");
-  const exercisesPerPage = 5;
+  const exercisesPerPage = 4;
   const { Option } = Select;
   const { lessonId } = useParams();
   const navigate = useNavigate();
@@ -87,6 +89,7 @@ const Exercise = () => {
         await fetchLevels();
       } catch (error) {
         toast.error(error.response?.data?.message?.[i18n.language], {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         });
@@ -125,6 +128,7 @@ const Exercise = () => {
     } catch (error) {
       console.error("Error fetching exercises:", error);
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -160,6 +164,7 @@ const Exercise = () => {
     } catch (error) {
       console.error("Error fetching exercises:", error);
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -196,6 +201,7 @@ const Exercise = () => {
     } catch (error) {
       console.error("Error fetching exercises:", error);
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -236,6 +242,7 @@ const Exercise = () => {
     } catch (error) {
       console.error("Error fetching exercises:", error);
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -248,6 +255,7 @@ const Exercise = () => {
       setLesson(response.data);
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -262,6 +270,7 @@ const Exercise = () => {
     } catch (error) {
       console.error("Error fetching levels:", error);
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -287,6 +296,7 @@ const Exercise = () => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -332,6 +342,7 @@ const Exercise = () => {
             },
           });
           toast.success(t("updateSuccess", { ns: "common" }), {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 2000,
           });
@@ -342,6 +353,7 @@ const Exercise = () => {
             },
           });
           toast.success(t("addSuccess", { ns: "common" }), {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 2000,
           });
@@ -366,6 +378,7 @@ const Exercise = () => {
           error.response?.data?.message?.[i18n.language] ||
             t("saveFailed", { ns: "common" }),
           {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 3000,
           }
@@ -382,6 +395,7 @@ const Exercise = () => {
         isDisabled: !exercise.isDisabled,
       });
       toast.success(t("updateSuccess", { ns: "common" }), {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 2000,
       });
@@ -392,6 +406,7 @@ const Exercise = () => {
       );
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -535,7 +550,9 @@ const Exercise = () => {
 
   const addOption = () => {
     if (editingExercise.option.length >= 3) {
-      toast.error(t("maxThreeOptions"));
+      toast.error(t("maxThreeOptions"), {
+        theme: user?.mode === "dark" ? "dark" : "light",
+      });
       return;
     }
     setEditingExercise((prev) => ({
@@ -593,32 +610,12 @@ const Exercise = () => {
         return index + 1;
       },
     },
-    {
-      title: t("level"),
-      dataIndex: "levelId",
-      key: "levelId",
-      width: 150,
-      align: "center",
-      render: (levelId, record) => {
-        if (record.isMoreButtonRow) return { props: { colSpan: 0 } };
-        const levelName = getLevelName(levelId);
-        return <strong>{levelName?.[i18n.language]}</strong>;
-      },
-    },
-    {
-      title: t("question"),
-      dataIndex: "question",
-      key: "question",
-      render: (_, record) => {
-        if (record.isMoreButtonRow) return { props: { colSpan: 0 } };
-        return record.question?.[i18n.language];
-      },
-    },
-    {
+        {
       title: t("image"),
       dataIndex: "image",
       key: "image",
       align: "center",
+      width: 250,
       render: (image, record) => {
         if (record.isMoreButtonRow) return { props: { colSpan: 0 } };
         return image ? (
@@ -641,10 +638,40 @@ const Exercise = () => {
       },
     },
     {
+      title: t("question_level"),
+      key: "question",
+      // width: 250,
+      render: (_, record) => {
+        if (record.isMoreButtonRow) return { props: { colSpan: 0 } };
+
+        const questionText = record.question?.[i18n.language];
+        const level = levels.find((level) => level.id === record.levelId);
+        const levelName = level?.name?.[i18n.language];
+        return (
+          <div>
+            <p>
+              <strong>{levelName}</strong>
+            </p>
+            <p>{questionText}</p>
+          </div>
+        );
+      },
+    },
+    {
+      title: t("answer"),
+      dataIndex: "answer",
+      key: "answer", 
+      width: 200,     
+      render: (_, record) => {
+        if (record.isMoreButtonRow) return { props: { colSpan: 0 } };
+        return record.answer?.[i18n.language];
+      },
+    },
+    {
       title: t("action", { ns: "common" }),
       key: "action",
       align: "center",
-      width: 270,
+      width: 255,
       render: (_, record) => {
         if (record.isMoreButtonRow) return { props: { colSpan: 0 } };
         return (
@@ -676,7 +703,7 @@ const Exercise = () => {
       dataIndex: "isDisabled",
       key: "isDisabled",
       align: "center",
-      width: 120,
+      width: 100,
       render: (isDisabled, record) => {
         if (record.isMoreButtonRow) return { props: { colSpan: 0 } };
         return (
@@ -752,6 +779,9 @@ const Exercise = () => {
                   </button>
                 </span>
                 <Select
+                  suffixIcon={
+                    <DownOutlined style={{ color: "var(--dropdown-icon)" }} />
+                  }
                   className="filter-dropdown"
                   value={filterLevel}
                   onChange={(value) => setFilterLevel(value)}
@@ -765,6 +795,9 @@ const Exercise = () => {
                   ))}
                 </Select>
                 <Select
+                  suffixIcon={
+                    <DownOutlined style={{ color: "var(--dropdown-icon)" }} />
+                  }
                   className="filter-dropdown"
                   value={filterStatus}
                   onChange={(value) => {
@@ -852,7 +885,7 @@ const Exercise = () => {
                 textAlign: "center",
                 fontSize: "24px",
                 fontWeight: "bold",
-                color: "#1a1a1a",
+                // color: "#1a1a1a",
               }}
             >
               {t("exercisedetail")}
@@ -955,6 +988,11 @@ const Exercise = () => {
                     },
                   })
                 }
+                styles={{
+                  input: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
                 status={errors.questionVi ? "error" : ""}
               />
               {errors.questionVi && (
@@ -978,6 +1016,11 @@ const Exercise = () => {
                     },
                   })
                 }
+                styles={{
+                  input: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
                 status={errors.questionEn ? "error" : ""}
               />
               {errors.questionEn && (
@@ -994,12 +1037,12 @@ const Exercise = () => {
                   onChange={handleImageChange}
                   fileList={fileList}
                 >
-                  <Button
-                    icon={<UploadOutlined />}
-                    className="custom-upload-button"
-                  >
-                    {t("inputImage")}
-                  </Button>
+                  <button className="buttondetail">
+                    <Flex justify="center" align="center">
+                      <UploadOutlined className="iconupdate" />
+                      <span>{t("inputImage")}</span>
+                    </Flex>
+                  </button>
                 </Upload>
                 {imageUrl && (
                   <div className="image-preview-box">
@@ -1015,9 +1058,9 @@ const Exercise = () => {
                         top: 8,
                         right: 8,
                         fontSize: 20,
-                        color: "#ff4d4f",
+                        color: "var(--error-text)",
                         cursor: "pointer",
-                        background: "#fff",
+                        background: "var(--color-bg-container)",
                         borderRadius: "50%",
                         padding: 4,
                       }}
@@ -1031,6 +1074,9 @@ const Exercise = () => {
                 {t("level")} <span style={{ color: "red" }}>*</span>
               </label>
               <Select
+                suffixIcon={
+                  <DownOutlined style={{ color: "var(--dropdown-icon)" }} />
+                }
                 style={{ width: "100%", height: "50px" }}
                 placeholder={t("selectLevelId")}
                 value={editingExercise?.levelId || null}
@@ -1070,6 +1116,11 @@ const Exercise = () => {
                     })
                   }
                   style={{ flex: 1 }}
+                  styles={{
+                    input: {
+                      backgroundColor: "var(--date-picker-bg)",
+                    },
+                  }}
                   status={errors.answerVi ? "error" : ""}
                 />
 
@@ -1086,6 +1137,11 @@ const Exercise = () => {
                     })
                   }
                   style={{ flex: 1 }}
+                  styles={{
+                    input: {
+                      backgroundColor: "var(--date-picker-bg)",
+                    },
+                  }}
                   status={errors.answerEn ? "error" : ""}
                 />
               </div>
@@ -1140,6 +1196,11 @@ const Exercise = () => {
                         });
                       }}
                       style={{ flex: 1 }}
+                      styles={{
+                        input: {
+                          backgroundColor: "var(--date-picker-bg)",
+                        },
+                      }}
                       status={errors.optionVi?.[index] ? "error" : ""}
                     />
                     <Input
@@ -1159,6 +1220,11 @@ const Exercise = () => {
                         });
                       }}
                       style={{ flex: 1 }}
+                      styles={{
+                        input: {
+                          backgroundColor: "var(--date-picker-bg)",
+                        },
+                      }}
                       status={errors.optionEn?.[index] ? "error" : ""}
                     />
                     {editingExercise?.option.length !== 1 && (
@@ -1171,9 +1237,9 @@ const Exercise = () => {
                           top: "50%",
                           transform: "translateY(-50%) translateX(-10%)",
                           fontSize: "20",
-                          color: "#ff4d4f",
+                          color: "var(--error-text)",
                           cursor: "pointer",
-                          background: "white",
+                          background: "var(--color-bg-container)",
                           borderRadius: "50%",
                           height: "60%",
                         }}
@@ -1207,7 +1273,7 @@ const Exercise = () => {
                 <button
                   onClick={addOption}
                   style={{ marginTop: "10px" }}
-                  className="custom-upload-button"
+                  className="buttondetail"
                 >
                   <Flex justify="center" align="center" gap="small">
                     <FaPlus />

@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useContext } from "react";
+import { UserContext } from "../../contexts/UserContext";
 import { useNavigate } from "react-router-dom";
 import {
   Input,
@@ -11,7 +12,7 @@ import {
   Spin,
   Empty,
 } from "antd";
-import { LoadingOutlined } from "@ant-design/icons";
+import { LoadingOutlined, DownOutlined } from "@ant-design/icons";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
@@ -23,6 +24,7 @@ import "./level.css";
 const { Option } = Select;
 
 const Level = () => {
+  const { user } = useContext(UserContext);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadingSave, setLoadingSave] = useState(false);
@@ -80,6 +82,7 @@ const Level = () => {
           error.response?.data?.message?.[i18n.language] ||
             "Error fetching levels",
           {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 3000,
           }
@@ -120,6 +123,7 @@ const Level = () => {
           error.response?.data?.message?.[i18n.language] ||
             "Error fetching levels",
           {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 3000,
           }
@@ -159,6 +163,7 @@ const Level = () => {
         setTimeout(() => setLoading(false), 0);
       } catch (error) {
         toast.error(error.response?.data?.message?.[i18n.language], {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         });
@@ -178,6 +183,7 @@ const Level = () => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -218,6 +224,7 @@ const Level = () => {
         if (editingLevel?.id) {
           await api.patch(`/level/${editingLevel.id}`, payload);
           toast.success(t("updateSuccess", { ns: "common" }), {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 2000,
           });
@@ -231,6 +238,7 @@ const Level = () => {
           payload.level = maxLevel + 1;
           await api.post(`/level`, payload);
           toast.success(t("addSuccess", { ns: "common" }), {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 2000,
           });
@@ -248,6 +256,7 @@ const Level = () => {
           error.response?.data?.message?.[i18n.language] ||
             "Error saving level",
           {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 3000,
           }
@@ -266,6 +275,7 @@ const Level = () => {
           isDisabled: updatedLevel.isDisabled,
         });
         toast.success(t("updateSuccess", { ns: "common" }), {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 2000,
         });
@@ -279,6 +289,7 @@ const Level = () => {
           error.response?.data?.message?.[i18n.language] ||
             "Error updating status",
           {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 3000,
           }
@@ -305,6 +316,7 @@ const Level = () => {
           });
         } catch (error) {
           toast.error(t("fetchLevelsFailed", { ns: "common" }), {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 3000,
           });
@@ -344,11 +356,13 @@ const Level = () => {
         );
         await Promise.all(updatePromises);
         toast.success(t("updateOrderSuccess"), {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 2000,
         });
       } catch (error) {
         toast.error(t("updateOrderFailed"), {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         });
@@ -539,6 +553,9 @@ const Level = () => {
               </button>
             </span>
             <Select
+              suffixIcon={
+                <DownOutlined style={{ color: "var(--dropdown-icon)" }} />
+              }
               className="filter-dropdown"
               value={filterStatus}
               onChange={(value) => setFilterStatus(value)}
@@ -731,6 +748,11 @@ const Level = () => {
                     name: { ...editingLevel?.name, vi: e.target.value },
                   })
                 }
+                styles={{
+                  input: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
                 status={errors.nameVi ? "error" : ""}
               />
               {errors.nameVi && (
@@ -750,6 +772,11 @@ const Level = () => {
                     name: { ...editingLevel?.name, en: e.target.value },
                   })
                 }
+                styles={{
+                  input: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
                 status={errors.nameEn ? "error" : ""}
               />
               {errors.nameEn && (

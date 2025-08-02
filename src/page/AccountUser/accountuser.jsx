@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import { UserContext } from "../../contexts/UserContext";
 import "./accountuser.css";
 import Navbar from "../../component/Navbar";
 import {
@@ -15,7 +16,7 @@ import {
   Spin,
   Empty,
 } from "antd";
-import { LoadingOutlined } from "@ant-design/icons";
+import { LoadingOutlined, DownOutlined } from "@ant-design/icons";
 import moment from "moment";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
@@ -33,6 +34,7 @@ import {
 import api from "../../assets/api/Api";
 
 const AccountUser = () => {
+  const { user } = useContext(UserContext);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadingSave, setLoadingSave] = useState(false);
@@ -82,6 +84,7 @@ const AccountUser = () => {
         setTimeout(() => setLoading(false), 0);
       } catch (error) {
         toast.error(error.response?.data?.message?.[i18n.language], {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         });
@@ -154,6 +157,7 @@ const AccountUser = () => {
       setNextPageToken(response.data.nextPageToken || null);
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -186,6 +190,7 @@ const AccountUser = () => {
       setNextPageToken(response.data.nextPageToken || null);
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -207,6 +212,7 @@ const AccountUser = () => {
       return newPupils; // Return pupils for immediate use
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -225,6 +231,7 @@ const AccountUser = () => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -241,12 +248,14 @@ const AccountUser = () => {
         const newuser = response.data.id;
         await api.put(`/user/${newuser}`, { isVerify: true });
         toast.success(t("addSuccess", { ns: "common" }), {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 2000,
         });
         closeModal();
       } catch (error) {
         toast.error(error.response?.data?.message?.[i18n.language], {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         });
@@ -256,22 +265,24 @@ const AccountUser = () => {
     }
   };
 
-  const handleToggleDisabled = async (user) => {
+  const handleToggleDisabled = async (userInfo) => {
     try {
-      await api.patch(`/user/updateProfile/${user.id}`, {
-        isDisabled: !user.isDisabled,
+      await api.patch(`/user/updateProfile/${userInfo.id}`, {
+        isDisabled: !userInfo.isDisabled,
       });
       setUserData((prev) =>
         prev.map((e) =>
-          e.id === user.id ? { ...e, isDisabled: !user.isDisabled } : e
+          e.id === userInfo.id ? { ...e, isDisabled: !userInfo.isDisabled } : e
         )
       );
       toast.success(t("updateSuccess", { ns: "common" }), {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 2000,
       });
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -347,17 +358,18 @@ const AccountUser = () => {
     setIsModalOpen(true);
   };
 
-  const openDetailModal = async (user) => {
+  const openDetailModal = async (userInfo) => {
     try {
-      setSelectedUserDetail({ ...user, children: [] });
+      setSelectedUserDetail({ ...userInfo, children: [] });
       // Fetch pupil data
-      const pupils = await fetchAllPupils(user.id, null, false);
+      const pupils = await fetchAllPupils(userInfo.id, null, false);
       // Update selectedUserDetail with pupils
-      setSelectedUserDetail({ ...user, children: pupils });
+      setSelectedUserDetail({ ...userInfo, children: pupils });
       // Open the modal
       setDetailModalOpen(true);
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -619,16 +631,23 @@ const AccountUser = () => {
               </button>
             </span>
             <Select
+              suffixIcon={
+                <DownOutlined style={{ color: "var(--dropdown-icon)" }} />
+              }
               className="filter-dropdown"
               value={selectedRole}
               onChange={(value) => setSelectedRole(value)}
               placeholder={t("role")}
+              style={{ minWidth: "120px" }}
             >
               {/* <Select.Option value="all">{t('rolefilter')}</Select.Option> */}
               <Select.Option value="user">{t("roleUser")}</Select.Option>
               <Select.Option value="admin">{t("roleAdmin")}</Select.Option>
             </Select>
             <Select
+              suffixIcon={
+                <DownOutlined style={{ color: "var(--dropdown-icon)" }} />
+              }
               className="filter-dropdown"
               value={filterStatus}
               onChange={(value) => {
@@ -770,7 +789,13 @@ const AccountUser = () => {
               </div>
               {selectedRole === "user" && (
                 <>
-                  <h3 style={{ textAlign: "center", fontSize: "24px" }}>
+                  <h3
+                    style={{
+                      textAlign: "center",
+                      fontSize: "24px",
+                      color: "var(--color-text)",
+                    }}
+                  >
                     {t("pupil")}
                   </h3>
                   {selectedUserDetail.children?.length > 0 ? (
@@ -782,7 +807,9 @@ const AccountUser = () => {
                       scroll={{ y: "230px" }}
                     />
                   ) : (
-                    <p>{t("noPupilProfile")}</p>
+                    <p style={{ color: "var(--color-text)" }}>
+                      {t("noPupilProfile")}
+                    </p>
                   )}
                 </>
               )}
@@ -815,6 +842,11 @@ const AccountUser = () => {
                 onChange={(e) =>
                   setEditingUser({ ...edittingUser, fullName: e.target.value })
                 }
+                styles={{
+                  input: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
                 status={errors.fullName ? "error" : ""}
               />
               {errors.fullName && (
@@ -834,6 +866,11 @@ const AccountUser = () => {
                     phoneNumber: e.target.value,
                   })
                 }
+                styles={{
+                  input: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
                 status={errors.phoneNumber ? "error" : ""}
               />
               {errors.phoneNumber && (
@@ -851,6 +888,11 @@ const AccountUser = () => {
                 onChange={(e) =>
                   setEditingUser({ ...edittingUser, email: e.target.value })
                 }
+                styles={{
+                  input: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
                 status={errors.email ? "error" : ""}
               />
               {errors.email && <div className="error-text">{errors.email}</div>}
@@ -865,6 +907,11 @@ const AccountUser = () => {
                 onChange={(e) =>
                   setEditingUser({ ...edittingUser, address: e.target.value })
                 }
+                styles={{
+                  input: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
                 status={errors.address ? "error" : ""}
               />
               {errors.address && (
@@ -891,6 +938,11 @@ const AccountUser = () => {
                     dateOfBirth: date ? date.format("YYYY/MM/DD") : "",
                   })
                 }
+                styles={{
+                  root: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
                 status={errors.dateOfBirth ? "error" : ""}
               />
               {errors.dateOfBirth && (
@@ -902,6 +954,9 @@ const AccountUser = () => {
                 {t("gender")} <span style={{ color: "red" }}>*</span>
               </label>
               <Select
+                suffixIcon={
+                  <DownOutlined style={{ color: "var(--dropdown-icon)" }} />
+                }
                 style={{ width: "100%", height: "50px" }}
                 placeholder={t("selectionGender")}
                 value={edittingUser?.gender || undefined}
