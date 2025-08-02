@@ -317,12 +317,12 @@ const Notification = () => {
             </Flex>
           </button>
         </div>
-        <div>
+        {/* <div> */}
           {loading ? (
             <Flex
               justify="center"
               align="center"
-              style={{ height: "calc(100vh - 225px)" }}
+              style={{ height: "calc(100vh - 222px)" }}
             >
               <Spin
                 indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />}
@@ -343,7 +343,7 @@ const Notification = () => {
               rowKey="id"
               className="custom-table"
               scroll={{ y: "calc(100vh - 300px)" }}
-              style={{ height: "calc(100vh - 225px)" }}
+              style={{ height: "calc(100vh - 222px)" }}
               locale={{
                 emptyText: (
                   <Flex
@@ -369,7 +369,7 @@ const Notification = () => {
               </Button>
             ) : null}
           </div> */}
-        </div>
+        {/* </div> */}
         <Modal
           title={
             <div style={{ textAlign: "center", fontSize: "24px" }}>

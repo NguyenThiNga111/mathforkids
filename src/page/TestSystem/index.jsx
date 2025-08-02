@@ -16,7 +16,7 @@ export default function index() {
   return (
     <div>
       <h1 className="container-title">{t("managementTestSystem")}</h1>
-      <div className="containers-content mt-4">
+      <div className="containers-content">
         <Filter setLoading={setLoading} setRanking={setRanking} />
         {loading ? (
           <Flex

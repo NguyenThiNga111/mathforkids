@@ -28,7 +28,7 @@ export default function ExerciseStatistic() {
   return (
     <div>
       <h1 className="container-title">{t("exercise_statistic")}</h1>
-      <div className="containers-content mt-4">
+      <div className="containers-content">
         <Filter
           setLoading={setLoading}
           selectedLesson={selectedLesson}
