@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Line } from "@ant-design/plots";
 import { Flex, Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
+import { UserContext } from "../../contexts/UserContext";
 import { useTranslation } from "react-i18next";
 import { countUsersByWeek } from "../../assets/api/User";
 import { countPupilsByWeek } from "../../assets/api/Pupil";
 
 export default function UserPupil_Week({ range }) {
+  const { user } = useContext(UserContext);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const { i18n } = useTranslation();
@@ -88,6 +90,7 @@ export default function UserPupil_Week({ range }) {
     yField: "total",
     colorField: "type",
     shapeField: "smooth",
+    theme: user?.mode === "dark" ? "dark" : "light",
     height: 420,
   };
 

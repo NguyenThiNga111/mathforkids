@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import { UserContext } from "../../contexts/UserContext";
 import {
   Input,
+  InputNumber,
   Button,
   Modal,
   Table,
@@ -13,7 +15,7 @@ import {
   Spin,
   Empty,
 } from "antd";
-import { LoadingOutlined } from "@ant-design/icons";
+import { LoadingOutlined, DownOutlined } from "@ant-design/icons";
 import { FaEdit, FaPlus } from "react-icons/fa";
 import { UploadOutlined, DeleteOutlined } from "@ant-design/icons";
 import { Upload } from "antd";
@@ -25,6 +27,7 @@ import "./reward.css";
 import Navbar from "../../component/Navbar";
 
 const Rewards = () => {
+  const { user } = useContext(UserContext);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadingSave, setLoadingSave] = useState(false);
@@ -71,6 +74,7 @@ const Rewards = () => {
         setTimeout(() => setLoading(false), 0);
       } catch (error) {
         toast.error(error.response?.data?.message?.[i18n.language], {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         });
@@ -107,6 +111,7 @@ const Rewards = () => {
       setNextPageToken(response.data.nextPageToken || null);
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -141,6 +146,7 @@ const Rewards = () => {
       setNextPageToken(response.data.nextPageToken || null);
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -157,6 +163,7 @@ const Rewards = () => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -186,6 +193,7 @@ const Rewards = () => {
             headers: { "Content-Type": "multipart/form-data" },
           });
           toast.success(t("updateSuccess", { ns: "common" }), {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 2000,
           });
@@ -194,6 +202,7 @@ const Rewards = () => {
             headers: { "Content-Type": "multipart/form-data" },
           });
           toast.success(t("addSuccess", { ns: "common" }), {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 2000,
           });
@@ -209,6 +218,7 @@ const Rewards = () => {
         closeModal();
       } catch (error) {
         toast.error(error.response?.data?.message?.[i18n.language], {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         });
@@ -224,6 +234,7 @@ const Rewards = () => {
         isDisabled: !reward.isDisabled,
       });
       toast.success(t("updateSuccess", { ns: "common" }), {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 2000,
       });
@@ -234,6 +245,7 @@ const Rewards = () => {
       );
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -322,6 +334,7 @@ const Rewards = () => {
       };
       reader.onerror = () => {
         toast.error(t("errorReadingImage", { ns: "common" }), {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 2000,
         });
@@ -514,6 +527,9 @@ const Rewards = () => {
               </button>
             </span>
             <Select
+              suffixIcon={
+                <DownOutlined style={{ color: "var(--dropdown-icon)" }} />
+              }
               className="filter-dropdown"
               value={filterStatus}
               onChange={(value) => {
@@ -620,6 +636,12 @@ const Rewards = () => {
                     name: { ...editingReward.name, vi: e.target.value },
                   })
                 }
+                styles={{
+                  input: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
+                status={errors.nameVi ? "error" : ""}
               />
               {errors.nameVi && (
                 <div className="error-text">{errors.nameVi}</div>
@@ -638,6 +660,12 @@ const Rewards = () => {
                     name: { ...editingReward.name, en: e.target.value },
                   })
                 }
+                styles={{
+                  input: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
+                status={errors.nameEn ? "error" : ""}
               />
               {errors.nameEn && (
                 <div className="error-text">{errors.nameEn}</div>
@@ -648,17 +676,21 @@ const Rewards = () => {
                 {t("exchangePoint")}
                 <span style={{ color: "red" }}> *</span>
               </label>
-              <Input
+              <InputNumber
                 placeholder={t("inputextchangePoint")}
                 value={editingReward?.exchangePoint || 1}
-                onChange={(e) =>
+                onChange={(value) =>
                   setEditingReward({
                     ...editingReward,
-                    exchangePoint: parseInt(e.target.value),
+                    exchangePoint: parseInt(value),
                   })
                 }
-                type="number"
+                // type="number"
                 min={1}
+                style={{
+                  width: "100%",
+                  backgroundColor: "var(--date-picker-bg)",
+                }}
               />
               {errors.exchangePointRequired && (
                 <div className="error-text">{errors.exchangePointRequired}</div>
@@ -669,17 +701,21 @@ const Rewards = () => {
                 {t("exchangeReward")}
                 <span style={{ color: "red" }}> *</span>
               </label>
-              <Input
+              <InputNumber
                 placeholder={t("inputextchangePoint")}
                 value={editingReward?.exchangeReward || 1}
-                onChange={(e) =>
+                onChange={(value) =>
                   setEditingReward({
                     ...editingReward,
-                    exchangeReward: parseInt(e.target.value),
+                    exchangeReward: parseInt(value),
                   })
                 }
-                type="number"
+                // type="number"
                 min={1}
+                style={{
+                  width: "100%",
+                  backgroundColor: "var(--date-picker-bg)",
+                }}
               />
               {errors.exchangeRewardRequired && (
                 <div className="error-text">
@@ -699,12 +735,12 @@ const Rewards = () => {
                   onChange={handleImageChange}
                   fileList={fileList}
                 >
-                  <Button
-                    icon={<UploadOutlined />}
-                    className="custom-upload-button"
-                  >
-                    {t("inputImage")}
-                  </Button>
+                  <button className="buttondetail">
+                    <Flex justify="center" align="center">
+                      <UploadOutlined className="iconupdate" />
+                      <span>{t("inputImage")}</span>
+                    </Flex>
+                  </button>
                 </Upload>
                 {imageUrl && (
                   <div className="image-preview-box-option">
@@ -720,9 +756,9 @@ const Rewards = () => {
                         top: 8,
                         right: 8,
                         fontSize: 20,
-                        color: "#ff4d4f",
+                        color: "var(--error-text)",
                         cursor: "pointer",
-                        background: "#fff",
+                        background: "var(--color-bg-container)",
                         borderRadius: "50%",
                         padding: 4,
                       }}
@@ -750,6 +786,12 @@ const Rewards = () => {
                   })
                 }
                 rows={4}
+                styles={{
+                  textarea: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
+                status={errors.descriptionVi ? "error" : ""}
               />
               {errors.descriptionVi && (
                 <div className="error-text">{errors.descriptionVi}</div>
@@ -773,6 +815,12 @@ const Rewards = () => {
                   })
                 }
                 rows={4}
+                styles={{
+                  textarea: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
+                status={errors.descriptionEn ? "error" : ""}
               />
               {errors.descriptionEn && (
                 <div className="error-text">{errors.descriptionEn}</div>

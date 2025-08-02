@@ -12,7 +12,7 @@ import {
   Flex,
   Spin,
 } from "antd";
-import { LoadingOutlined } from "@ant-design/icons";
+import { LoadingOutlined, DownOutlined } from "@ant-design/icons";
 import { UploadOutlined } from "@ant-design/icons";
 import moment from "moment";
 import dayjs from "dayjs";
@@ -22,7 +22,7 @@ import api from "../../assets/api/Api";
 import "./profile.css";
 
 const Profile = () => {
-  const { reloadUser } = useContext(UserContext);
+  const { user, reloadUser } = useContext(UserContext);
   const { t, i18n } = useTranslation(["profile", "common"]);
   const { id } = useParams();
   const navigate = useNavigate();
@@ -91,12 +91,14 @@ const Profile = () => {
         setErrors({}); // Clear errors on successful fetch
       } else {
         toast.error(t("fetchFailed", { ns: "common" }), {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         });
       }
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -123,9 +125,12 @@ const Profile = () => {
       );
       if (response.status === 200) {
         setUserData({ ...userData, image: response.data.image });
-        toast.success(t("imageUploadSuccess", { ns: "common" }));
+        toast.success(t("imageUploadSuccess", { ns: "common" }), {
+          theme: user?.mode === "dark" ? "dark" : "light",
+        });
       } else {
         toast.error(t("imageUploadFailed", { ns: "common" }), {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         });
@@ -136,6 +141,7 @@ const Profile = () => {
         error.response?.data?.message?.[i18n.language] ||
           t("imageUploadFailed", { ns: "common" }),
         {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         }
@@ -231,6 +237,7 @@ const Profile = () => {
         );
         if (response.status === 200) {
           toast.success(t("updateSuccess", { ns: "common" }), {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 2000,
           });
@@ -239,12 +246,14 @@ const Profile = () => {
           reloadUser();
         } else {
           toast.error(t("updateFailed", { ns: "common" }), {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 3000,
           });
         }
       } catch (error) {
         toast.error(error.response?.data?.message?.[i18n.language], {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         });
@@ -285,7 +294,9 @@ const Profile = () => {
             }
           );
           if (res.status === 200) {
-            toast.success(t("otpSent"));
+            toast.success(t("otpSent"), {
+              theme: user?.mode === "dark" ? "dark" : "light",
+            });
             setIsEmailModalVisible(false);
             setIsPhoneModalVisible(false);
             setOtpModalVisible(true);
@@ -293,6 +304,7 @@ const Profile = () => {
             return true;
           }
           toast.error(t("otpSendFailed", { ns: "common" }), {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 3000,
           });
@@ -302,6 +314,7 @@ const Profile = () => {
             error.response?.data?.message?.[i18n.language] ||
               t("otpSendFailed", { ns: "common" }),
             {
+              theme: user?.mode === "dark" ? "dark" : "light",
               position: "top-right",
               autoClose: 3000,
             }
@@ -326,7 +339,9 @@ const Profile = () => {
             }
           );
           if (res.status === 200) {
-            toast.success(t("otpSent"));
+            toast.success(t("otpSent"), {
+              theme: user?.mode === "dark" ? "dark" : "light",
+            });
             setIsEmailModalVisible(false);
             setIsPhoneModalVisible(false);
             setOtpModalVisible(true);
@@ -334,6 +349,7 @@ const Profile = () => {
             return true;
           }
           toast.error(t("otpSendFailed", { ns: "common" }), {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 3000,
           });
@@ -343,6 +359,7 @@ const Profile = () => {
             error.response?.data?.message?.[i18n.language] ||
               t("otpSendFailed", { ns: "common" }),
             {
+              theme: user?.mode === "dark" ? "dark" : "light",
               position: "top-right",
               autoClose: 3000,
             }
@@ -374,7 +391,9 @@ const Profile = () => {
       //   return;
       // }
       if (!userID) {
-        toast.error(t("userIdRequired", { ns: "common" }));
+        toast.error(t("userIdRequired", { ns: "common" }), {
+          theme: user?.mode === "dark" ? "dark" : "light",
+        });
         return;
       }
       setLoadingVerify(true);
@@ -406,9 +425,11 @@ const Profile = () => {
               toast.success(
                 updateRes.data.message[t("ns")] ||
                   t("updateSuccess", { ns: "common" })
-              );
+              ),
+                { theme: user?.mode === "dark" ? "dark" : "light" };
             } else {
               toast.error(updateRes.response?.data?.message?.[i18n.language], {
+                theme: user?.mode === "dark" ? "dark" : "light",
                 position: "top-right",
                 autoClose: 3000,
               });
@@ -429,10 +450,14 @@ const Profile = () => {
               fetchUserData();
               toast.success(
                 updateRes.data.message[t("ns")] ||
-                  t("updateSuccess", { ns: "common" })
+                  t("updateSuccess", { ns: "common" }),
+                {
+                  theme: user?.mode === "dark" ? "dark" : "light",
+                }
               );
             } else {
               toast.error(updateRes.response?.data?.message?.[i18n.language], {
+                theme: user?.mode === "dark" ? "dark" : "light",
                 position: "top-right",
                 autoClose: 3000,
               });
@@ -442,12 +467,15 @@ const Profile = () => {
           setOtpCode("");
           setOtpPurpose("");
         } else {
-          toast.error(t("otpInvalid"));
+          toast.error(t("otpInvalid"), {
+            theme: user?.mode === "dark" ? "dark" : "light",
+          });
         }
       } catch (err) {
         toast.error(
           err.response?.data?.message?.[i18n.language] || t("otpInvalid"),
           {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 3000,
           }
@@ -485,7 +513,9 @@ const Profile = () => {
             <div className="form-wrapper">
               <div className="form-grid">
                 <div className="form-group">
-                  <label>{t("fullName")}</label>
+                  <label style={{ color: "var(--color-text)" }}>
+                    {t("fullName")}
+                  </label>
                   <Input
                     className="inputprofile"
                     placeholder={t("enterFullName")}
@@ -493,6 +523,11 @@ const Profile = () => {
                     onChange={(e) =>
                       setUserData({ ...userData, fullName: e.target.value })
                     }
+                    styles={{
+                      input: {
+                        backgroundColor: "var(--date-picker-bg)",
+                      },
+                    }}
                     status={errors.fullName ? "error" : ""}
                   />
                   {errors.fullName ? (
@@ -522,7 +557,9 @@ const Profile = () => {
                   )}
                 </div>
                 <div className="form-group">
-                  <label>{t("birthday")}</label>
+                  <label style={{ color: "var(--color-text)" }}>
+                    {t("birthday")}
+                  </label>
                   <DatePicker
                     className="inputprofile"
                     placeholder={t("inputDateOfBirth")}
@@ -536,6 +573,11 @@ const Profile = () => {
                     }
                     format="DD/MM/YYYY"
                     allowClear={false}
+                    styles={{
+                      root: {
+                        backgroundColor: "var(--date-picker-bg)",
+                      },
+                    }}
                     status={errors.dateOfBirth ? "error" : ""}
                   />
                   {errors.dateOfBirth && (
@@ -551,7 +593,9 @@ const Profile = () => {
                   )}
                 </div>
                 <div className="form-group">
-                  <label>{t("address")}</label>
+                  <label style={{ color: "var(--color-text)" }}>
+                    {t("address")}
+                  </label>
                   <Input
                     className="inputprofile"
                     placeholder={t("enterAddress")}
@@ -559,6 +603,11 @@ const Profile = () => {
                     onChange={(e) =>
                       setUserData({ ...userData, address: e.target.value })
                     }
+                    styles={{
+                      input: {
+                        backgroundColor: "var(--date-picker-bg)",
+                      },
+                    }}
                     status={errors.address ? "error" : ""}
                   />
                   {errors.address ? (
@@ -588,8 +637,13 @@ const Profile = () => {
                   )}
                 </div>
                 <div className="form-group">
-                  <label>{t("gender")}</label>
+                  <label style={{ color: "var(--color-text)" }}>
+                    {t("gender")}
+                  </label>
                   <Select
+                    suffixIcon={
+                      <DownOutlined style={{ color: "var(--dropdown-icon)" }} />
+                    }
                     className="inputprofile"
                     style={{ width: "100%", height: "50px" }}
                     placeholder={t("selectionGender")}
@@ -615,7 +669,9 @@ const Profile = () => {
                   )}
                 </div>
                 <div className="form-group">
-                  <label>{t("email")}</label>
+                  <label style={{ color: "var(--color-text)" }}>
+                    {t("email")}
+                  </label>
                   <Input
                     className="inputprofile"
                     style={{ height: "50px" }}
@@ -651,7 +707,9 @@ const Profile = () => {
                   )} */}
                 </div>
                 <div className="form-group">
-                  <label>{t("phoneNumber")}</label>
+                  <label style={{ color: "var(--color-text)" }}>
+                    {t("phoneNumber")}
+                  </label>
                   <Input
                     className="inputprofile"
                     style={{ height: "50px" }}
@@ -712,6 +770,11 @@ const Profile = () => {
                   placeholder={t("enterNewEmail")}
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
+                  styles={{
+                    input: {
+                      backgroundColor: "var(--date-picker-bg)",
+                    },
+                  }}
                   status={errors.email ? "error" : ""}
                 />
                 {errors.email && (
@@ -765,6 +828,11 @@ const Profile = () => {
                   placeholder={t("enterNewPhone")}
                   value={newPhoneNumber}
                   onChange={(e) => setNewPhoneNumber(e.target.value)}
+                  styles={{
+                    input: {
+                      backgroundColor: "var(--date-picker-bg)",
+                    },
+                  }}
                   status={errors.phoneNumber ? "error" : ""}
                 />
                 {errors.phoneNumber && (
@@ -851,7 +919,7 @@ const Profile = () => {
                           style={{ fontSize: 20, color: "#fff" }}
                           spin
                         />
-                      }                      
+                      }
                     />
                   </Button>
                 ) : (

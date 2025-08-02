@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import { UserContext } from "../../contexts/UserContext";
 import Navbar from "../../component/Navbar";
 import { Input, Button, Modal, Table, Flex, Spin, Empty } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
@@ -9,6 +10,7 @@ import api from "../../assets/api/Api";
 import "./notification.css";
 
 const Notification = () => {
+  const { user } = useContext(UserContext);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadingSave, setLoadingSave] = useState(false);
@@ -62,6 +64,7 @@ const Notification = () => {
       setTimeout(() => setLoading(false), 0);
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -75,6 +78,7 @@ const Notification = () => {
       await fetchAllNotifications(nextPageToken);
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -83,7 +87,7 @@ const Notification = () => {
     }
   };
 
-  const handleSave = async () => {    
+  const handleSave = async () => {
     if (validateForm()) {
       setLoadingSave(true);
       try {
@@ -104,12 +108,14 @@ const Notification = () => {
             payload
           );
           toast.success(t("updateSuccess", { ns: "common" }), {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 2000,
           });
         } else {
           await api.post(`/generalnotification`, payload);
           toast.success(t("addSuccess", { ns: "common" }), {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 2000,
           });
@@ -121,6 +127,7 @@ const Notification = () => {
         closeModal();
       } catch (error) {
         toast.error(error.response?.data?.message?.[i18n.language], {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         });
@@ -391,6 +398,11 @@ const Notification = () => {
                     title: { ...editingNotification.title, vi: e.target.value },
                   })
                 }
+                styles={{
+                  input: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
                 status={errors.titleVi ? "error" : ""}
               />
               {errors.titleVi && (
@@ -410,6 +422,11 @@ const Notification = () => {
                     title: { ...editingNotification.title, en: e.target.value },
                   })
                 }
+                styles={{
+                  input: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
                 status={errors.titleEn ? "error" : ""}
               />
               {errors.titleEn && (
@@ -433,6 +450,11 @@ const Notification = () => {
                   })
                 }
                 rows={4}
+                styles={{
+                  textarea: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
                 status={errors.contentVi ? "error" : ""}
               />
               {errors.contentVi && (
@@ -456,6 +478,11 @@ const Notification = () => {
                   })
                 }
                 rows={4}
+                styles={{
+                  textarea: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
                 status={errors.contentEn ? "error" : ""}
               />
               {errors.contentEn && (

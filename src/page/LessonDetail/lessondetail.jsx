@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import { UserContext } from "../../contexts/UserContext";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Input,
@@ -13,7 +14,7 @@ import {
   Spin,
   Empty,
 } from "antd";
-import { LoadingOutlined } from "@ant-design/icons";
+import { LoadingOutlined, DownOutlined } from "@ant-design/icons";
 import { UploadOutlined, DeleteOutlined } from "@ant-design/icons";
 import { FaEdit, FaPlus } from "react-icons/fa";
 import { Upload } from "antd";
@@ -27,6 +28,7 @@ import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
 import DOMPurify from "dompurify";
 
 const LessonDetail = () => {
+  const { user } = useContext(UserContext);
   const [loading, setLoading] = useState(true);
   const [loadingSave, setLoadingSave] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -85,6 +87,7 @@ const LessonDetail = () => {
         setTimeout(() => setLoading(false), 0);
       } catch (error) {
         toast.error(error.response?.data?.message?.[i18n.language], {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         });
@@ -124,6 +127,7 @@ const LessonDetail = () => {
       setNextPageToken(response.data.nextPageToken || null);
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -159,6 +163,7 @@ const LessonDetail = () => {
       setNextPageToken(response.data.nextPageToken || null);
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -175,6 +180,7 @@ const LessonDetail = () => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -187,6 +193,7 @@ const LessonDetail = () => {
       setLesson(response.data);
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -325,12 +332,16 @@ const LessonDetail = () => {
             await api.put(`/lessondetail/${editingLessonDetail.id}`, formData, {
               headers: { "Content-Type": "multipart/form-data" },
             });
-            toast.success(t("updateSuccess", { ns: "common" }));
+            toast.success(t("updateSuccess", { ns: "common" }), {
+              theme: user?.mode === "dark" ? "dark" : "light",
+            });
           } else {
             await api.post(`/lessondetail`, formData, {
               headers: { "Content-Type": "multipart/form-data" },
             });
-            toast.success(t("addSuccess", { ns: "common" }));
+            toast.success(t("addSuccess", { ns: "common" }), {
+              theme: user?.mode === "dark" ? "dark" : "light",
+            });
           }
           setLessonDetails([]);
           setVisibleLessonDetail([]);
@@ -343,6 +354,7 @@ const LessonDetail = () => {
           closeModal();
         } catch (error) {
           toast.error(error.response?.data?.message?.[i18n.language], {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 3000,
           });
@@ -372,10 +384,13 @@ const LessonDetail = () => {
           await api.post(`/lessondetail/full`, formData, {
             headers: { "Content-Type": "multipart/form-data" },
           });
-          toast.success(t("addFullLessonSuccess", { ns: "common" }));
+          toast.success(t("addFullLessonSuccess", { ns: "common" }), {
+            theme: user?.mode === "dark" ? "dark" : "light",
+          });
           closeModal();
         } catch (error) {
           toast.error(error.response?.data?.message?.[i18n.language], {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 3000,
           });
@@ -494,6 +509,7 @@ const LessonDetail = () => {
         isDisabled: !lessonDetail.isDisabled,
       });
       toast.success(t("updateSuccess", { ns: "common" }), {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 2000,
       });
@@ -513,6 +529,7 @@ const LessonDetail = () => {
       );
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -677,6 +694,9 @@ const LessonDetail = () => {
               </button>
             </span>
             <Select
+              suffixIcon={
+                <DownOutlined style={{ color: "var(--dropdown-icon)" }} />
+              }
               className="filter-dropdown"
               value={filterStatus}
               onChange={(value) => setFilterStatus(value)}
@@ -816,7 +836,13 @@ const LessonDetail = () => {
                   <div className="error-text">{errors.title}</div>
                 )}
               </div> */}
-              <h5 style={{ marginTop: "15px", textAlign: "center" }}>
+              <h5
+                style={{
+                  marginTop: "15px",
+                  textAlign: "center",
+                  color: "var(--color-text)",
+                }}
+              >
                 {editingLessonDetail?.title?.en == "Define"
                   ? t("defineSection")
                   : editingLessonDetail?.title?.en == "Exercise"
@@ -919,12 +945,12 @@ const LessonDetail = () => {
                     onChange={handleImageChange}
                     fileList={fileList}
                   >
-                    <Button
-                      icon={<UploadOutlined />}
-                      className="custom-upload-button"
-                    >
-                      {t("inputImage")}
-                    </Button>
+                    <button className="buttondetail">
+                      <Flex justify="center" align="center">
+                        <UploadOutlined className="iconupdate" />
+                        <span>{t("inputImage")}</span>
+                      </Flex>
+                    </button>
                   </Upload>
                   {imageUrl && (
                     <div className="image-preview-box">
@@ -940,9 +966,9 @@ const LessonDetail = () => {
                           top: 8,
                           right: 8,
                           fontSize: 20,
-                          color: "#ff4d4f",
+                          color: "var(--error-text)",
                           cursor: "pointer",
-                          background: "#fff",
+                          background: "var(--color-bg-container)",
                           borderRadius: "50%",
                           padding: 4,
                         }}
@@ -962,6 +988,7 @@ const LessonDetail = () => {
                   {t("contentVi")} <span style={{ color: "red" }}>*</span>
                 </label>
                 <CKEditor
+                  style={{ backgroundColor: "var(--date-picker-bg)" }}
                   key={`define-vi-editor-${editorKey}`}
                   editor={ClassicEditor}
                   data={
@@ -1059,12 +1086,12 @@ const LessonDetail = () => {
                     onChange={(info) => handleImageChange(info, "define")}
                     fileList={fileList.define}
                   >
-                    <Button
-                      icon={<UploadOutlined />}
-                      className="custom-upload-button"
-                    >
-                      {t("inputImage")}
-                    </Button>
+                    <button className="buttondetail">
+                      <Flex justify="center" align="center">
+                        <UploadOutlined className="iconupdate" />
+                        <span>{t("inputImage")}</span>
+                      </Flex>
+                    </button>
                   </Upload>
                   {fileList.define?.[0]?.url && (
                     <div className="image-preview-box">
@@ -1311,12 +1338,12 @@ const LessonDetail = () => {
                     onChange={(info) => handleImageChange(info, "remember")}
                     fileList={fileList.remember}
                   >
-                    <Button
-                      icon={<UploadOutlined />}
-                      className="custom-upload-button"
-                    >
-                      {t("inputImage")}
-                    </Button>
+                    <button className="buttondetail">
+                      <Flex justify="center" align="center">
+                        <UploadOutlined className="iconupdate" />
+                        <span>{t("inputImage")}</span>
+                      </Flex>
+                    </button>
                   </Upload>
                   {fileList.remember?.[0]?.url && (
                     <div className="image-preview-box">

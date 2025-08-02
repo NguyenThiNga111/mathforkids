@@ -83,7 +83,9 @@ const Verify = () => {
       const { token, mode } = response.data;
       localStorage.setItem("token", token);
       localStorage.setItem("darkMode", mode);
-      toast.success("OTP verified successfully!");
+      toast.success("OTP verified successfully!", {
+        theme: mode === "dark" ? "dark" : "light",
+      });
       navigate("/");
     } catch (error) {
       toast.error(error.response?.data?.message?.en, {

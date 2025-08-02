@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useContext } from "react";
+import { UserContext } from "../../contexts/UserContext";
 import { useNavigate } from "react-router-dom";
 import {
   Input,
@@ -11,7 +12,7 @@ import {
   Spin,
   Empty,
 } from "antd";
-import { LoadingOutlined } from "@ant-design/icons";
+import { LoadingOutlined, DownOutlined } from "@ant-design/icons";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
@@ -32,6 +33,7 @@ import "./lesson.css";
 const { Option } = Select;
 
 const Lesson = () => {
+  const { user } = useContext(UserContext);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadingSave, setLoadingSave] = useState(false);
@@ -109,6 +111,7 @@ const Lesson = () => {
         setNextPageToken(response.data.nextPageToken || null);
       } catch (error) {
         toast.error(error.response?.data?.message?.[i18n.language], {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         });
@@ -146,6 +149,7 @@ const Lesson = () => {
         setNextPageToken(response.data.nextPageToken || null);
       } catch (error) {
         toast.error(error.response?.data?.message?.[i18n.language], {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         });
@@ -189,6 +193,7 @@ const Lesson = () => {
         setTimeout(() => setLoading(false), 0);
       } catch (error) {
         toast.error(error.response?.data?.message?.[i18n.language], {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         });
@@ -213,6 +218,7 @@ const Lesson = () => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message?.[i18n.language], {
+        theme: user?.mode === "dark" ? "dark" : "light",
         position: "top-right",
         autoClose: 3000,
       });
@@ -267,6 +273,7 @@ const Lesson = () => {
 
           await api.patch(`/lesson/${editingLesson.id}`, payload);
           toast.success(t("updateSuccess", { ns: "common" }), {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 2000,
           });
@@ -283,6 +290,7 @@ const Lesson = () => {
           payload.order = maxOrder + 1;
           await api.post(`/lesson`, payload);
           toast.success(t("addSuccess", { ns: "common" }), {
+            theme: user?.mode === "dark" ? "dark" : "light",
             position: "top-right",
             autoClose: 2000,
           });
@@ -305,6 +313,7 @@ const Lesson = () => {
         closeModal();
       } catch (error) {
         toast.error(error.response?.data?.message?.[i18n.language], {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         });
@@ -333,6 +342,7 @@ const Lesson = () => {
           isDisabled: updatedLesson.isDisabled,
         });
         toast.success(t("updateSuccess", { ns: "common" }), {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 2000,
         });
@@ -343,6 +353,7 @@ const Lesson = () => {
         );
       } catch (error) {
         toast.error(error.response?.data?.message?.[i18n.language], {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         });
@@ -432,11 +443,13 @@ const Lesson = () => {
         );
         await Promise.all(updatePromises);
         toast.success(t("updateOrderSuccess", { ns: "common" }), {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 2000,
         });
       } catch (error) {
         toast.error(t("updateOrderFailed", { ns: "common" }), {
+          theme: user?.mode === "dark" ? "dark" : "light",
           position: "top-right",
           autoClose: 3000,
         });
@@ -631,6 +644,9 @@ const Lesson = () => {
               </button>
             </span>
             <Select
+              suffixIcon={
+                <DownOutlined style={{ color: "var(--dropdown-icon)" }} />
+              }
               className="filter-dropdown"
               value={selectedGrade}
               onChange={(value) => {
@@ -643,16 +659,21 @@ const Lesson = () => {
                 }
               }}
               placeholder={t("grade")}
+              style={{ minWidth: "120px" }}
             >
               <Select.Option value={1}>{t("grade")} 1</Select.Option>
               <Select.Option value={2}>{t("grade")} 2</Select.Option>
               <Select.Option value={3}>{t("grade")} 3</Select.Option>
             </Select>
             <Select
+              suffixIcon={
+                <DownOutlined style={{ color: "var(--dropdown-icon)" }} />
+              }
               className="filter-dropdown"
               value={filterType}
               onChange={(value) => setFilterType(value)}
               placeholder={t("type")}
+              style={{ minWidth: "120px" }}
             >
               {lessonTypes
                 .filter((type) => {
@@ -671,6 +692,9 @@ const Lesson = () => {
                 ))}
             </Select>
             <Select
+              suffixIcon={
+                <DownOutlined style={{ color: "var(--dropdown-icon)" }} />
+              }
               className="filter-dropdown"
               value={filterStatus}
               onChange={(value) => setFilterStatus(value)}
@@ -868,6 +892,11 @@ const Lesson = () => {
                     name: { ...editingLesson?.name, vi: e.target.value },
                   })
                 }
+                styles={{
+                  input: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
                 status={errors.nameVi ? "error" : ""}
               />
               {errors.nameVi && (
@@ -887,6 +916,11 @@ const Lesson = () => {
                     name: { ...editingLesson?.name, en: e.target.value },
                   })
                 }
+                styles={{
+                  input: {
+                    backgroundColor: "var(--date-picker-bg)",
+                  },
+                }}
                 status={errors.nameEn ? "error" : ""}
               />
               {errors.nameEn && (
@@ -898,6 +932,9 @@ const Lesson = () => {
                 {t("grade")} <span style={{ color: "red" }}>*</span>
               </label>
               <Select
+                suffixIcon={
+                  <DownOutlined style={{ color: "var(--dropdown-icon)" }} />
+                }
                 style={{ width: "100%", height: "50px" }}
                 placeholder={t("inputgrade")}
                 value={editingLesson?.grade || undefined}
@@ -917,6 +954,9 @@ const Lesson = () => {
                 {t("type")} <span style={{ color: "red" }}>*</span>
               </label>
               <Select
+                suffixIcon={
+                  <DownOutlined style={{ color: "var(--dropdown-icon)" }} />
+                }
                 style={{ width: "100%", height: "50px" }}
                 placeholder={t("inputType")}
                 value={editingLesson?.type || undefined}
