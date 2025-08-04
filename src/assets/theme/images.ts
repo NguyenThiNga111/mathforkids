@@ -1,4 +1,4 @@
-import dashboardWhite from '../images/dashboardWhite.png';
+import dashboardWhite from '../images/dashboardwhite.png';
 import dashboardBlue from '../images/dashboardblue.png';
 import accountUserWhite from '../images/accountuserwhite.png';
 import accountUserBlue from '../images/accountuserblue.png';
