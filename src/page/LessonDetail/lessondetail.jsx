@@ -21,7 +21,7 @@ import { Upload } from "antd";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
 import api from "../../assets/api/Api";
-import "./lessonDetail.css";
+import "./lessondetail";
 import Navbar from "../../component/Navbar";
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
