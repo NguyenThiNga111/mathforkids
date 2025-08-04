@@ -21,7 +21,7 @@ const QuestionTest = () => {
 
   const { testId } = useParams();
   const navigate = useNavigate();
-  const questionTestsPerPage = 16;
+  const questionTestsPerPage = 20;
   const { t, i18n } = useTranslation(['questiontest', 'common']);
 
   useEffect(() => {
@@ -67,7 +67,7 @@ const QuestionTest = () => {
 
   const fetchLevels = async () => {
     try {
-      const response = await api.get(`/level`);
+      const response = await api.get(`/level/getEnabledLevels`);
       const levelsData = Array.isArray(response.data) ? response.data : response.data?.data || [];
       setLevels(levelsData);
     } catch (error) {
@@ -95,9 +95,11 @@ const QuestionTest = () => {
     {
       title: t('test'),
       onClick: () => navigate('/testsystem'),
+      className: 'current-breadcrumb-title',
     },
     {
       title: t('testquestion'),
+      className: 'current-breadcrumb',
     },
   ];
 
@@ -135,8 +137,8 @@ const QuestionTest = () => {
 
     {
       title: t('level'),
-      dataIndex: 'level',
-      key: 'level',
+      dataIndex: 'levelId',
+      key: 'levelId',
       render: (levelId) => getLevelName(levelId),
     },
     {
@@ -156,7 +158,7 @@ const QuestionTest = () => {
 
   return (
     <div className="containers">
-      <Navbar />
+      {/* <Navbar /> */}
       <Breadcrumb items={breadcrumbItems} style={{ marginBottom: 16 }} />
       <h1 className="container-title">{t('managementQuestionTest')}</h1>
       <div className="containers-content">
@@ -213,7 +215,7 @@ const QuestionTest = () => {
               </div>
               <div className="detail-item">
                 <label className="detail-label">{t('level')}</label>
-                <div className="detail-content">{getLevelName(selectedQuestionTest.level)}</div>
+                <div className="detail-content">{getLevelName(selectedQuestionTest.levelId)}</div>
               </div>
               {/* <div className="detail-item">
                 <label className="detail-label">{t('testId')}</label>

@@ -23,19 +23,33 @@
     line-height: 1.5;
 }
 
+.current-breadcrumb {
+    font-weight: bold;
+    color: var(--breadcrumb);
+    /* padding: 2px 6px; */
+}
+
+.current-breadcrumb-title {
+    color: var(--breadcrumb);
+    /* padding: 2px 6px; */
+}
+
+.current-breadcrumb-title:hover {
+    cursor: pointer;
+    /* color: var(--color-breadcrumb-hover); */
+    background-color: rgba(47, 128, 237, 0.1);
+    /* nền xám nhẹ */
+    /* border-radius: 4px; */
+    /* padding: 2px 6px; */
+    text-decoration: underline;
+    transition: all 0.2s ease;
+}
+
 .ant-breadcrumb {
     padding-left: 20px;
     font-size: 16px;
 }
 
-.ant-breadcrumb span:last-child {
-    color: var(--color-text);
-    /* Gray color for the active item */
-}
-
-.ant-breadcrumb .ant-breadcrumb-separator {
-    color: var(--color-text);
-}
 
 /* Optional: Specific column widths */
 .table-container-lessondetail th:nth-child(1),
@@ -72,6 +86,7 @@
     max-width: 100px;
     /* dateOfBirth */
 }
+
 .emoji-picker-container {
     position: absolute;
     z-index: 1000;
@@ -82,4 +97,27 @@
 
 .form-content-lesson .inputtext {
     position: relative;
+}
+
+.ck.ck-editor__main>.ck-editor__editable {
+    color: var(--color-text);
+    background: none !important;
+}
+
+.ck.ck-editor__main>.ck-editor__editable:not(.ck-focused) {
+    border-color: none;
+}
+
+.ck.ck-toolbar {
+    background: none !important;
+    /* border-color: #1f2d3d; */
+}
+
+.ck.ck-toolbar .ck-button {
+    color: var(--color-text);
+}
+
+.ck.ck-toolbar .ck-button:hover,
+.ck.ck-toolbar .ck-button.ck-on {
+    background-color: var(--ckeditor-hover) !important;
 }

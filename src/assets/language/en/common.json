@@ -6,7 +6,7 @@
     "exportFile": "Export file",
     "update": "Update",
     "action": "Action",
-    "available": "isEnabled",
+    "available": "Enabled",
     "errorFetchData": "Error fetching data",
     "updateSuccess": "Update successful",
     "addSuccess": "Add successful",
@@ -17,5 +17,10 @@
     "searchPlaceholder": "Search",
     "adminRole": "Admin",
     "status": "All status",
-    ".no": ".No"
+    ".no": "No.",
+    "no_lesson_available": "No lesson Available",
+    "exercise_statistic": "Exercise Answers",
+    "More": "More",
+    "nodata": "No data",
+    "none": "None"
 }

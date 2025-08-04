@@ -19,7 +19,7 @@ const CompleteTask = () => {
 
     const { t, i18n } = useTranslation(['completetask', 'common']);
     const { Option } = Select;
-    const tasksPerPage = 15;
+    const tasksPerPage = 20;
 
     useEffect(() => {
         fetchData();
@@ -151,7 +151,7 @@ const CompleteTask = () => {
 
     return (
         <div className="container">
-            <Navbar />
+            {/* <Navbar /> */}
             <div className="container-content">
                 <h1 className="container-title">{t('managementCompleteTasks')}</h1>
                 <div className="flex justify-between items-center mb-4">

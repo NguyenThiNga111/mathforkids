@@ -19,7 +19,7 @@ const TestSystem = () => {
   const [lessons, setLessons] = useState([]);
   const [pupils, setPupils] = useState([]);
   const navigate = useNavigate();
-  const testPage = 10;
+  const testPage = 20;
 
   useEffect(() => {
     fetchAllTests(null);
@@ -155,7 +155,7 @@ const TestSystem = () => {
 
   return (
     <div className="containers">
-      <Navbar />
+      {/* <Navbar /> */}
       <h1 className="container-title">{t('managementTestSystem')}</h1>
       <div className="containers-content">
         <div className="filter-bar mb-2">
