@@ -4,7 +4,7 @@ import { Input, Button, Select, Modal } from 'antd';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 import api from '../../assets/api/Api';
-import './completeTask.css';
+import './completetask.css';
 
 const CompleteTask = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
