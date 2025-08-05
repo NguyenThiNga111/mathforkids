@@ -44,6 +44,7 @@ function App() {
     const savedMode = localStorage.getItem("darkMode");
     const isDark = savedMode === "dark";
     injectColorsToRoot(isDark ? darkColors : lightColors);
+    injectFontsToRoot();
   }, []);
 
   return (
@@ -64,7 +65,7 @@ function App() {
             colorTextDisabled: "var(--color-text-disabled)",
             controlItemBgActive: "var(--cell-active-with-range-bg)",
             colorBgContainerDisabled: "var(--cell-bg-disabled)",
-            colorTextQuaternary:"var(--color-text-quaternary)",
+            colorTextQuaternary: "var(--color-text-quaternary)",
             colorTextTertiary: "var(--color-text-tertiary)",
             colorErrorOutline: "var(--color-error-outline)",
             colorBgMask: "var(--color-bg-mask)",
@@ -95,7 +96,7 @@ function App() {
               hoverBg: "var(--hover-datepicker-bg)",
               hoverBorderColor: "var(--hover-datepicker-border-color)",
               activeShadow: "var(--active-shadow)",
-              errorActiveShadow: "var(--error-text)"
+              errorActiveShadow: "var(--error-text)",
             },
             InputNumber: {
               activeBg: "var(--active-datepicker-bg)",
@@ -103,7 +104,7 @@ function App() {
               hoverBg: "var(--date-picker-bg)",
               hoverBorderColor: "var(--hover-datepicker-border-color)",
               activeShadow: "var(--active-shadow)",
-              errorActiveShadow: "var(--error-text)"
+              errorActiveShadow: "var(--error-text)",
             },
             Tabs: {
               inkBarColor: "var(--ink-bar-color)",
@@ -124,7 +125,7 @@ function App() {
               hoverBorderColor: "var(--hover-datepicker-border-color)",
               multipleItemBg: "var(--multiple-item-bg)",
               multipleItemColorDisabled: "var(--multiple-item-color-disabled)",
-              activeShadow: "var(--active-shadow)"
+              activeShadow: "var(--active-shadow)",
             },
             Table: {
               rowHoverBg: "var(--row-hover-bg)",
@@ -192,4 +193,3 @@ function App() {
 
 export default App;
 injectColorsToRoot(lightColors);
-injectFontsToRoot();
